@@ -1,3 +1,6 @@
+// dotenv to keep secret variables in (they won't show on github)
+require('dotenv').config();
+
 //call new Server
 global.WebSocket = require('ws');
 global.EventEmitter = require('events').EventEmitter;
