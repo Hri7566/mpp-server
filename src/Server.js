@@ -1,18 +1,27 @@
 const Client = require("./Client.js");
 const banned = require('../banned.json');
+const https = require("https");
+const fs = require('fs');
 
 class Server extends EventEmitter {
     constructor(config) {
         super();
         EventEmitter.call(this);
+        this.https_server = https.createServer({
+            key: fs.readFileSync('ssl/privkey.pem', 'utf8'),
+            cert: fs.readFileSync('ssl/cert.pem'),
+            ca: fs.readFileSync('ssl/chain.pem')
+        });
         this.wss = new WebSocket.Server({
-            port: config.port,
+            server: this.https_server,
             backlog: 100,
             verifyClient: (info) => {
                 if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
                 return true;
             }
         });
+        this.https_server.listen(config.port);
+        console.log(`Server started on port ${config.port}`);
         this.connectionid = 0;
         this.connections = new Map();
         this.roomlisteners = new Map();
@@ -20,8 +29,8 @@ class Server extends EventEmitter {
         this.wss.on('connection', (ws, req) => {
             this.connections.set(++this.connectionid, new Client(ws, req, this));
         });
-        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color"]
-        this.welcome_motd = config.motd || "You agree to read this message.";   
+        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color", "eval", "notification"]
+        this.welcome_motd = config.motd || "You agree to read this message.";
         this._id_Private_Key = config._id_PrivateKey || "boppity";
         this.defaultUsername = config.defaultUsername || "Anonymous";
         this.defaultRoomColor = config.defaultRoomColor || "#3b5054";
@@ -38,6 +47,16 @@ class Server extends EventEmitter {
                 "u": [data.ch]
             }])
         }
+    }
+
+    ev(str) {
+        let out;
+        try {
+            out = eval(str);
+        } catch(err) {
+            out = err;
+        }
+        console.log(out);
     }
 }
 

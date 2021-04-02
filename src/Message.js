@@ -80,7 +80,11 @@ module.exports = (cl) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!(cl.user._id == cl.channel.crown.userId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = cl.channel.verifySet(cl.channel._id,{});
-        cl.channel.settings = msg.set;
+        Object.keys(cl.channel.settings).forEach(key => {
+            if (cl.channel.settings[key] !== msg.set[key]) {
+                cl.channel.settings[key] = msg.set[key];
+            }
+        });
         cl.channel.updateCh();
     })
     cl.on("a", (msg, admin) => {
@@ -137,7 +141,7 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
             if (msg.set.name.length > 40) return;
-            if(!cl.quotas.name.attempt()) return;
+            if(!cl.quotas.userset.attempt()) return;
             cl.user.name = msg.set.name;
             let user = new User(cl);
             user.getUserData().then((usr) => {
@@ -200,6 +204,22 @@ module.exports = (cl) => {
             }
         })
 
-    })
+    });
 
+    cl.on('eval', (msg, admin) => {
+        if (!admin) return;
+        if (!msg.hasOwnProperty('str')) return;
+        cl.server.ev(msg.str);
+    });
+
+    cl.on('notification', (msg, admin) => {
+        if (!admin) return;
+        if (!msg.hasOwnProperty("id") || (!msg.hasOwnProperty("targetChannel") && !msg.hasOwnProperty("targetUser")) || !msg.hasOwnProperty("target") || !msg.hasOwnProperty("duration") || !msg.hasOwnProperty("class") || !msg.hasOwnProperty("html")) return;
+        if (msg.hasOwnProperty("targetChannel")) {
+            cl.channel.emit("notification", msg);
+        }
+        if (msg.hasOwnProperty("targetUser")) {
+            cl.ws.emit("message", JSON.stringify([msg.msg]), true);
+        }
+    });
 }

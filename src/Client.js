@@ -105,6 +105,7 @@ class Client extends EventEmitter {
     bindEventListeners() {
         this.ws.on("message", (evt, admin) => {
             try {
+                if (typeof(evt) !== 'string') evt = evt.toJSON();
                 let transmission = JSON.parse(evt);
                 for (let msg of transmission) {
                     if (!msg.hasOwnProperty("m")) return;
@@ -114,7 +115,7 @@ class Client extends EventEmitter {
                 }
             } catch (e) {
                 console.log(e)
-                this.destroy();
+                // this.destroy();
             }
         });
         this.ws.on("close", () => {

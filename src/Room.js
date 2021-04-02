@@ -100,7 +100,11 @@ class Room extends EventEmitter {
 
     }
     updateCh(cl) { //update channel for all people in channel
-        if (Array.from(this.ppl.values()).length <= 0) this.destroy();
+        if (Array.from(this.ppl.values()).length <= 0) {
+            setTimeout(() => {
+                this.destroy();
+            }, 10000);
+        }
         this.connections.forEach((usr) => {
             this.server.connections.get(usr.connectionid).sendArray([this.fetchData(usr, cl)])
         })
@@ -192,6 +196,7 @@ class Room extends EventEmitter {
     }
     isLobby(_id) {
         if (_id.startsWith("lobby")) {
+            return true;
             let lobbynum = _id.split("lobby")[1];
             if (_id == "lobby") {
                 return true;
@@ -205,7 +210,7 @@ class Room extends EventEmitter {
                     return false;
                 }
             }
-        } else if (_id.startsWith("test/")) {
+        } else if (_id.startsWith("test/") || _id.toLowerCase().includes("grant")) {
             if (_id == "test/") {
                 return false;
             } else {
