@@ -215,11 +215,6 @@ module.exports = (cl) => {
     cl.on('notification', (msg, admin) => {
         if (!admin) return;
         if (!msg.hasOwnProperty("id") || (!msg.hasOwnProperty("targetChannel") && !msg.hasOwnProperty("targetUser")) || !msg.hasOwnProperty("target") || !msg.hasOwnProperty("duration") || !msg.hasOwnProperty("class") || !msg.hasOwnProperty("html")) return;
-        if (msg.hasOwnProperty("targetChannel")) {
-            cl.channel.emit("notification", msg);
-        }
-        if (msg.hasOwnProperty("targetUser")) {
-            cl.ws.emit("message", JSON.stringify([msg.msg]), true);
-        }
+        cl.channel.Notification(msg.targetUser || msg.targetChannel, null, null, msg.html, msg.duration, msg.target, msg.class);
     });
 }
