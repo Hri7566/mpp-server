@@ -61,7 +61,7 @@ class Room extends EventEmitter {
                     this.settings.color2 = this.server.lobbySettings.color2;
                     this.settings.lobby = true;
                 } else {
-                    this.settings = new RoomSettings(set, 'user');
+                    this.settings = new RoomSettings(cl.channel.settings, 'user');
                 }
             }
 
@@ -94,7 +94,6 @@ class Room extends EventEmitter {
             }])
             this.updateCh(cl, this.settings);
         }
-
     }
 
     remove(p) { //this is complicated too
@@ -128,6 +127,8 @@ class Room extends EventEmitter {
         this.connections.forEach((usr) => {
             this.server.connections.get(usr.connectionid).sendArray([this.fetchData(usr, cl)])
         });
+
+        console.log(this.settings);
 
         this.server.updateRoom(this.fetchData());
     }
