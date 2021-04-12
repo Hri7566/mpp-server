@@ -1,20 +1,27 @@
 const Quota = require('./Quota');
 const User = require("./User.js");
 const Room = require("./Room.js");
+const RoomSettings = require('./RoomSettings');
+
 module.exports = (cl) => {
-    cl.once("hi", () => {
-        let user = new User(cl);
-        user.getUserData().then((data) => {
-            let msg = {};
-            msg.m = "hi";
-            msg.motd = cl.server.welcome_motd;
-            msg.t = Date.now();
-            msg.u = data;
-            msg.v = "Beta";
-            cl.sendArray([msg])
-            cl.user = data;
-        })
-    })
+    cl.once("hi", msg => {
+        let m = {};
+
+        m.m = "hi";
+        m.motd = cl.server.welcome_motd;
+        m.t = Date.now();
+        m.u = {
+            name: cl.user.name,
+            _id: cl.user._id,
+            id: cl.participantId,
+            color: cl.user.color
+        };
+
+        m.v = "https://gitlab.com/hri7566/mpp-server";
+
+        cl.sendArray([m]);
+    });
+
     cl.on("t", msg => {
         if (msg.hasOwnProperty("e") && !isNaN(msg.e))
             cl.sendArray([{
@@ -22,13 +29,17 @@ module.exports = (cl) => {
                 t: Date.now(),
                 e: msg.e
             }])
-    })
+    });
+
     cl.on("ch", msg => {
-        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
+        if (typeof(msg.set) !== 'object') msg.set = {};
+
         if (msg.hasOwnProperty("_id") && typeof msg._id == "string") {
             if (msg._id.length > 512) return;
             if (!cl.staticQuotas.room.attempt()) return;
+
             cl.setChannel(msg._id, msg.set);
+
             let param;
             if (cl.channel.isLobby(cl.channel._id)) {
                 param = Quota.N_PARAMS_LOBBY;
@@ -39,10 +50,12 @@ module.exports = (cl) => {
                     param = Quota.N_PARAMS_RIDICULOUS;
                 }
             }
+
             param.m = "nq";
-            cl.sendArray([param])
+            cl.sendArray([param]);
         }
-    })
+    });
+
     cl.on("m", (msg, admin) => {
         // if (!cl.quotas.cursor.attempt() && !admin) return;
         if (!(cl.channel && cl.participantId)) return;
@@ -50,43 +63,63 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty("y")) msg.y = null;
         if (parseInt(msg.x) == NaN) msg.x = null;
         if (parseInt(msg.y) == NaN) msg.y = null;
-        cl.channel.emit("m", cl, msg.x, msg.y)
+        cl.channel.emit("m", cl, msg.x, msg.y);
+    });
 
-    })
     cl.on("chown", (msg, admin) => {
         if (!cl.quotas.chown.attempt() && !admin) return;
         if (!(cl.channel && cl.participantId)) return;
+
         //console.log((Date.now() - cl.channel.crown.time))
         //console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
+
         if (!(cl.channel.crown.userId == cl.user._id) && !((Date.now() - cl.channel.crown.time) > 15000)) return;
+
         if (msg.hasOwnProperty("id")) {
             // console.log(cl.channel.crown)
-            if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped)
+            if (!admin) {
+                if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped) {
+                    cl.channel.chown(msg.id);
+                    if (msg.id == cl.user.id) {
+                        param =  Quota.N_PARAMS_RIDICULOUS;
+                        param.m = "nq";
+                        cl.sendArray([param])
+                    }
+                }
+            } else {
                 cl.channel.chown(msg.id);
                 if (msg.id == cl.user.id) {
                     param =  Quota.N_PARAMS_RIDICULOUS;
                     param.m = "nq";
                     cl.sendArray([param])
                 }
+            }
         } else {
-            if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped)
+            if (!admin) {
+                if (cl.user._id == cl.channel.crown.userId || cl.channel.crowndropped) {
+                    cl.channel.chown();
+                    param =  Quota.N_PARAMS_NORMAL;
+                    param.m = "nq";
+                    cl.sendArray([param])
+                }
+            } else {
                 cl.channel.chown();
                 param =  Quota.N_PARAMS_NORMAL;
                 param.m = "nq";
-                cl.sendArray([param])
+                cl.sendArray([param]);
+            }
         }
-    })
+    });
+
     cl.on("chset", msg => {
         if (!(cl.channel && cl.participantId)) return;
+        if (!cl.channel.crown) return;
         if (!(cl.user._id == cl.channel.crown.userId)) return;
-        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = cl.channel.verifySet(cl.channel._id,{});
-        Object.keys(cl.channel.settings).forEach(key => {
-            if (cl.channel.settings[key] !== msg.set[key]) {
-                cl.channel.settings[key] = msg.set[key];
-            }
-        });
+        if (!msg.hasOwnProperty("set") || !msg.set) msg.set = new RoomSettings(cl.channel.settings, 'user');
+        cl.channel.settings.changeSettings(msg.set);
         cl.channel.updateCh();
-    })
+    });
+
     cl.on("a", (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
@@ -102,7 +135,8 @@ module.exports = (cl) => {
             }
             cl.channel.emit('a', cl, msg);
         }
-    })
+    });
+
     cl.on('n', msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('t') || !msg.hasOwnProperty('n')) return;
@@ -114,7 +148,8 @@ module.exports = (cl) => {
         } else {
             cl.channel.playNote(cl, msg);
         }
-    })
+    });
+
     cl.on('+ls', msg => {
         if (!(cl.channel && cl.participantId)) return;
         cl.server.roomlisteners.set(cl.connectionid, cl);
@@ -131,11 +166,13 @@ module.exports = (cl) => {
             "c": true,
             "u": rooms
         }])
-    })
+    });
+
     cl.on('-ls', msg => {
         if (!(cl.channel && cl.participantId)) return;
         cl.server.roomlisteners.delete(cl.connectionid);
-    })
+    });
+
     cl.on("userset", msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
@@ -157,7 +194,8 @@ module.exports = (cl) => {
             })
 
         }
-    })
+    });
+
     cl.on('kickban', msg => {
         if (cl.channel.crown == null) return;
         if (!(cl.channel && cl.participantId)) return;
@@ -169,17 +207,20 @@ module.exports = (cl) => {
             let ms = msg.ms || 3600000;
             cl.channel.kickban(_id, ms);
         }
-    })
+    });
+
     cl.on("bye", msg => {
         cl.destroy();
-    })
+    });
+
     cl.on("admin message", msg => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('password') || !msg.hasOwnProperty('msg')) return;
         if (typeof msg.msg != 'object') return;
         if (msg.password !== cl.server.adminpass) return;
         cl.ws.emit("message", JSON.stringify([msg.msg]), true);
-    })
+    });
+
     //admin only stuff
     cl.on('color', (msg, admin) => {
         if (!admin) return;
