@@ -108,6 +108,7 @@ class Client extends EventEmitter {
                 if (typeof(evt) !== 'string') evt = evt.toJSON();
                 let transmission = JSON.parse(evt);
                 for (let msg of transmission) {
+                    if (typeof(msg) !== 'object' || msg == null || msg == NaN) return;
                     if (!msg.hasOwnProperty("m")) return;
                     if (!this.server.legit_m.includes(msg.m)) return;
                     this.emit(msg.m, msg, !!admin);

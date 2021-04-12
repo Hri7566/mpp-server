@@ -278,6 +278,21 @@ class Room extends EventEmitter {
         let filter = ["AMIGHTYWIND"];
         let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
         if (regexp.test(msg.message)) return;
+        if (p.participantId == 0) {
+            let message = {};
+            message.m = "a";
+            message.a = msg.message;
+            message.p = {
+                color: "#ffffff",
+                id: "0",
+                name: "mpp",
+                _id: "0"
+            };
+            message.t = Date.now();
+            this.sendArray([message]);
+            this.chatmsgs.push(message);
+            return;
+        }
         let prsn = this.ppl.get(p.participantId);
         if (prsn) {
             let message = {};
@@ -382,12 +397,13 @@ class Room extends EventEmitter {
                 break;
             }
             default: {
-                Array.from(this.server.connections.values()).filter((usr) => usr.user._id == who).forEach((p) => {
+                Array.from(this.server.connections.values()).filter((usr) => typeof(usr.user) !== 'undefined' ? usr.user._id == who : null).forEach((p) => {
                     p.sendArray([obj]);
                 });
             }
         }
     }
+
     bindEventListeners() {
         this.on("bye", participant => {
             this.remove(participant);
@@ -401,6 +417,7 @@ class Room extends EventEmitter {
             this.chat(participant, msg);
         })
     }
+
     verifySet(_id,msg){
         if(!isObj(msg.set)) msg.set = {visible:true,color:this.server.defaultRoomColor,chat:true,crownsolo:false};
         if(isBool(msg.set.lobby)){
@@ -433,6 +450,5 @@ class Room extends EventEmitter {
         };
         return msg.set;
     }
-
 }
 module.exports = Room;
