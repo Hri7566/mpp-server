@@ -111,10 +111,12 @@ module.exports = (cl) => {
         }
     });
 
-    cl.on("chset", msg => {
+    cl.on("chset", (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
-        if (!cl.channel.crown) return;
-        if (!(cl.user._id == cl.channel.crown.userId)) return;
+        if (!cl.channel.crown && !admin) return;
+        if (!admin) {
+            if (!(cl.user._id == cl.channel.crown.userId)) return;
+        }
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = new RoomSettings(cl.channel.settings, 'user');
         cl.channel.settings.changeSettings(msg.set);
         cl.channel.updateCh();
