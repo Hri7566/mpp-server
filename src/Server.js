@@ -50,7 +50,7 @@ class Server extends EventEmitter {
     }
 
     ev(str) {
-        let out;
+        let out = "";
         try {
             out = eval(str);
         } catch(err) {
