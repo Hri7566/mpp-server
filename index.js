@@ -1,26 +1,31 @@
-// dotenv to keep secret variables in (they won't show on github)
+// dotenv
 require('dotenv').config();
 
-//call new Server
+// call new Server
 global.WebSocket = require('ws');
 global.EventEmitter = require('events').EventEmitter;
 global.fs = require('fs');
-global.createKeccakHash = require('keccak');
-const AsyncConsole = require('asyncconsole')
+const AsyncConsole = require('asyncconsole');
 
-global.isString = function(a){
+global.isString = function(a) {
 	return typeof a === 'string';
 }
-global.isBool = function(a){
+
+global.isBool = function(a) {
 	return typeof a === 'boolean';
 }
-global.isObj = function(a){
+
+global.isObj = function(a) {
 	return typeof a === "object" && !Array.isArray(a) && a !== null;
 }
 
 let Server = require("./src/Server.js");
 let config = require('./config');
 global.SERVER = new Server(config);
+
+// below commented because it doesn't work with pm2
+
+/*
 let console = process.platform == 'win32' ? new AsyncConsole("", input => {
     try {
         console.log(JSON.stringify(eval(input)));
@@ -28,3 +33,4 @@ let console = process.platform == 'win32' ? new AsyncConsole("", input => {
         console.log(e.toString());
     }
 }) : {};
+*/

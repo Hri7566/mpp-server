@@ -3,42 +3,55 @@ const Quota = require ("./Quota.js");
 const quotas = require('../Quotas');
 const RateLimit = require('./Ratelimit.js').RateLimit;
 const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
+const User = require("./User.js");
+const Database = require("./Database.js");
 require('node-json-color-stringify');
+
 class Client extends EventEmitter {
     constructor(ws, req, server) {
         super();
         EventEmitter.call(this);
-        this.user;
         this.connectionid = server.connectionid;
         this.server = server;
         this.participantId;
         this.channel;
+
         this.staticQuotas = {
             room: new RateLimit(quotas.room.time)
         };
+
         this.quotas = {};
         this.ws = ws;
         this.req = req;
         this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
-        this.destroied = false;
-        this.bindEventListeners();
-        require('./Message.js')(this);
+
+        Database.getUserData(this, server).then(data => {
+            this.user = new User(this, data);
+            this.destroied = false;
+            this.bindEventListeners();
+            require('./Message.js')(this);
+        });
     }
+
     isConnected() {
         return this.ws && this.ws.readyState === WebSocket.OPEN;
     }
+
     isConnecting() {
         return this.ws && this.ws.readyState === WebSocket.CONNECTING;
     }
+
     setChannel(_id, settings) {
         if (this.channel && this.channel._id == _id) return;
         if (this.server.rooms.get(_id)) {
             let room = this.server.rooms.get(_id, settings);
             let userbanned = room.bans.get(this.user._id);
+
             if (userbanned && (Date.now() - userbanned.bannedtime >= userbanned.msbanned)) {
                 room.bans.delete(userbanned.user._id);
                 userbanned = undefined;
             }
+
             if (userbanned) {
                 room.Notification(this.user._id,
                     "Notice",
@@ -51,9 +64,11 @@ class Client extends EventEmitter {
                 this.setChannel("test/awkward", settings);
                 return;
             }
+
             let channel = this.channel;
             if (channel) this.channel.emit("bye", this);
-            if (channel) this.channel.updateCh();
+            if (channel) this.channel.updateCh(this);
+
             this.channel = this.server.rooms.get(_id);
             this.channel.join(this);
         } else {
@@ -61,7 +76,7 @@ class Client extends EventEmitter {
             this.server.rooms.set(_id, room);
             if (this.channel) this.channel.emit("bye", this);
             this.channel = this.server.rooms.get(_id);
-            this.channel.join(this);
+            this.channel.join(this, settings);
         }
     }
     sendArray(arr) {
@@ -70,6 +85,7 @@ class Client extends EventEmitter {
             this.ws.send(JSON.stringify(arr));
         }
     }
+
     initParticipantQuotas() {
         this.quotas = {
             //"chat": new Quota(Quota.PARAMS_A_NORMAL),
@@ -88,6 +104,7 @@ class Client extends EventEmitter {
             "-ls": new Quota(Quota.PARAMS_USED_A_LOT)
         }
     }
+
     destroy() {
         this.ws.close();
         if (this.channel) {
@@ -102,6 +119,7 @@ class Client extends EventEmitter {
         this.destroied = true;
         console.log(`Removed Connection ${this.connectionid}.`);
     }
+
     bindEventListeners() {
         this.ws.on("message", (evt, admin) => {
             try {
@@ -120,14 +138,17 @@ class Client extends EventEmitter {
             }
         });
         this.ws.on("close", () => {
-            if (!this.destroied)
+            if (!this.destroied) {
                 this.destroy();
+            }
         });
         this.ws.addEventListener("error", (err) => {
             console.error(err);
-            if (!this.destroied)
+            if (!this.destroied) {
                 this.destroy();
+            }
         });
     }
 }
+
 module.exports = Client;
