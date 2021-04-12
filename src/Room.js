@@ -196,16 +196,16 @@ class Room extends EventEmitter {
     }
     isLobby(_id) {
         if (_id.startsWith("lobby")) {
-            return true;
-            let lobbynum = _id.split("lobby")[1];
             if (_id == "lobby") {
                 return true;
             }
+
+            let lobbynum = _id.split("lobby")[1];
             if (!(parseInt(lobbynum).toString() == lobbynum)) return false;
+
             for (let i in lobbynum) {
                 if (parseInt(lobbynum[i]) >= 0) {
                     if (parseInt(i) + 1 == lobbynum.length) return true;
-
                 } else {
                     return false;
                 }

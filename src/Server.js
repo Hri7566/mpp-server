@@ -1,26 +1,40 @@
 const Client = require("./Client.js");
 const banned = require('../banned.json');
 const https = require("https");
+const http = require("http");
 const fs = require('fs');
 
 class Server extends EventEmitter {
     constructor(config) {
         super();
         EventEmitter.call(this);
-        this.https_server = https.createServer({
-            key: fs.readFileSync('ssl/privkey.pem', 'utf8'),
-            cert: fs.readFileSync('ssl/cert.pem'),
-            ca: fs.readFileSync('ssl/chain.pem')
-        });
-        this.wss = new WebSocket.Server({
-            server: this.https_server,
-            backlog: 100,
-            verifyClient: (info) => {
-                if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
-                return true;
-            }
-        });
-        this.https_server.listen(config.port);
+        if (config.ssl == true) {
+            this.https_server = https.createServer({
+                key: fs.readFileSync('ssl/privkey.pem', 'utf8'),
+                cert: fs.readFileSync('ssl/cert.pem'),
+                ca: fs.readFileSync('ssl/chain.pem')
+            });
+
+            this.wss = new WebSocket.Server({
+                server: this.https_server,
+                backlog: 100,
+                verifyClient: (info) => {
+                    if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                    return true;
+                }
+            });
+            
+            this.https_server.listen(config.port);
+        } else {
+            this.wss = new WebSocket.Server({
+                port: 8443,
+                backlog: 100,
+                verifyClient: (info) => {
+                    if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                    return true;
+                }
+            });
+        }
         console.log(`Server started on port ${config.port}`);
         this.connectionid = 0;
         this.connections = new Map();
