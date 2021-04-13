@@ -3,7 +3,7 @@ const Database = require("./Database");
 class User {
     constructor(cl, data) {
         this.server = cl.server;
-        this.name = typeof(data.name) == 'string' ? data.name : "Anonymous";
+        this.name = data.name;
         this._id = data._id;
         this.color = data.color;
         this.ip = data.ip;

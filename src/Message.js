@@ -190,7 +190,7 @@ module.exports = (cl) => {
             if(!cl.quotas.userset.attempt()) return;
             cl.user.name = msg.set.name;
             let user = new User(cl);
-            Database.getUserData(cl, cl.server).then((usr) => {
+            Database.getUserData().then((usr) => {
                 let dbentry = user.userdb.get(cl.user._id);
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
