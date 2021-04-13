@@ -24,6 +24,7 @@ class Client extends EventEmitter {
         this.ws = ws;
         this.req = req;
         this.ip = (req.connection.remoteAddress).replace("::ffff:", "");
+        this.hidden = false;
 
         Database.getUserData(this, server).then(data => {
             this.user = new User(this, data);

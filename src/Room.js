@@ -1,8 +1,3 @@
-//array of rooms
-//room class
-//room deleter
-//databases in Map
-
 const createKeccakHash = require('keccak');
 const Quota = require("./Quota.js");
 const RoomSettings = require('./RoomSettings.js');
@@ -51,7 +46,6 @@ class Room extends EventEmitter {
                 this.settings = new RoomSettings(set, 'user');
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
-                console.log(this.isLobby(this._id));
 
                 if (this.isLobby(this._id)) {
                     this.settings = new RoomSettings(this.server.lobbySettings, 'user');
@@ -61,7 +55,15 @@ class Room extends EventEmitter {
                     this.settings.color2 = this.server.lobbySettings.color2;
                     this.settings.lobby = true;
                 } else {
-                    this.settings = new RoomSettings(cl.channel.settings, 'user');
+                    if (typeof(set) == 'undefined') {
+                        if (typeof(this.settings) == 'undefined') {
+                            this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                        } else {
+                            this.settings = new RoomSettings(cl.channel.settings, 'user');
+                        }
+                    } else {
+                        this.settings = new RoomSettings(set, 'user');
+                    }
                 }
             }
 
@@ -69,19 +71,21 @@ class Room extends EventEmitter {
 
             this.connections.push(cl);
 
-            this.sendArray([{
-                color: this.ppl.get(cl.participantId).user.color,
-                id: this.ppl.get(cl.participantId).participantId,
-                m: "p",
-                name: this.ppl.get(cl.participantId).user.name,
-                x: this.ppl.get(cl.participantId).x || 200,
-                y: this.ppl.get(cl.participantId).y || 100,
-                _id: cl.user._id
-            }], cl, false)
-            cl.sendArray([{
-                m: "c",
-                c: this.chatmsgs.slice(-1 * 32)
-            }])
+            if (!cl.hidden) {
+                this.sendArray([{
+                    color: this.ppl.get(cl.participantId).user.color,
+                    id: this.ppl.get(cl.participantId).participantId,
+                    m: "p",
+                    name: this.ppl.get(cl.participantId).user.name,
+                    x: this.ppl.get(cl.participantId).x || 200,
+                    y: this.ppl.get(cl.participantId).y || 100,
+                    _id: cl.user._id
+                }], cl, false)
+                cl.sendArray([{
+                    m: "c",
+                    c: this.chatmsgs.slice(-1 * 32)
+                }]);
+            }
             this.updateCh(cl, this.settings);
         } else {
             cl.user.id = otheruser.participantId;
@@ -128,8 +132,6 @@ class Room extends EventEmitter {
             this.server.connections.get(usr.connectionid).sendArray([this.fetchData(usr, cl)])
         });
 
-        console.log(this.settings);
-
         this.server.updateRoom(this.fetchData());
     }
 
@@ -152,15 +154,17 @@ class Room extends EventEmitter {
             options.color ? usr.user.color = options.color : {};
         });
 
-        this.sendArray([{
-            color: p.user.color,
-            id: p.participantId,
-            m: "p",
-            name: p.user.name,
-            x: p.x || 200,
-            y: p.y || 100,
-            _id: p.user._id
-        }]);
+        if (!p.hidden) {
+            this.sendArray([{
+                color: p.user.color,
+                id: p.participantId,
+                m: "p",
+                name: p.user.name,
+                x: p.x || 200,
+                y: p.y || 100,
+                _id: p.user._id
+            }]);
+        }
     }
     
     destroy() { //destroy room
