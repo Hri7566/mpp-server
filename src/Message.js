@@ -192,7 +192,7 @@ module.exports = (cl) => {
             let data = Database.getUserData(cl, cl.server);
             let user = new User(cl, data);
             Database.getUserData(cl, cl.server).then((usr) => {
-                let dbentry = user.userdb.get(cl.user._id);
+                let dbentry = Database.userdb.get(cl.user._id);
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
                 user.updatedb();
