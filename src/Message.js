@@ -189,8 +189,9 @@ module.exports = (cl) => {
             if (msg.set.name.length > 40) return;
             if(!cl.quotas.userset.attempt()) return;
             cl.user.name = msg.set.name;
-            let user = new User(cl);
-            Database.getUserData().then((usr) => {
+            let data = Database.getUserData(cl, cl.server);
+            let user = new User(cl, data);
+            Database.getUserData(cl, cl.server).then((usr) => {
                 let dbentry = user.userdb.get(cl.user._id);
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
