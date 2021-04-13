@@ -189,13 +189,11 @@ module.exports = (cl) => {
             if (msg.set.name.length > 40) return;
             if(!cl.quotas.userset.attempt()) return;
             cl.user.name = msg.set.name;
-            let data = Database.getUserData(cl, cl.server);
-            let user = new User(cl, data);
             Database.getUserData(cl, cl.server).then((usr) => {
                 let dbentry = Database.userdb.get(cl.user._id);
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
-                user.updatedb();
+                Database.update();
                 cl.server.rooms.forEach((room) => {
                     room.updateParticipant(cl.user._id, {
                         name: msg.set.name
