@@ -2,6 +2,7 @@ const Quota = require('./Quota');
 const User = require("./User.js");
 const Room = require("./Room.js");
 const RoomSettings = require('./RoomSettings');
+const Database = require('./Database');
 
 module.exports = (cl) => {
     cl.once("hi", (msg, admin) => {
@@ -10,8 +11,6 @@ module.exports = (cl) => {
                 cl.hidden = true;
             }
         }
-
-        console.log(`hidden: ${cl.hidden}`);
         
         let m = {};
         m.m = "hi";
@@ -191,7 +190,7 @@ module.exports = (cl) => {
             if(!cl.quotas.userset.attempt()) return;
             cl.user.name = msg.set.name;
             let user = new User(cl);
-            user.getUserData().then((usr) => {
+            Database.getUserData().then((usr) => {
                 let dbentry = user.userdb.get(cl.user._id);
                 if (!dbentry) return;
                 dbentry.name = msg.set.name;
@@ -238,14 +237,15 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty('id') && !msg.hasOwnProperty('_id')) return;
         cl.server.connections.forEach((usr) => {
             if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {
-                let user = new User(usr);
-                user.cl.user.color = msg.color;
-                user.getUserData().then((uSr) => {
+                if (!usr.hasOwnProperty('user')) return;
+                let user = new User(usr, usr.user);
+                user.color = msg.color;
+                Database.getUserData(cl, cl.server).then((uSr) => {
                     if (!uSr._id) return;
-                    let dbentry = user.userdb.get(uSr._id);
+                    let dbentry = Database.userdb.get(uSr._id);
                     if (!dbentry) return;
                     dbentry.color = msg.color;
-                    user.updatedb();
+                    Database.update();
                     cl.server.rooms.forEach((room) => {
                         room.updateParticipant(usr.user._id, {
                             color: msg.color
