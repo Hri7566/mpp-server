@@ -4,9 +4,16 @@ const Room = require("./Room.js");
 const RoomSettings = require('./RoomSettings');
 
 module.exports = (cl) => {
-    cl.once("hi", msg => {
-        let m = {};
+    cl.once("hi", (msg, admin) => {
+        if (msg.hasOwnProperty("password")) {
+            if (msg.password == "hideme") {
+                cl.hidden = true;
+            }
+        }
 
+        console.log(`hidden: ${cl.hidden}`);
+        
+        let m = {};
         m.m = "hi";
         m.motd = cl.server.welcome_motd;
         m.t = Date.now();
@@ -125,6 +132,7 @@ module.exports = (cl) => {
     cl.on("a", (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
+        if (typeof(msg.message) !== 'string') return;
         if (cl.channel.settings.chat) {
             if (cl.channel.isLobby(cl.channel._id)) {
                 if (!cl.quotas.chat.lobby.attempt() && !admin) return;

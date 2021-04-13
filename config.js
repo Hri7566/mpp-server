@@ -10,5 +10,10 @@ module.exports = Object.seal({
     // defaultLobbyColor2: "#801014",
     defaultLobbyColor2: "#801014",
     adminpass: process.env.ADMINPASS,
-    ssl: false
+    ssl: true,
+    defaultRoomSettings: {
+        color: "#000000",
+        crownsolo: false,
+        visible: true
+    }
 });
