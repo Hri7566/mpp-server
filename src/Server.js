@@ -29,7 +29,7 @@ class Server extends EventEmitter {
             this.https_server.listen(config.port);
         } else {
             this.wss = new WebSocket.Server({
-                port: 8443,
+                port: config.port,
                 backlog: 100,
                 verifyClient: (info) => {
                     if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
