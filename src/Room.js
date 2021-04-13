@@ -129,7 +129,9 @@ class Room extends EventEmitter {
         }
 
         this.connections.forEach((usr) => {
-            this.server.connections.get(usr.connectionid).sendArray([this.fetchData(usr, cl)])
+            let u = this.fetchData(usr, cl);
+            u.ip = undefined;
+            this.server.connections.get(usr.connectionid).sendArray([u])
         });
 
         this.server.updateRoom(this.fetchData());
