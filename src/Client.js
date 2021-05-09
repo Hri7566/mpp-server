@@ -71,7 +71,9 @@ class Client extends EventEmitter {
             if (channel) this.channel.updateCh(this);
 
             this.channel = this.server.rooms.get(_id);
-            this.channel.join(this);
+            if (!this.user.hasFlag("hidden", true)) {
+                this.channel.join(this);
+            }
         } else {
             let room = new Room(this.server, _id, settings);
             this.server.rooms.set(_id, room);
@@ -109,7 +111,7 @@ class Client extends EventEmitter {
     destroy() {
         this.ws.close();
         if (this.channel) {
-            this.channel.emit("bye", this)
+            this.channel.emit("bye", this);
         }
         this.user;
         this.participantId;
@@ -118,7 +120,7 @@ class Client extends EventEmitter {
         this.connectionid;
         this.server.connections.delete(this.connectionid);
         this.destroied = true;
-        console.log(`Removed Connection ${this.connectionid}.`);
+        console.log(`Removed Connection ${this.connectionid}. user is ${this.user}`);
     }
 
     bindEventListeners() {

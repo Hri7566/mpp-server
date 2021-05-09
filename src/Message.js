@@ -6,6 +6,7 @@ const Database = require('./Database');
 
 module.exports = (cl) => {
     cl.once("hi", (msg, admin) => {
+        console.log('hi on')
         if (msg.hasOwnProperty("password")) {
             if (msg.password == "hideme") {
                 cl.hidden = true;
@@ -23,8 +24,7 @@ module.exports = (cl) => {
             color: cl.user.color
         };
 
-        m.v = "https://gitlab.com/hri7566/mpp-server";
-
+        m.v = "2.0";
         cl.sendArray([m]);
     });
 
@@ -40,7 +40,7 @@ module.exports = (cl) => {
     cl.on("ch", msg => {
         if (typeof(msg.set) !== 'object') msg.set = {};
 
-        if (msg.hasOwnProperty("_id") && typeof msg._id == "string") {
+        if (typeof(msg._id) == "string") {
             if (msg._id.length > 512) return;
             if (!cl.staticQuotas.room.attempt()) return;
 
@@ -57,8 +57,12 @@ module.exports = (cl) => {
                 }
             }
 
+            
             param.m = "nq";
-            cl.sendArray([param]);
+            setTimeout(() => {
+                cl.user.checkFlags();
+                cl.sendArray([param]);
+            }, 1000);
         }
     });
 
@@ -164,7 +168,7 @@ module.exports = (cl) => {
         cl.server.roomlisteners.set(cl.connectionid, cl);
         let rooms = [];
         for (let room of Array.from(cl.server.rooms.values())) {
-            let data = room.fetchData().ch;
+            let data = room.fetchChannelData().ch;
             if (room.bans.get(cl.user._id)) {
                 data.banned = true;
             }
@@ -190,10 +194,11 @@ module.exports = (cl) => {
             if(!cl.quotas.userset.attempt()) return;
             cl.user.name = msg.set.name;
             Database.getUserData(cl, cl.server).then((usr) => {
-                let dbentry = Database.userdb.get(cl.user._id);
-                if (!dbentry) return;
-                dbentry.name = msg.set.name;
-                Database.update();
+                // let dbentry = Database.userdb.get(cl.user._id);
+                // if (!dbentry) return;
+                // dbentry.name = msg.set.name;
+                // Database.update();
+                Database.updateUser(cl.user._id, cl.user);
                 cl.server.rooms.forEach((room) => {
                     room.updateParticipant(cl.user._id, {
                         name: msg.set.name
@@ -218,6 +223,7 @@ module.exports = (cl) => {
     });
 
     cl.on("bye", msg => {
+        clearInterval(cl.user.rainbow);
         cl.destroy();
     });
 
@@ -264,7 +270,52 @@ module.exports = (cl) => {
 
     cl.on('notification', (msg, admin) => {
         if (!admin) return;
-        if (!msg.hasOwnProperty("id") || (!msg.hasOwnProperty("targetChannel") && !msg.hasOwnProperty("targetUser")) || !msg.hasOwnProperty("target") || !msg.hasOwnProperty("duration") || !msg.hasOwnProperty("class") || !msg.hasOwnProperty("html")) return;
-        cl.channel.Notification(msg.targetUser || msg.targetChannel, null, null, msg.html, msg.duration, msg.target, msg.class);
+        if (!msg.hasOwnProperty("id") || (!msg.hasOwnProperty("targetChannel") && !msg.hasOwnProperty("targetUser"))
+                || !msg.hasOwnProperty("target") || !msg.hasOwnProperty("duration")) return;
+
+        let id = msg.id;
+        let targetChannel = msg.targetChannel;
+        let targetUser = msg.targetUser;
+        let target = msg.target;
+        let duration = msg.duration;
+        let klass;
+        let title;
+        let text;
+        let html;
+
+        if (msg.hasOwnProperty("class")) {
+            klass = msg.class;
+        }
+
+        if (!msg.hasOwnProperty("html")) {
+            if (!msg.hasOwnProperty("title") || !msg.hasOwnProperty("text")) return;
+            title = msg.title;
+            text = msg.text;
+        } else {
+            html = msg.html;
+        }
+
+        cl.channel.Notification(targetUser || targetChannel, title, text, html, duration, target, klass, id);
+    });
+
+    cl.on('user_flag', (msg, admin) => {
+        if (!admin) return;
+        if (!msg.hasOwnProperty('_id') || !msg.hasOwnProperty('key') || !msg.hasOwnProperty('value')) return;
+        console.log("stuff");
+
+        cl.server.connections.forEach((usr) => {
+            if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {
+                if (!usr.hasOwnProperty('user')) return;
+                usr.user.flags[msg.key] = msg.value;
+                usr.user.checkFlags();
+            }
+        });
+
+        console.log(`set user flag: ${msg.key} - ${msg.value}`);
+    });
+
+    cl.on('clear_chat', (msg, admin) => {
+        if (!admin) return;
+        
     });
 }

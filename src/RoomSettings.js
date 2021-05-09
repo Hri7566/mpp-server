@@ -1,14 +1,16 @@
+const config = require ('../config');
+
 class RoomSettings {
     static allowedProperties = {
         color: {
             type: 'color',
-            default: "#9900ff",
+            default: config.defaultRoomSettings.color,
             allowedChange: true,
             required: true
         },
         color2: {
             type: 'color2',
-            default: "#5900bf",
+            default: config.defaultRoomSettings.color2,
             allowedChange: true,
             required: false
         },
@@ -39,10 +41,15 @@ class RoomSettings {
             default: false,
             allowedChange: true,
             required: true
+        },
+        "no cussing": {
+            type: 'boolean',
+            allowedChange: true,
+            required: false
         }
     }
 
-    constructor (set, cont) {
+    constructor (set, context) {
         Object.keys(RoomSettings.allowedProperties).forEach(key => {
             if (typeof(RoomSettings.allowedProperties[key].default) !== 'undefined') {
                 if (this[key] !== RoomSettings.allowedProperties[key].default) {
@@ -63,10 +70,10 @@ class RoomSettings {
             Object.keys(set).forEach(key => {
                 if (typeof(set[key]) == 'undefined') return;
                 if (Object.keys(RoomSettings.allowedProperties).indexOf(key) !== -1) {
-                    if (typeof(cont) == 'undefined') {
+                    if (typeof(context) == 'undefined') {
                         this[key] = this.verifyPropertyType(key, set[key], RoomSettings.allowedProperties[key].type);
                     } else {
-                        if (cont == 'user') {
+                        if (context == 'user') {
                             if (RoomSettings.allowedProperties[key].allowedChange) {
                                 this[key] = this.verifyPropertyType(key, set[key], RoomSettings.allowedProperties[key].type);
                             }

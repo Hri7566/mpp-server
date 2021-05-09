@@ -52,11 +52,13 @@ class Server extends EventEmitter {
         this.roomlisteners = new Map();
         this.rooms = new Map();
 
+        this.specialIntervals = {};
+
         this.wss.on('connection', (ws, req) => {
             this.connections.set(++this.connectionid, new Client(ws, req, this));
         });
 
-        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color", "eval", "notification"]
+        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color", "eval", "notification", "user_flag", "room_flag", "clear_chat"]
         this.welcome_motd = config.motd || "You agree to read this message.";
 
         this._id_Private_Key = config._id_PrivateKey || "boppity";
@@ -68,6 +70,10 @@ class Server extends EventEmitter {
         if (!data.ch.settings.visible) return;
 
         for (let cl of Array.from(this.roomlisteners.values())) {
+            if (cl.destroied) {
+                cl = undefined;
+                return;
+            }
             cl.sendArray([{
                 "m": "ls",
                 "c": false,
