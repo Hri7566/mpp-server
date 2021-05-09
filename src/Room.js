@@ -327,7 +327,7 @@ class Room extends EventEmitter {
             message.m = "a";
             message.a = msg.message;
             if (prsn.user.hasFlag('vowels')) {
-                message.a = message.a.split(/[aeiouAEIOU]/).join(prsn.user.flags["vowels"]);
+                if (prsn.user.flags.vowels != false) message.a = message.a.split(/[aeiouAEIOU]/).join(prsn.user.flags["vowels"]);
             }
             message.p = {
                 color: p.user.color,
