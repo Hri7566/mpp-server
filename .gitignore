@@ -1,5 +1,5 @@
 .env
 node_modules
 ssl/
-src/db/users.json
+src/db/rooms.db
 .history
