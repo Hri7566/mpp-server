@@ -31,4 +31,4 @@ module.exports = Object.seal({
         amount: 2,
         time: 1000
     }
-})
+});

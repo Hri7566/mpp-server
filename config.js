@@ -4,15 +4,15 @@ module.exports = Object.seal({
     _id_PrivateKey: process.env.SALT,
     defaultUsername: "Anonymous",
     // defaultRoomColor: "#3b5054",
-    defaultRoomColor: "#000000",
     // defaultLobbyColor: "#19b4b9",
-    defaultLobbyColor: "#9900ff",
+    defaultLobbyColor: "#76b0db",
     // defaultLobbyColor2: "#801014",
-    defaultLobbyColor2: "#801014",
+    defaultLobbyColor2: "#276491",
     adminpass: process.env.ADMINPASS,
-    ssl: true,
+    ssl: false,
     defaultRoomSettings: {
-        color: "#000000",
+        color: "#3b5054",
+        color2: "#001014",
         crownsolo: false,
         visible: true
     }

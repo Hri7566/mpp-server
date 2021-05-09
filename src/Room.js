@@ -1,14 +1,15 @@
 const createKeccakHash = require('keccak');
+const Crown = require('./Crown.js');
+const Database = require('./Database.js');
 const Quota = require("./Quota.js");
 const RoomSettings = require('./RoomSettings.js');
 
 class Room extends EventEmitter {
     constructor(server, _id, settings) {
         super();
-        EventEmitter.call(this);
         this._id = _id;
         this.server = server;
-        this.crown = null;
+        this.crown;
         this.crowndropped = false;
         this.settings = settings;
         this.chatmsgs = [];
@@ -17,30 +18,31 @@ class Room extends EventEmitter {
         this.bindEventListeners();
         this.server.rooms.set(_id, this);
         this.bans = new Map();
+        this.flags = {}
+
+        Database.getRoomSettings(this._id, (err, set) => {
+            if (err) {
+                return;
+            }
+            
+            this.settings = set.settings;
+            this.chatmsgs = set.chat;
+            this.setData();
+        });
     }
 
     join(cl, set) { //this stuff is complicated
         let otheruser = this.connections.find((a) => a.user._id == cl.user._id)
         if (!otheruser) {
             let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
+
             cl.user.id = participantId;
             cl.participantId = participantId;
             cl.initParticipantQuotas();
+            
             if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
-                this.crown = {
-                    participantId: cl.participantId,
-                    userId: cl.user._id,
-                    time: Date.now(),
-                    startPos: {
-                        x: 50,
-                        y: 50
-                    },
-                    endPos: {
-                        x: this.getCrownX(),
-                        y: this.getCrownY()
-                    }
-                }
+                this.crown = new Crown(cl.participantId, cl.user._id);
 
                 this.crowndropped = false;
                 this.settings = new RoomSettings(set, 'user');
@@ -105,7 +107,6 @@ class Room extends EventEmitter {
         if (!(otheruser.length > 1)) {
             this.ppl.delete(p.participantId);
             this.connections.splice(this.connections.findIndex((a) => a.connectionid == p.connectionid), 1);
-            console.log(`Deleted client ${p.user.id}`);
             this.sendArray([{
                 m: "bye",
                 p: p.participantId
@@ -125,19 +126,15 @@ class Room extends EventEmitter {
         if (Array.from(this.ppl.values()).length <= 0) {
             setTimeout(() => {
                 this.destroy();
-            }, 10000);
+            }, 5000);
         }
 
         this.connections.forEach((usr) => {
-            let u = this.fetchData(usr, cl);
-            u.ppl.forEach(c => {
-                c.ip = undefined;
-                c.server = undefined;
-            });
-            this.server.connections.get(usr.connectionid).sendArray([u])
+            let u = this.fetchChannelData(usr, cl);
+            this.server.connections.get(usr.connectionid).sendArray([u]);
         });
 
-        this.server.updateRoom(this.fetchData());
+        this.server.updateRoom(this.fetchChannelData());
     }
 
     updateParticipant(pid, options) {
@@ -195,11 +192,17 @@ class Room extends EventEmitter {
         });
     }
 
-    fetchData(usr, cl) {
+    fetchChannelData(usr, cl) {
         let chppl = [];
 
-        [...this.ppl.values()].forEach((a) => {
-            chppl.push(a.user);
+        [...this.ppl.values()].forEach(c => {
+            let u = {
+                _id: c.user._id,
+                name: c.user.name,
+                color: c.user.color,
+                id: c.participantId
+            }
+            chppl.push(u);
         });
 
         let data = {
@@ -270,44 +273,13 @@ class Room extends EventEmitter {
 
     }
 
-    getCrownY() {
-        return Math.floor(Math.random() * 10000) / 100;
-    }
-    
-    getCrownX() {
-        return Math.floor(Math.random() * 10000) / 100;
-    }
-
     chown(id) {
         let prsn = this.ppl.get(id);
         if (prsn) {
-            this.crown = {
-                participantId: prsn.participantId,
-                userId: prsn.user._id,
-                time: Date.now(),
-                startPos: {
-                    x: 50,
-                    y: 50
-                },
-                endPos: {
-                    x: this.getCrownX(),
-                    y: this.getCrownY()
-                },
-            }
+            this.crown = new Crown(id, prsn.user._id);
             this.crowndropped = false;
         } else {
-            this.crown = {
-                userId: this.crown.userId,
-                time: Date.now(),
-                startPos: {
-                    x: 50,
-                    y: 50
-                },
-                endPos: {
-                    x: this.getCrownX(),
-                    y: this.getCrownY()
-                }
-            }
+            this.crown = new Crown(id, this.crown.userId);
             this.crowndropped = true;
         }
 
@@ -329,7 +301,7 @@ class Room extends EventEmitter {
 
     chat(p, msg) {
         if (msg.message.length > 512) return;
-        let filter = ["AMIGHTYWIND"];
+        let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
         let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
         if (regexp.test(msg.message)) return;
         if (p.participantId == 0) {
@@ -344,7 +316,9 @@ class Room extends EventEmitter {
             };
             message.t = Date.now();
             this.sendArray([message]);
+
             this.chatmsgs.push(message);
+            this.setData();
             return;
         }
         let prsn = this.ppl.get(p.participantId);
@@ -352,6 +326,9 @@ class Room extends EventEmitter {
             let message = {};
             message.m = "a";
             message.a = msg.message;
+            if (prsn.user.hasFlag('vowels')) {
+                message.a = message.a.split(/[aeiouAEIOU]/).join(prsn.user.flags["vowels"]);
+            }
             message.p = {
                 color: p.user.color,
                 id: p.participantId,
@@ -361,34 +338,46 @@ class Room extends EventEmitter {
             message.t = Date.now();
             this.sendArray([message]);
             this.chatmsgs.push(message);
+            this.setData();
         }
     }
 
     playNote(cl, note) {
+        let vel = Math.round(cl.user.flags["volume"])/100 || undefined;
+        if (vel == 1) vel = undefined;
+
         this.sendArray([{
             m: "n",
             n: note.n,
             p: cl.participantId,
-            t: note.t
+            t: note.t,
+            v: vel
         }], cl, true);
     }
 
     kickban(_id, ms) {
         ms = parseInt(ms);
+
         if (ms >= (1000 * 60 * 60)) return;
         if (ms < 0) return;
+
         ms = Math.round(ms / 1000) * 1000;
+
         let user = this.connections.find((usr) => usr.user._id == _id);
         if (!user) return;
         let asd = true;
         let pthatbanned = this.ppl.get(this.crown.participantId);
+
         this.connections.filter((usr) => usr.participantId == user.participantId).forEach((u) => {
             user.bantime = Math.floor(Math.floor(ms / 1000) / 60);
             user.bannedtime = Date.now();
             user.msbanned = ms;
+
             this.bans.set(user.user._id, user);
-            if (this.crown && (this.crown.userId)) {
+
+            //if (this.crown && (this.crown.userId)) {
                 u.setChannel("test/awkward", {});
+
                 if (asd)
                     this.Notification(user.user._id,
                         "Notice",
@@ -416,8 +405,7 @@ class Room extends EventEmitter {
                         "#room"
                     );
                 }
-
-            }
+            //}
 
         })
     }
@@ -433,6 +421,7 @@ class Room extends EventEmitter {
             class: klass,
             id: id
         };
+
         if (!id) delete obj.id;
         if (!title) delete obj.title;
         if (!text) delete obj.text;
@@ -440,6 +429,7 @@ class Room extends EventEmitter {
         if (!target) delete obj.target;
         if (!duration) delete obj.duration;
         if (!klass) delete obj.class;
+
         switch (who) {
             case "all": {
                 for (let con of Array.from(this.server.connections.values())) {
@@ -475,7 +465,7 @@ class Room extends EventEmitter {
         })
     }
 
-    verifySet(_id, msg){
+    verifySet(_id, msg) {
         if(typeof(msg.set) !== 'object') {
             msg.set = {
                 visible: true,
@@ -495,6 +485,15 @@ class Room extends EventEmitter {
                 }
             }
         }
+    }
+
+    setData() {
+        Database.setRoomSettings(this._id, this.settings, this.chatmsgs);
+    }
+
+    hasFlag(flag, val) {
+        if (!val) return this.flags.hasOwnProperty(flag);
+        return this.flags.hasOwnProperty(flag) && this.flags[flag] == val;
     }
 }
 
