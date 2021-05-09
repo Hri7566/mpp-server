@@ -245,7 +245,7 @@ module.exports = (cl) => {
 
             c.user.color = msg.color;
             require("./Database").updateUser(c.user._id, c.user);
-            c.channel.updateParticipant(c.user._id, c.user);
+            c.user.cl.updateParticipant(c.user._id, c.user);
         });
     });
 
