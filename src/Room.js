@@ -1,12 +1,15 @@
 const createKeccakHash = require('keccak');
 const Crown = require('./Crown.js');
 const Database = require('./Database.js');
+const Logger = require('./Logger.js');
 const Quota = require("./Quota.js");
 const RoomSettings = require('./RoomSettings.js');
+const ftc = require('fancy-text-converter');
 
 class Room extends EventEmitter {
     constructor(server, _id, settings) {
         super();
+        this.logger = new Logger(`Room - ${ftc.normalise(_id)}`);
         this._id = _id;
         this.server = server;
         this.crown;

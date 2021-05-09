@@ -4,11 +4,14 @@ const https = require("https");
 const http = require("http");
 const fs = require('fs');
 const RoomSettings = require('./RoomSettings');
+const Logger = require("./Logger.js");
 
 class Server extends EventEmitter {
     constructor(config) {
         super();
         EventEmitter.call(this);
+
+        this.logger = new Logger("Server");
         
         if (config.ssl == true) {
             this.https_server = https.createServer({
@@ -38,7 +41,7 @@ class Server extends EventEmitter {
             });
         }
 
-        this.defaultUsername = "Anonymous";
+        this.defaultUsername = config.defaultUsername;
         this.defaultRoomSettings = new RoomSettings(config.defaultRoomSettings);
 
         this.lobbySettings = new RoomSettings(config.defaultRoomSettings);
@@ -46,7 +49,7 @@ class Server extends EventEmitter {
         this.lobbySettings.color = config.defaultLobbyColor || "#9900ff";
         this.lobbySettings.color2 = config.defaultLobbyColor2 || "#9900ff";
 
-        console.log(`Server started on port ${config.port}`);
+        this.logger.log(`Server started on port ${config.port}`);
         this.connectionid = 0;
         this.connections = new Map();
         this.roomlisteners = new Map();

@@ -6,7 +6,6 @@ const Database = require('./Database');
 
 module.exports = (cl) => {
     cl.once("hi", (msg, admin) => {
-        console.log('hi on')
         if (msg.hasOwnProperty("password")) {
             if (msg.password == "hideme") {
                 cl.hidden = true;
@@ -138,12 +137,12 @@ module.exports = (cl) => {
         if (typeof(msg.message) !== 'string') return;
         if (cl.channel.settings.chat) {
             if (cl.channel.isLobby(cl.channel._id)) {
-                if (!cl.quotas.chat.lobby.attempt() && !admin) return;
+                if (!cl.quotas.chat.lobby.attempt() && !admin && !cl.user.hasFlag('no rate chat limit', true)) return;
             } else {
                 if (!(cl.user._id == cl.channel.crown.userId)) {
-                    if (!cl.quotas.chat.normal.attempt() && !admin) return;
+                    if (!cl.quotas.chat.normal.attempt() && !admin && !cl.user.hasFlag('no rate chat limit', true)) return;
                 } else {
-                    if (!cl.quotas.chat.insane.attempt() && !admin) return;
+                    if (!cl.quotas.chat.insane.attempt() && !admin && !cl.user.hasFlag('no rate chat limit', true)) return;
                 }
             }
             cl.channel.emit('a', cl, msg);
@@ -240,26 +239,14 @@ module.exports = (cl) => {
         if (!admin) return;
         if (typeof cl.channel.verifyColor(msg.color) != 'string') return;
         if (!msg.hasOwnProperty('id') && !msg.hasOwnProperty('_id')) return;
-        cl.server.connections.forEach((usr) => {
-            if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {
-                if (!usr.hasOwnProperty('user')) return;
-                let user = new User(usr, usr.user);
-                user.color = msg.color;
-                Database.getUserData(cl, cl.server).then((uSr) => {
-                    if (!uSr._id) return;
-                    let dbentry = Database.userdb.get(uSr._id);
-                    if (!dbentry) return;
-                    dbentry.color = msg.color;
-                    Database.update();
-                    cl.server.rooms.forEach((room) => {
-                        room.updateParticipant(usr.user._id, {
-                            color: msg.color
-                        });
-                    })
-                })
-            }
-        })
+        cl.server.connections.forEach(c => {
+            if (c.destroied) return;
+            if (c.user._id !== msg._id && c.participantId !== msg.id) return;
 
+            c.user.color = msg.color;
+            require("./Database").updateUser(c.user._id, c.user);
+            c.channel.updateParticipant(c.user._id, c.user);
+        });
     });
 
     cl.on('eval', (msg, admin) => {
@@ -306,6 +293,11 @@ module.exports = (cl) => {
         cl.server.connections.forEach((usr) => {
             if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {
                 if (!usr.hasOwnProperty('user')) return;
+                if (msg.key == "remove") {
+                    delete usr.user.flags[msg.key];
+                    usr.user.flags[msg.key] = undefined;
+                    return;
+                }
                 usr.user.flags[msg.key] = msg.value;
                 usr.user.checkFlags();
             }

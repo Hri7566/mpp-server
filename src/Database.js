@@ -6,6 +6,9 @@ const UserModel = require('./UserModel');
 const mongoose = require('mongoose');
 const level = require('level');
 const { db } = require('./UserModel');
+const Logger = require('./Logger');
+
+var logger = new Logger("Database");
 
 mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
@@ -15,7 +18,7 @@ mongoose.connect(process.env.MONGO_URL, {
         console.error(err);
         return;
     }
-    console.log("Connected to Database");
+    logger.log("Connected");
 });
 
 class Database {
@@ -49,9 +52,6 @@ class Database {
             user = this.createUser(_id);
         }
 
-        console.log('user flags:');
-        console.log(user.flags);
-
         return user;
     }
 
@@ -69,19 +69,16 @@ class Database {
     }
 
     static async updateUser(_id, data) {
-        UserModel.findById(_id, (err, doc) => {
+        UserModel.findOneAndUpdate({_id: _id}, data, {new: true}, (err, doc) => {
             if (err) {
-                console.error(err);
+                logger.error(err);
                 return err;
             }
             
-            if (!doc) {
-                return console.warn('Could not find user to save.');
+            if (doc == null) {
+                logger.warn('Could not find user to save.');
+                return;
             }
-            
-            doc.set(data);
-
-            doc.save();
         });
     }
 
