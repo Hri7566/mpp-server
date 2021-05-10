@@ -69,17 +69,15 @@ class Database {
     }
 
     static async updateUser(_id, data) {
-        UserModel.findOneAndUpdate({_id: _id}, data, {new: true}, (err, doc) => {
-            if (err) {
-                logger.error(err);
-                return err;
-            }
-            
-            if (doc == null) {
-                logger.warn('Could not find user to save.');
-                return;
-            }
+        let user = await UserModel.findOne({_id: _id}).exec();
+        UserModel.updateOne({_id: _id}, {
+            name: data.name,
+            color: data.color,
+            _id: data._id,
+            flags: data.flags
         });
+
+        await user.save();
     }
 
     static async wipe() {
