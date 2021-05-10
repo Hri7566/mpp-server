@@ -43,6 +43,8 @@ module.exports = (cl) => {
             if (msg._id.length > 512) return;
             if (!cl.staticQuotas.room.attempt()) return;
 
+            cl.user.checkFlags();
+
             cl.setChannel(msg._id, msg.set);
 
             let param;
@@ -55,11 +57,9 @@ module.exports = (cl) => {
                     param = Quota.N_PARAMS_RIDICULOUS;
                 }
             }
-
             
             param.m = "nq";
             setTimeout(() => {
-                cl.user.checkFlags();
                 cl.sendArray([param]);
             }, 1000);
         }
@@ -222,7 +222,7 @@ module.exports = (cl) => {
     });
 
     cl.on("bye", msg => {
-        clearInterval(cl.user.rainbow);
+        cl.user.stopFlagEvents();
         cl.destroy();
     });
 
@@ -288,7 +288,6 @@ module.exports = (cl) => {
     cl.on('user_flag', (msg, admin) => {
         if (!admin) return;
         if (!msg.hasOwnProperty('_id') || !msg.hasOwnProperty('key') || !msg.hasOwnProperty('value')) return;
-        console.log("stuff");
 
         cl.server.connections.forEach((usr) => {
             if ((usr.channel && usr.participantId && usr.user) && (usr.user._id == msg._id || (usr.participantId == msg.id))) {
@@ -299,11 +298,10 @@ module.exports = (cl) => {
                     return;
                 }
                 usr.user.flags[msg.key] = msg.value;
+                Database.updateUser(usr.user._id, usr.user);
                 usr.user.checkFlags();
             }
         });
-
-        console.log(`set user flag: ${msg.key} - ${msg.value}`);
     });
 
     cl.on('clear_chat', (msg, admin) => {

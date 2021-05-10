@@ -70,12 +70,11 @@ class Database {
 
     static async updateUser(_id, data) {
         let user = await UserModel.findOne({_id: _id}).exec();
-        UserModel.updateOne({_id: _id}, {
-            name: data.name,
-            color: data.color,
-            _id: data._id,
-            flags: data.flags
-        });
+        
+        user.name = data.name;
+        user._id = data._id;
+        user.flags = data.flags;
+        user.color = data.color;
 
         await user.save();
     }
