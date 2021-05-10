@@ -32,9 +32,12 @@ class User {
     }
 
     checkFlags() {
-        if (typeof(this.cl.server.specialIntervals[this._id]) == 'undefined') this.cl.server.specialIntervals[this._id] = {};
+        if (typeof(this.cl.server.specialIntervals[this._id]) == 'undefined') {
+            this.cl.server.specialIntervals[this._id] = {};
+        }
         if (this.hasFlag('rainbow', true)) {
             if (!this.cl.server.specialIntervals[this._id].hasOwnProperty('rainbow')) {
+                console.log('rainbow triggered');
                 let h = Math.floor(Math.random() * 360);
                 let s = 50;
                 let l = 50;
@@ -65,8 +68,13 @@ class User {
                 }, 1000/15);
             }
         } else if (this.hasFlag('rainbow', false)) {
+            console.log('rainbow off triggered');
             clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
         }
+    }
+
+    stopFlagEvents() {
+        clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
     }
 
     hasFlag(flag, val) {
