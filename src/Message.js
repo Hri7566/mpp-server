@@ -38,6 +38,7 @@ module.exports = (cl) => {
 
     cl.on("ch", msg => {
         if (typeof(msg.set) !== 'object') msg.set = {};
+        console.log(msg);
 
         if (typeof(msg._id) == "string") {
             if (msg._id.length > 512) return;
@@ -66,7 +67,8 @@ module.exports = (cl) => {
     });
 
     cl.on("m", (msg, admin) => {
-        // if (!cl.quotas.cursor.attempt() && !admin) return;
+        if (!cl.hasOwnProperty('room')) return;
+        if (!cl.quotas.cursor.attempt() && !admin) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
@@ -137,12 +139,12 @@ module.exports = (cl) => {
         if (typeof(msg.message) !== 'string') return;
         if (cl.channel.settings.chat) {
             if (cl.channel.isLobby(cl.channel._id)) {
-                if (!cl.quotas.chat.lobby.attempt() && !admin && !cl.user.hasFlag('no rate chat limit', true)) return;
+                if (!cl.quotas.chat.lobby.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
             } else {
                 if (!(cl.user._id == cl.channel.crown.userId)) {
-                    if (!cl.quotas.chat.normal.attempt() && !admin && !cl.user.hasFlag('no rate chat limit', true)) return;
+                    if (!cl.quotas.chat.normal.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
                 } else {
-                    if (!cl.quotas.chat.insane.attempt() && !admin && !cl.user.hasFlag('no rate chat limit', true)) return;
+                    if (!cl.quotas.chat.insane.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
                 }
             }
             cl.channel.emit('a', cl, msg);

@@ -5,6 +5,7 @@ const Logger = require('./Logger.js');
 const Quota = require("./Quota.js");
 const RoomSettings = require('./RoomSettings.js');
 const ftc = require('fancy-text-converter');
+const Notification = require('./Notification');
 
 class Room extends EventEmitter {
     constructor(server, _id, settings) {
@@ -306,7 +307,7 @@ class Room extends EventEmitter {
         if (msg.message.length > 512) return;
         let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
         let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
-        if (regexp.test(msg.message)) return;
+        if (regexp.test(msg.message.split(' ').join(''))) return;
         if (p.participantId == 0) {
             let message = {};
             message.m = "a";
@@ -330,7 +331,7 @@ class Room extends EventEmitter {
             message.m = "a";
             message.a = msg.message;
             if (prsn.user.hasFlag('vowels')) {
-                if (prsn.user.flags.vowels != false) message.a = message.a.split(/[aeiouAEIOU]/).join(prsn.user.flags["vowels"]);
+                if (prsn.user.flags.vowels != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
             }
             message.p = {
                 color: p.user.color,
@@ -414,44 +415,17 @@ class Room extends EventEmitter {
     }
 
     Notification(who, title, text, html, duration, target, klass, id) {
-        let obj = {
-            m: "notification",
+        new Notification({
+            id: id,
+            chat: undefined,
+            refresh: undefined,
             title: title,
             text: text,
             html: html,
-            target: target,
             duration: duration,
-            class: klass,
-            id: id
-        };
-
-        if (!id) delete obj.id;
-        if (!title) delete obj.title;
-        if (!text) delete obj.text;
-        if (!html) delete obj.html;
-        if (!target) delete obj.target;
-        if (!duration) delete obj.duration;
-        if (!klass) delete obj.class;
-
-        switch (who) {
-            case "all": {
-                for (let con of Array.from(this.server.connections.values())) {
-                    con.sendArray([obj]);
-                }
-                break;
-            }
-            case "room": {
-                for (let con of this.connections) {
-                    con.sendArray([obj]);
-                }
-                break;
-            }
-            default: {
-                Array.from(this.server.connections.values()).filter((usr) => typeof(usr.user) !== 'undefined' ? usr.user._id == who : null).forEach((p) => {
-                    p.sendArray([obj]);
-                });
-            }
-        }
+            target: target,
+            class: klass
+        }).send(who, this);
     }
 
     bindEventListeners() {
