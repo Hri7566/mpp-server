@@ -25,7 +25,8 @@ module.exports = Object.seal({
         time: 500
     },
     cursor: {
-        time: 16
+        time: 16,
+        amount: 10
     },
     kickban: {
         amount: 2,

@@ -19,7 +19,7 @@ class User {
         this.color = data.color;
         this.flags = typeof data.flags == "object" ? data.flags : {
             volume: 100,
-            "no chat rate limit": false,
+            "no chat rate limit": false
         }
     }
 
@@ -32,12 +32,12 @@ class User {
     }
 
     checkFlags() {
+        /*
         if (typeof(this.cl.server.specialIntervals[this._id]) == 'undefined') {
             this.cl.server.specialIntervals[this._id] = {};
         }
         if (this.hasFlag('rainbow', true)) {
             if (!this.cl.server.specialIntervals[this._id].hasOwnProperty('rainbow')) {
-                console.log('rainbow triggered');
                 let h = Math.floor(Math.random() * 360);
                 let s = 50;
                 let l = 50;
@@ -71,6 +71,7 @@ class User {
             console.log('rainbow off triggered');
             clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
         }
+        */
     }
 
     stopFlagEvents() {

@@ -97,7 +97,7 @@ class Client extends EventEmitter {
                 normal: new RateLimitChain(quotas.chat.normal.amount, quotas.chat.normal.time),
                 insane: new RateLimitChain(quotas.chat.insane.amount, quotas.chat.insane.time)
             },
-            cursor: new RateLimit(quotas.cursor.time),
+            cursor: new RateLimitChain(quotas.cursor.amount, quotas.cursor.time),
             chown: new RateLimitChain(quotas.chown.amount, quotas.chown.time),
             userset: new RateLimitChain(quotas.userset.amount, quotas.userset.time),
             kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
