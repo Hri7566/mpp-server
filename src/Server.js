@@ -13,7 +13,7 @@ class Server extends EventEmitter {
 
         this.logger = new Logger("Server");
         
-        if (config.ssl == true) {
+        if (config.ssl == "true") {
             this.https_server = https.createServer({
                 key: fs.readFileSync('ssl/privkey.pem', 'utf8'),
                 cert: fs.readFileSync('ssl/cert.pem'),
