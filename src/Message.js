@@ -38,7 +38,6 @@ module.exports = (cl) => {
 
     cl.on("ch", msg => {
         if (typeof(msg.set) !== 'object') msg.set = {};
-        console.log(msg);
 
         if (typeof(msg._id) == "string") {
             if (msg._id.length > 512) return;
@@ -67,13 +66,13 @@ module.exports = (cl) => {
     });
 
     cl.on("m", (msg, admin) => {
-        if (!cl.hasOwnProperty('room')) return;
+        if (!cl.hasOwnProperty('channel')) return;
         if (!cl.quotas.cursor.attempt() && !admin) return;
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
-        if (parseInt(msg.x) == NaN) msg.x = null;
-        if (parseInt(msg.y) == NaN) msg.y = null;
+        if (isNaN(parseFloat(msg.x))) msg.x = null;
+        if (isNaN(parseFloat(msg.y))) msg.y = null;
         cl.channel.emit("m", cl, msg.x, msg.y);
     });
 
