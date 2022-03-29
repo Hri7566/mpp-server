@@ -24,6 +24,8 @@ class Channel extends EventEmitter {
         this.bans = new Map();
         this.flags = {}
 
+        this.logger.log('Created');
+
         Database.getRoomSettings(this._id, (err, set) => {
             if (err) {
                 return;
@@ -347,6 +349,9 @@ class Channel extends EventEmitter {
             message.a = msg.message;
             if (prsn.user.hasFlag('chat_curse_1')) {
                 if (prsn.user.flags['chat_curse_1'] != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
+            }
+            if (prsn.user.hasFlag('chat_curse_2')) {
+                
             }
             message.p = {
                 color: p.user.color,
