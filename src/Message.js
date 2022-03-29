@@ -1,6 +1,6 @@
 const Quota = require('./Quota');
 const User = require("./User.js");
-const Room = require("./Room.js");
+const Channel = require("./Channel.js");
 const RoomSettings = require('./RoomSettings');
 const Database = require('./Database');
 
@@ -319,9 +319,7 @@ module.exports = (cl) => {
 
     cl.on('clear_chat', (msg, admin) => {
         if (!admin) return;
-        cl.channel.connections.forEach(cl => {
-            cl.sendArray([{m:"c", c:[]}]);
-        });
+        cl.channel.setChatArray([]);
     });
 
     cl.on('sudo', (msg, admin) => {

@@ -1,4 +1,4 @@
-const Room = require("./Room.js");
+const Channel = require("./Channel.js");
 const Quota = require ("./Quota.js");
 const quotas = require('../Quotas');
 const RateLimit = require('./Ratelimit.js').RateLimit;
@@ -75,13 +75,14 @@ class Client extends EventEmitter {
                 this.channel.join(this);
             }
         } else {
-            let room = new Room(this.server, _id, settings);
+            let room = new Channel(this.server, _id, settings);
             this.server.rooms.set(_id, room);
             if (this.channel) this.channel.emit("bye", this);
             this.channel = this.server.rooms.get(_id);
             this.channel.join(this, settings);
         }
     }
+
     sendArray(arr) {
         if (this.isConnected()) {
             //console.log(`SEND: `, JSON.colorStringify(arr));
