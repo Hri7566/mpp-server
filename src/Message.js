@@ -332,4 +332,8 @@ module.exports = (cl) => {
             c.emit(msg.msg.m, msg.msg);
         });
     });
+
+    cl.on('subscribe to admin stream', (msg, admin) => {
+        if (!admin) return;
+    });
 }
