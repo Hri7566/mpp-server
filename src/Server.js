@@ -61,7 +61,7 @@ class Server extends EventEmitter {
             this.connections.set(++this.connectionid, new Client(ws, req, this));
         });
 
-        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color", "eval", "notification", "user_flag", "room_flag", "clear_chat"]
+        this.legit_m = ["a", "bye", "hi", "ch", "+ls", "-ls", "m", "n", "devices", "t", "chset", "userset", "chown", "kickban", "admin message", "color", "eval", "notification", "user_flag", "room_flag", "clear_chat", "sudo"];
         this.welcome_motd = config.motd || "You agree to read this message.";
 
         this._id_Private_Key = config._id_PrivateKey || "boppity";

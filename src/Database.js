@@ -27,7 +27,7 @@ class Database {
 
     static async load() {
         this.userdb = mongoose.connection;
-        this.roomdb = level('src/db/rooms.db');
+        this.roomdb = level('db/rooms.db');
         // const writeFile = promisify(fs.writeFile);
         // const readdir = promisify(fs.readdir);
 

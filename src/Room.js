@@ -31,6 +31,12 @@ class Room extends EventEmitter {
             
             this.settings = set.settings;
             this.chatmsgs = set.chat;
+            this.connections.forEach(cl => {
+                cl.sendArray([{
+                    m: 'c',
+                    c: this.chatmsgs.slice(-1 * 32)
+                }]);
+            });
             this.setData();
         });
     }
@@ -348,14 +354,18 @@ class Room extends EventEmitter {
 
     playNote(cl, note) {
         let vel = Math.round(cl.user.flags["volume"])/100 || undefined;
-        if (vel == 1) vel = undefined;
+        
+        if (vel) {
+            for (let no of note.n) {
+                no.v /= vel;
+            }
+        }
 
         this.sendArray([{
             m: "n",
             n: note.n,
             p: cl.participantId,
-            t: note.t,
-            v: vel
+            t: note.t
         }], cl, true);
     }
 
