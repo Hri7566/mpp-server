@@ -7,7 +7,7 @@ const RoomSettings = require('./RoomSettings.js');
 const ftc = require('fancy-text-converter');
 const Notification = require('./Notification');
 
-class Room extends EventEmitter {
+class Channel extends EventEmitter {
     constructor(server, _id, settings) {
         super();
         this.logger = new Logger(`Room - ${ftc.normalise(_id)}`);
@@ -39,6 +39,15 @@ class Room extends EventEmitter {
             });
             this.setData();
         });
+    }
+
+    setChatArray(arr) {
+        this.chatmsgs = arr || [];
+        this.sendArray([{
+            m: 'c',
+            c: this.chatmsgs.slice(-1 * 32)
+        }]);
+        this.setData();
     }
 
     join(cl, set) { //this stuff is complicated
@@ -336,8 +345,8 @@ class Room extends EventEmitter {
             let message = {};
             message.m = "a";
             message.a = msg.message;
-            if (prsn.user.hasFlag('vowels')) {
-                if (prsn.user.flags.vowels != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
+            if (prsn.user.hasFlag('chat_curse_1')) {
+                if (prsn.user.flags['chat_curse_1'] != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
             }
             message.p = {
                 color: p.user.color,
@@ -484,4 +493,4 @@ class Room extends EventEmitter {
     }
 }
 
-module.exports = Room;
+module.exports = Channel;
