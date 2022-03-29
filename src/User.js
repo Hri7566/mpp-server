@@ -32,11 +32,11 @@ class User {
     }
 
     checkFlags() {
-        /*
         if (typeof(this.cl.server.specialIntervals[this._id]) == 'undefined') {
             this.cl.server.specialIntervals[this._id] = {};
         }
         if (this.hasFlag('rainbow', true)) {
+            console.log('rainbow on for ' + this._id);
             if (!this.cl.server.specialIntervals[this._id].hasOwnProperty('rainbow')) {
                 let h = Math.floor(Math.random() * 360);
                 let s = 50;
@@ -68,10 +68,9 @@ class User {
                 }, 1000/15);
             }
         } else if (this.hasFlag('rainbow', false)) {
-            console.log('rainbow off triggered');
+            console.log('rainbow off for ' + this._id);
             clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
         }
-        */
     }
 
     stopFlagEvents() {
@@ -96,3 +95,4 @@ class User {
 }
 
 module.exports = User;
+

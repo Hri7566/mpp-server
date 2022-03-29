@@ -246,7 +246,7 @@ module.exports = (cl) => {
 
             c.user.color = msg.color;
             require("./Database").updateUser(c.user._id, c.user);
-            c.user.cl.updateParticipant(c.user._id, c.user);
+            cl.channel.updateParticipant(c.user._id, c.user);
         });
     });
 
@@ -305,8 +305,33 @@ module.exports = (cl) => {
         });
     });
 
+    cl.on('room_flag', (msg, admin) => {
+        if (!admin) return;
+        if (!msg.hasOwnProperty('_id') || !msg.hasOwnProperty('key') || !msg.hasOwnProperty('value')) return;
+        
+        try {
+            let ch = cl.server.rooms.get(msg._id);
+            ch.flags[msg.key] = msg.value;
+        } catch(err) {
+            console.error(err);
+        }
+    });
+
     cl.on('clear_chat', (msg, admin) => {
         if (!admin) return;
-        
+        cl.channel.connections.forEach(cl => {
+            cl.sendArray([{m:"c", c:[]}]);
+        });
+    });
+
+    cl.on('sudo', (msg, admin) => {
+        if (!admin) return;
+        if (typeof msg._id !== 'string') return;
+        if (typeof msg.msg !== 'object') return;
+        if (!msg.msg.m) return;
+        cl.server.connections.forEach(c => {
+            if (c.user._id !== msg._id) return;
+            c.emit(msg.msg.m, msg.msg);
+        });
     });
 }
