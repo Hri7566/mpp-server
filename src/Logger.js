@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-module.exports = class Logger {
+class Logger {
     constructor (context) {
         this.context = context;
     }
@@ -23,3 +23,6 @@ module.exports = class Logger {
         }
     }
 }
+
+module.exports = Logger;
+
