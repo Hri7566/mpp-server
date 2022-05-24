@@ -1,4 +1,4 @@
-module.exports = class Crown {
+class Crown {
     constructor (id, _id) {
         this.participantId = id;
         this.userId = _id;
@@ -17,3 +17,6 @@ module.exports = class Crown {
         return Math.floor(Math.random() * 10000) / 100;
     }
 }
+
+module.exports = Crown;
+
