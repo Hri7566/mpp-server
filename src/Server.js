@@ -121,6 +121,18 @@ class Server extends EventEmitter {
         }
         console.log(out);
     }
+
+    getClient(id) {
+        return this.connections.get(id);
+    }
+
+    getAllClientsByUserID(_id) {
+        let out = [];
+        for (let cl of Array.from(this.connections.values())) {
+            if (cl.user._id == _id) out.push(cl);
+        }
+        return out;
+    }
 }
 
 module.exports = Server;

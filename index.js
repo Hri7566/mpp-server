@@ -23,7 +23,7 @@ let Server = require("./src/Server.js");
 let config = require('./config');
 global.SERVER = new Server(config);
 
-// below commented because it doesn't work with pm2
+// doesn't work with pm2
 
 /*
 let console = process.platform == 'win32' ? new AsyncConsole("", input => {
