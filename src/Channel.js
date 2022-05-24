@@ -10,7 +10,7 @@ const Notification = require('./Notification');
 class Channel extends EventEmitter {
     constructor(server, _id, settings) {
         super();
-        this.logger = new Logger(`Room - ${ftc.normalise(_id)}`);
+        this.logger = new Logger(`Room - ${_id}`);
         this._id = _id;
         this.server = server;
         this.crown;
@@ -23,6 +23,7 @@ class Channel extends EventEmitter {
         this.server.rooms.set(_id, this);
         this.bans = new Map();
         this.flags = {}
+        this.destroyed = false;
 
         this.logger.log('Created');
 
@@ -191,7 +192,9 @@ class Channel extends EventEmitter {
     }
     
     destroy() { //destroy room
+        if (this.destroyed) return;
         if (this.ppl.size > 0) return;
+        this.destroyed = true;
         this._id;
         console.log(`Deleted room ${this._id}`);
         this.settings = undefined;
