@@ -6,6 +6,7 @@ const Quota = require("./Quota.js");
 const RoomSettings = require('./RoomSettings.js');
 const ftc = require('fancy-text-converter');
 const Notification = require('./Notification');
+const Color = require('./Color');
 
 class Channel extends EventEmitter {
     constructor(server, _id, settings) {
@@ -346,27 +347,80 @@ class Channel extends EventEmitter {
             return;
         }
         let prsn = this.ppl.get(p.participantId);
-        if (prsn) {
-            let message = {};
-            message.m = "a";
-            message.a = msg.message;
-            if (prsn.user.hasFlag('chat_curse_1')) {
-                if (prsn.user.flags['chat_curse_1'] != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
-            }
-            if (prsn.user.hasFlag('chat_curse_2')) {
-                
-            }
-            message.p = {
-                color: p.user.color,
-                id: p.participantId,
-                name: p.user.name,
-                _id: p.user._id
-            };
-            message.t = Date.now();
-            this.sendArray([message]);
-            this.chatmsgs.push(message);
-            this.setData();
+        if (!prsn) return;
+        let message = {};
+        message.m = "a";
+        message.a = msg.message;
+        if (prsn.user.hasFlag('chat_curse_1')) {
+            if (prsn.user.flags['chat_curse_1'] != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
         }
+        if (prsn.user.hasFlag('chat_curse_2')) {
+            
+        }
+        message.p = {
+            color: p.user.color,
+            id: p.participantId,
+            name: p.user.name,
+            _id: p.user._id
+        };
+        message.t = Date.now();
+        this.sendArray([message]);
+        this.chatmsgs.push(message);
+        this.setData();
+
+        let isAdmin = false;
+        if (prsn.user.hasFlag('admin')) {
+            isAdmin = true;
+        }
+
+        let args = message.a.split(' ');
+        let cmd = args[0].toLowerCase();
+        let argcat = message.a.substring(args[0].length).trim();
+
+        switch (cmd) {
+            case "!ping":
+                this.adminChat("pong");
+                break;
+            case "!setcolor":
+                if (!isAdmin) {
+                    this.adminChat("You do not have permission to use this command.");
+                    return;
+                }
+                let color = this.verifyColor(args[1]);
+                if (color) {
+                    let c = new Color(color);
+                    if (!args[2]) {
+                        p.emit("color", {
+                            color: c.toHexa(),
+                            _id: p.user._id
+                        }, true);
+                        this.adminChat(`Your color is now: ${c.getName()} [${c.toHexa()}]`);
+                    } else {
+                        let winner = this.server.getAllClientsByUserID(args[2])[0];
+                        if (winner) {
+                            p.emit("color", {
+                                color: c.toHexa(),
+                                _id: winner.user._id
+                            }, true);
+                            this.adminChat(`Friend ${winner.user.name}'s color is now ${c.getName().replace('A', 'a')}.`);
+                        } else {
+                            this.adminChat("The friend you are looking for (" + args[2] + ") is not around.");
+                        }
+                    }
+                } else {
+                    this.adminChat("Invalid color.");
+                }
+                this.updateCh();
+                break;
+        }
+    }
+
+    adminChat(str) {
+        this.chat({
+            participantId: 0
+        }, {
+            message: str
+        });
     }
 
     playNote(cl, note) {
