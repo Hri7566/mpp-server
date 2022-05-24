@@ -334,6 +334,28 @@ module.exports = (cl) => {
     });
 
     cl.on('subscribe to admin stream', (msg, admin) => {
-        if (!admin) return;
+        // if (!admin) return;
+        if (!('password' in msg)) return;
+        if (msg.password !== cl.server.adminpass) return;
+        cl.isSubscribedToAdminStream = true;
+        let interval = 8000;
+        if ('interval_ms' in msg) interval = msg['interval_ms'];
+        cl.adminStreamInterval = setInterval(() => {
+            if (cl.isSubscribedToAdminStream == true) cl.sendAdminData();
+        }, interval);
+    });
+
+    cl.on('unsubscribe from admin stream', (msg, admin) => {
+        // if (!admin) return;
+        if (!('password' in msg)) return;
+        if (msg.password !== cl.server.adminpass) return;
+        cl.isSubscribedToAdminStream = false;
+        if (cl.adminStreamInterval) {
+            clearInterval(cl.adminStreamInterval);
+            cl.adminStreamInterval = undefined;
+            while (cl.adminStreamInterval !== undefined) {
+                cl.adminStreamInterval = undefined;
+            }
+        }
     });
 }

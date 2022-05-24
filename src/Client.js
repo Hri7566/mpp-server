@@ -15,6 +15,8 @@ class Client extends EventEmitter {
         this.server = server;
         this.participantId;
         this.channel;
+        this.isSubscribedToAdminStream = false;
+        this.adminStreamInterval;
 
         this.staticQuotas = {
             room: new RateLimit(quotas.room.time)
@@ -151,6 +153,22 @@ class Client extends EventEmitter {
                 this.destroy();
             }
         });
+    }
+
+    sendAdminData() {
+        let data = {};
+        data.m = "data";
+
+        let channels = [];
+        this.server.rooms.forEach(ch => {
+            channels.push(ch.fetchChannelData());
+        });
+        
+        data.channelManager = {
+            channels
+        };
+
+        this.sendArray([data]);
     }
 }
 
