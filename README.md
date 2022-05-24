@@ -1,9 +1,4 @@
 # mpp-server
-Attempt at making a MPP Server.
 
-### How to run
+Hri7566's MPP server
 
-```
-$ npm install
-$ npm run start
-```
