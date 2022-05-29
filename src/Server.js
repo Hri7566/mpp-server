@@ -5,6 +5,7 @@ const http = require("http");
 const fs = require('fs');
 const RoomSettings = require('./RoomSettings');
 const Logger = require("./Logger.js");
+const express = require('express');
 
 class Server extends EventEmitter {
     constructor(config) {
@@ -24,7 +25,8 @@ class Server extends EventEmitter {
                 server: this.https_server,
                 backlog: 100,
                 verifyClient: (info) => {
-                    if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                    const ip = (info.req.connection.remoteAddress).replace("::ffff:", "");
+                    if (banned.includes(ip)) return false;
                     return true;
                 }
             });
@@ -35,7 +37,8 @@ class Server extends EventEmitter {
                 port: config.port,
                 backlog: 100,
                 verifyClient: (info) => {
-                    if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                    const ip = (info.req.connection.remoteAddress).replace("::ffff:", "");
+                    if (ip) return false;
                     return true;
                 }
             });
