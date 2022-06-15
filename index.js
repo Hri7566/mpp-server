@@ -34,3 +34,24 @@ let console = process.platform == 'win32' ? new AsyncConsole("", input => {
     }
 }) : {};
 */
+
+
+
+
+
+
+// dev environment
+
+if (config.hostDevFiles) {
+    const express = require('express');
+    const app = express();
+    const path = require('path');
+    app.listen(8075, () => {
+    });
+
+    app.use(express.static(path.join(__dirname, 'mpp.hri7566.info')));
+}
+
+if (config.enableMPPCloneBot) {
+    require('./mppclonebot');
+}
