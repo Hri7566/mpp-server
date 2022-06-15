@@ -149,7 +149,7 @@ class Channel extends EventEmitter {
         if (Array.from(this.ppl.values()).length <= 0) {
             setTimeout(() => {
                 this.destroy();
-            }, 5000);
+            }, 1000);
         }
 
         this.connections.forEach((usr) => {
@@ -326,26 +326,33 @@ class Channel extends EventEmitter {
 
     chat(p, msg) {
         if (msg.message.length > 512) return;
+
         let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
         let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
         if (regexp.test(msg.message.split(' ').join(''))) return;
+        
         if (p.participantId == 0) {
             let message = {};
+
             message.m = "a";
+            message.t = Date.now();
             message.a = msg.message;
+
             message.p = {
                 color: "#ffffff",
                 id: "0",
                 name: "mpp",
                 _id: "0"
             };
-            message.t = Date.now();
+
+
             this.sendArray([message]);
 
             this.chatmsgs.push(message);
             this.setData();
             return;
         }
+
         let prsn = this.ppl.get(p.participantId);
         if (!prsn) return;
         let message = {};
@@ -394,7 +401,7 @@ class Channel extends EventEmitter {
                             color: c.toHexa(),
                             _id: p.user._id
                         }, true);
-                        this.adminChat(`Your color is now: ${c.getName()} [${c.toHexa()}]`);
+                        this.adminChat(`Your color is now ${c.getName().replace('A', 'a')} [${c.toHexa()}]`);
                     } else {
                         let winner = this.server.getAllClientsByUserID(args[2])[0];
                         if (winner) {
@@ -412,6 +419,19 @@ class Channel extends EventEmitter {
                 }
                 this.updateCh();
                 break;
+            case "!users":
+                this.adminChat(`There are ${this.server.connections.size} users online.`);
+                break;
+            case "!chown":
+                if (!isAdmin) return;
+                let id = p.participantId;
+                if (args[1]) {
+                    id = args[1];
+                }
+                if (this.hasUser(id)) {
+                    this.chown(id);
+                }
+                break;
         }
     }
 
@@ -421,6 +441,10 @@ class Channel extends EventEmitter {
         }, {
             message: str
         });
+    }
+
+    hasUser(id) {
+        return this.ppl.has(id);
     }
 
     playNote(cl, note) {
@@ -521,6 +545,10 @@ class Channel extends EventEmitter {
         this.on("a", (participant, msg) => {
             this.chat(participant, msg);
         })
+
+        this.on("update", (cl) => {
+            this.updateCh(cl);
+        });
     }
 
     verifySet(_id, msg) {
