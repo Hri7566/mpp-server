@@ -73,9 +73,7 @@ class Client extends EventEmitter {
             if (channel) this.channel.updateCh(this);
 
             this.channel = this.server.rooms.get(_id);
-            if (!this.user.hasFlag("hidden", true)) {
-                this.channel.join(this);
-            }
+            this.channel.join(this);
         } else {
             let room = new Channel(this.server, _id, settings);
             this.server.rooms.set(_id, room);
@@ -112,6 +110,7 @@ class Client extends EventEmitter {
     }
 
     destroy() {
+        this.user.stopFlagEvents();
         this.ws.close();
         if (this.channel) {
             this.channel.emit("bye", this);

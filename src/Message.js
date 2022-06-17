@@ -66,14 +66,28 @@ module.exports = (cl) => {
     });
 
     cl.on("m", (msg, admin) => {
-        if (!cl.hasOwnProperty('channel')) return;
+        // nobody will see our cursor if we're not somewhere
+        if (!('channel' in cl)) return;
+
+        // check against cursor rate limit
         if (!cl.quotas.cursor.attempt() && !admin) return;
-        if (!(cl.channel && cl.participantId)) return;
+
+        // if we are nobody, we don't have a cursor
+        if (!cl.participantId) return;
+
+        // no values? null, not undefined
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
         if (isNaN(parseFloat(msg.x))) msg.x = null;
         if (isNaN(parseFloat(msg.y))) msg.y = null;
-        cl.channel.emit("m", cl, msg.x, msg.y);
+
+        let m = {
+            p: cl.participantId,
+            x: msg.x,
+            y: msg.y
+        }
+
+        cl.channel.emit("m", m);
     });
 
     cl.on("chown", (msg, admin) => {
@@ -128,7 +142,7 @@ module.exports = (cl) => {
             if (!(cl.user._id == cl.channel.crown.userId)) return;
         }
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = new RoomSettings(cl.channel.settings, 'user');
-        cl.channel.settings.changeSettings(msg.set);
+        cl.channel.settings.changeSettings(msg.set, admin);
         cl.channel.updateCh();
     });
 
@@ -312,6 +326,7 @@ module.exports = (cl) => {
         try {
             let ch = cl.server.rooms.get(msg._id);
             ch.flags[msg.key] = msg.value;
+            ch.emit('flag ' + msg.key, msg.value);
         } catch(err) {
             console.error(err);
         }
@@ -357,5 +372,19 @@ module.exports = (cl) => {
                 cl.adminStreamInterval = undefined;
             }
         }
+    });
+
+    cl.on('channel message', (msg, admin) => {
+        if (!admin) return;
+
+        if (!msg.hasOwnProperty('msg')) return;
+        if (typeof msg.msg != 'object') return;
+
+        if (!cl.channel) return;
+        if (!msg.hasOwnProperty('_id')) msg._id = cl.channel._id;
+
+        let ch = cl.server.rooms.get(msg._id);
+        if (!ch) return;
+        ch.emit(msg.m, msg);
     });
 }

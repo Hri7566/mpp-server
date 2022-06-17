@@ -86,7 +86,8 @@ class Server extends EventEmitter {
             "sudo",
             "subscribe to admin stream",
             "unsubscribe from admin stream",
-            "data"
+            "data",
+            "channel message"
         ];
 
         this.welcome_motd = config.motd || "You agree to read this message.";
@@ -124,6 +125,13 @@ class Server extends EventEmitter {
 
     getClient(id) {
         return this.connections.get(id);
+    }
+
+    getClientByParticipantID(id) {
+        for (let cl of Array.from(this.connections.values())) {
+            if (cl.participantID == id) return cl;
+        }
+        return null;
     }
 
     getAllClientsByUserID(_id) {

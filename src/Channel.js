@@ -16,7 +16,16 @@ class Channel extends EventEmitter {
         this.server = server;
         this.crown;
         this.crowndropped = false;
-        this.settings = settings;
+
+        if (this.isLobby(this._id)) {
+            this.settings = new RoomSettings(this.server.lobbySettings);
+            // this.settings.lobby = true;
+            // this.settings.color = this.server.lobbySettings.color;
+            // this.settings.color2 = this.server.lobbySettings.color2;
+        } else {
+            this.settings = new RoomSettings(settings, 'user');
+        }
+
         this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
@@ -71,26 +80,28 @@ class Channel extends EventEmitter {
                 this.crown = new Crown(cl.participantId, cl.user._id);
 
                 this.crowndropped = false;
-                this.settings = new RoomSettings(set, 'user');
+                // this.settings = new RoomSettings(set, 'user');
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
 
                 if (this.isLobby(this._id) && this.settings.lobby !== true) {
-                    this.settings = new RoomSettings(this.server.lobbySettings, 'user');
-                    this.settings.visible = true;
-                    this.settings.crownsolo = false;
-                    this.settings.color = this.server.lobbySettings.color;
-                    this.settings.color2 = this.server.lobbySettings.color2;
-                    this.settings.lobby = true;
+                    this.settings.changeSettings(this.server.lobbySettings, 'user');
+                    // this.settings.visible = true;
+                    // this.settings.crownsolo = false;
+                    // this.settings.lobby = true;
+                    // this.settings.color = this.server.lobbySettings.color;
+                    // this.settings.color2 = this.server.lobbySettings.color2;
                 } else {
-                    if (typeof(set) == 'undefined') {
-                        if (typeof(this.settings) == 'undefined') {
-                            this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                    if (!this.isLobby) {
+                        if (typeof(set) == 'undefined') {
+                            if (typeof(this.settings) == 'undefined') {
+                                this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                            } else {
+                                this.settings = new RoomSettings(cl.channel.settings, 'user');
+                            }
                         } else {
-                            this.settings = new RoomSettings(cl.channel.settings, 'user');
+                            this.settings = new RoomSettings(set, 'user');
                         }
-                    } else {
-                        this.settings = new RoomSettings(set, 'user');
                     }
                 }
             }
@@ -99,7 +110,7 @@ class Channel extends EventEmitter {
 
             this.connections.push(cl);
 
-            if (!cl.hidden) {
+            if (cl.hidden !== true) {
                 this.sendArray([{
                     color: this.ppl.get(cl.participantId).user.color,
                     id: this.ppl.get(cl.participantId).participantId,
@@ -109,11 +120,11 @@ class Channel extends EventEmitter {
                     y: this.ppl.get(cl.participantId).y || 100,
                     _id: cl.user._id
                 }], cl, false)
-                cl.sendArray([{
-                    m: "c",
-                    c: this.chatmsgs.slice(-1 * 32)
-                }]);
             }
+            cl.sendArray([{
+                m: "c",
+                c: this.chatmsgs.slice(-1 * 32)
+            }]);
             this.updateCh(cl, this.settings);
         } else {
             cl.user.id = otheruser.participantId;
@@ -126,9 +137,40 @@ class Channel extends EventEmitter {
             }])
             this.updateCh(cl, this.settings);
         }
+
+        if (this.flags.spin == true) {
+            this.spin(cl);
+        }
     }
 
-    remove(p) { //this is complicated too
+    spin(cl) { // speeeeeeen
+        let id = cl.user._id;
+        if (!id) id = "room";
+        this.Notification(id,
+            "",
+            ``,
+            `<script>$("#piano").addClass("spin")</script>`,
+            1,
+            "#names",
+            "short"
+        );
+    }
+
+    stopSpin(cl) {
+        let id = cl.user._id;
+        if (!id) id = "room";
+        this.Notification(id,
+            "",
+            ``,
+            `<script>$("#piano").removeClass("spin")</script>`,
+            1,
+            "#names",
+            "short"
+        );
+    }
+
+    remove(p) { // remove user
+        if (!p) return;
         let otheruser = this.connections.filter((a) => a.user._id == p.user._id);
         if (!(otheruser.length > 1)) {
             this.ppl.delete(p.participantId);
@@ -212,6 +254,8 @@ class Channel extends EventEmitter {
         this.connections.forEach((usr) => {
             if (!not || (usr.participantId != not.participantId && !onlythisparticipant) || (usr.connectionid != not.connectionid && onlythisparticipant)) {
                 try {
+                    let cl = this.server.connections.get(usr.connectionid);
+                    if (!cl) return;
                     this.server.connections.get(usr.connectionid).sendArray(arr)
                 } catch (e) {
                     console.log(e);
@@ -435,6 +479,14 @@ class Channel extends EventEmitter {
                     this.chown(id);
                 }
                 break;
+            case "!chlist":
+            case "!channellist":
+                if (!isAdmin) return;
+                this.adminChat("Channels:");
+                for (let ch of this.server.rooms) {
+                    this.adminChat(`- ${ch._id}`);
+                }
+                break;
         }
     }
 
@@ -541,8 +593,10 @@ class Channel extends EventEmitter {
             this.remove(participant);
         })
 
-        this.on("m", (participant, x, y) => {
-            this.setCoords(participant, x, y);
+        this.on("m", msg => {
+            let p = this.ppl.get(msg.p);
+            if (!p) return;
+            this.setCoords(p, msg.x, msg.y);
         })
 
         this.on("a", (participant, msg) => {
@@ -551,6 +605,24 @@ class Channel extends EventEmitter {
 
         this.on("update", (cl) => {
             this.updateCh(cl);
+        });
+
+        this.on("remove crown", () => {
+            this.crown = undefined;
+            delete this.crown;
+            this.emit('update');
+        });
+
+        this.on("flag spin", spin => {
+            if (spin) {
+                for (let cl of this.connections) {
+                    this.spin(cl);
+                }
+            } else {
+                for (let cl of this.connections) {
+                    this.stopSpin(cl);
+                }
+            }
         });
     }
 
