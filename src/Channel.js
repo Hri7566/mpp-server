@@ -62,8 +62,11 @@ class Channel extends EventEmitter {
             cl.user.id = participantId;
             cl.participantId = participantId;
             cl.initParticipantQuotas();
-            
-            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
+
+            // if there are no users or the user with the crown entered the room, crown the user
+            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) {
+                // user owns the room
+                // we need to switch the crown to them
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
                 this.crown = new Crown(cl.participantId, cl.user._id);
 
@@ -72,7 +75,7 @@ class Channel extends EventEmitter {
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
 
-                if (this.isLobby(this._id)) {
+                if (this.isLobby(this._id) && this.settings.lobby !== true) {
                     this.settings = new RoomSettings(this.server.lobbySettings, 'user');
                     this.settings.visible = true;
                     this.settings.crownsolo = false;
@@ -336,7 +339,7 @@ class Channel extends EventEmitter {
 
             message.m = "a";
             message.t = Date.now();
-            message.a = msg.message;
+            message.a = msg.message.test;
 
             message.p = {
                 color: "#ffffff",
