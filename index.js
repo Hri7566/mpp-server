@@ -43,13 +43,27 @@ let console = process.platform == 'win32' ? new AsyncConsole("", input => {
 // dev environment
 
 if (config.hostDevFiles) {
+    let express_logger = new (require("./src/Logger"))("Express Server");
     const express = require('express');
     const app = express();
     const path = require('path');
-    app.listen(8075, () => {
+    var http = require('http');
+
+    let dir = path.join(__dirname, 'mpp.hri7566.info');
+    app.use(express.static(path.join(__dirname, dir)));
+
+    app.get('*', (req, res, next) => {
+        let file = path.join(dir, req.path);
+        if (fs.existsSync(file)) {
+            res.sendFile(file);
+        } else {
+            res.sendFile(path.join(dir, 'index.html'));
+        }
     });
 
-    app.use(express.static(path.join(__dirname, 'mpp.hri7566.info')));
+    const express_port = 8075;
+
+    http.createServer(app).listen(express_port);
 }
 
 if (config.enableMPPCloneBot) {
