@@ -271,7 +271,7 @@ class Channel extends EventEmitter {
             if (cl) {
                 if (c.hidden == true && c.user._id !== cl.user._id) {
                     return;
-                } else {
+                } else if (c.user._id == cl.user._id) {
                     let u = {
                         _id: c.user._id,
                         name: c.user.name + ' [HIDDEN]',
