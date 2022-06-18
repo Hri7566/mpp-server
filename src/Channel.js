@@ -272,13 +272,13 @@ class Channel extends EventEmitter {
                 if (c.hidden == true && c.user._id !== cl.user._id) {
                     return;
                 } else if (c.user._id == cl.user._id) {
-                    let u = {
-                        _id: c.user._id,
-                        name: c.user.name + ' [HIDDEN]',
-                        color: c.user.color,
-                        id: c.participantId
-                    }
-                    chppl.push(u);
+                    // let u = {
+                    //     _id: c.user._id,
+                    //     name: c.user.name + ' [HIDDEN]',
+                    //     color: c.user.color,
+                    //     id: c.participantId
+                    // }
+                    // chppl.push(u);
                 }
             }
             let u = {
