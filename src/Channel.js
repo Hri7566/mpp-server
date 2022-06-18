@@ -268,6 +268,19 @@ class Channel extends EventEmitter {
         let chppl = [];
 
         [...this.ppl.values()].forEach(c => {
+            if (cl) {
+                if (c.hidden == true && c.user._id !== cl.user._id) {
+                    return;
+                } else {
+                    let u = {
+                        _id: c.user._id,
+                        name: c.user.name + ' [HIDDEN]',
+                        color: c.user.color,
+                        id: c.participantId
+                    }
+                    chppl.push(u);
+                }
+            }
             let u = {
                 _id: c.user._id,
                 name: c.user.name,
