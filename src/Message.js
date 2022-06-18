@@ -319,7 +319,7 @@ module.exports = (cl) => {
         });
     });
 
-    cl.on('room_flag', (msg, admin) => {
+    cl.on('channel_flag', (msg, admin) => {
         if (!admin) return;
         if (!msg.hasOwnProperty('_id') || !msg.hasOwnProperty('key') || !msg.hasOwnProperty('value')) return;
         
@@ -331,6 +331,11 @@ module.exports = (cl) => {
             console.error(err);
         }
     });
+
+    cl.on('room_flag', (msg, admin) => {
+        if (!admin) return;
+        cl.emit('channel_flag', msg, admin);
+    })
 
     cl.on('clear_chat', (msg, admin) => {
         if (!admin) return;
