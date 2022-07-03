@@ -4,7 +4,10 @@
   "description": "Attempt at making a MPP Server.",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon"
+    "start": "node .",
+    "test": "jest",
+    "coverage": "jest --verbose --coverage",
+    "watch-test": "jest --watchAll --verbose"
   },
   "repository": {
     "type": "git",
@@ -22,6 +25,7 @@
   },
   "homepage": "https://github.com/BopItFreak/mpp-server#readme",
   "dependencies": {
+    "@types/jest": "^28.1.3",
     "asyncconsole": "^1.3.9",
     "chalk": "^4.1.1",
     "dotenv": "^8.2.0",
