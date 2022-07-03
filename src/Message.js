@@ -200,26 +200,11 @@ module.exports = (cl) => {
         cl.server.roomlisteners.delete(cl.connectionid);
     });
 
-    cl.on("userset", msg => {
+    cl.on("userset", (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
-            if (msg.set.name.length > 40) return;
-            if(!cl.quotas.userset.attempt()) return;
-            cl.user.name = msg.set.name;
-            Database.getUserData(cl, cl.server).then((usr) => {
-                // let dbentry = Database.userdb.get(cl.user._id);
-                // if (!dbentry) return;
-                // dbentry.name = msg.set.name;
-                // Database.update();
-                Database.updateUser(cl.user._id, cl.user);
-                cl.server.rooms.forEach((room) => {
-                    room.updateParticipant(cl.user._id, {
-                        name: msg.set.name
-                    });
-                })
-            })
-
+            cl.userset(msg.set.name, admin);
         }
     });
 
@@ -391,5 +376,25 @@ module.exports = (cl) => {
         let ch = cl.server.rooms.get(msg._id);
         if (!ch) return;
         ch.emit(msg.m, msg);
+    });
+
+    cl.on('name', (msg, admin) => {
+        if (!admin) return;
+
+        if (!msg.hasOwnProperty('_id')) return;
+        if (!msg.hasOwnProperty('name')) return;
+
+        let c;
+
+        for (const conn of cl.server.connections) {
+            if (conn.user._id == msg._id) {
+                c = conn;
+                break;
+            }
+        }
+
+        if (!c) return;
+
+        c.userset(msg.name, true);
     });
 }
