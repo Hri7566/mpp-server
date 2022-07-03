@@ -396,7 +396,7 @@ class Channel extends EventEmitter {
 
             message.m = "a";
             message.t = Date.now();
-            message.a = msg.message.test;
+            message.a = msg.message;
 
             message.p = {
                 color: "#ffffff",
@@ -496,8 +496,8 @@ class Channel extends EventEmitter {
             case "!channellist":
                 if (!isAdmin) return;
                 this.adminChat("Channels:");
-                for (let ch of this.server.rooms) {
-                    this.adminChat(`- ${ch._id}`);
+                for (let [_id] of this.server.rooms) {
+                    this.adminChat(`- ${_id}`);
                 }
                 break;
         }
