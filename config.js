@@ -22,6 +22,6 @@ module.exports = Object.seal({
         visible: true
     },
 
-    hostDevFiles: false,
-    enableMPPCloneBot: true
+    hostDevFiles: true,
+    enableMPPCloneBot: false
 });

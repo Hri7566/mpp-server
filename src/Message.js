@@ -97,7 +97,9 @@ module.exports = (cl) => {
         //console.log((Date.now() - cl.channel.crown.time))
         //console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
 
-        if (!(cl.channel.crown.userId == cl.user._id) && !((Date.now() - cl.channel.crown.time) > 15000)) return;
+        if (!cl.channel.crown && !admin) {
+            if (!(cl.channel.crown.userId == cl.user._id) && !((Date.now() - cl.channel.crown.time) > 15000)) return;
+        }
 
         if (msg.hasOwnProperty("id")) {
             // console.log(cl.channel.crown)
@@ -369,13 +371,14 @@ module.exports = (cl) => {
 
         if (!msg.hasOwnProperty('msg')) return;
         if (typeof msg.msg != 'object') return;
+        if (typeof msg.msg.m != 'string') return;
 
         if (!cl.channel) return;
         if (!msg.hasOwnProperty('_id')) msg._id = cl.channel._id;
 
         let ch = cl.server.rooms.get(msg._id);
         if (!ch) return;
-        ch.emit(msg.m, msg);
+        ch.emit(msg.msg.m, msg.msg);
     });
 
     cl.on('name', (msg, admin) => {
