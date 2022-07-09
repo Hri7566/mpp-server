@@ -383,21 +383,18 @@ module.exports = (cl) => {
 
     cl.on('name', (msg, admin) => {
         if (!admin) return;
-
+        
         if (!msg.hasOwnProperty('_id')) return;
         if (!msg.hasOwnProperty('name')) return;
-
-        let c;
-
-        for (const conn of cl.server.connections) {
+        
+        for (const [mapID, conn] of cl.server.connections) {
+            if (!conn.user) return;
             if (conn.user._id == msg._id) {
-                c = conn;
-                break;
+                let c = conn;
+                c.userset(msg.name, true);
             }
         }
 
-        if (!c) return;
 
-        c.userset(msg.name, true);
     });
 }
