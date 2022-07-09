@@ -5,6 +5,7 @@ const RateLimit = require('./Ratelimit.js').RateLimit;
 const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
 const User = require("./User.js");
 const Database = require("./Database.js");
+const { EventEmitter } = require('events');
 
 class Client extends EventEmitter {
     constructor(ws, req, server) {
