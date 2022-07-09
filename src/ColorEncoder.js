@@ -13,4 +13,8 @@ function intToRGB(i){
 
     return "00000".substring(0, 6 - c.length) + c;
 }
-module.exports = {hashCode, intToRGB};
+
+module.exports = {
+    hashCode,
+    intToRGB
+}
