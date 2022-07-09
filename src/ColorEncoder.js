@@ -72,6 +72,8 @@ function getTimeColor(currentDate = new Date()) {
     // let l = 0.5;
     l = l / 2;
 
+    console.log(h, s, l);
+
     // convert to rgb
     let [r, g, b] = hslToRgb(h, s, l);
 
