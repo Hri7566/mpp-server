@@ -24,6 +24,7 @@ module.exports = class Notification {
                 }
                 break;
             case "room":
+            case "channel":
                 for (let con of room.connections) {
                     con.sendArray([msg]);
                 }
