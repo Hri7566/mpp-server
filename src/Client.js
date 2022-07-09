@@ -186,6 +186,16 @@ class Client extends EventEmitter {
 
         this.sendArray([data]);
     }
+
+    /**
+     * 
+     * @param {Channel} ch 
+     * @param {Client} cl If this is present, only this client's user data will be sent(?)
+     */
+    sendChannelUpdate(ch, cl) {
+        let msg = ch.fetchChannelData(this, cl);
+        this.sendArray([msg]);
+    }
 }
 
 module.exports = Client;

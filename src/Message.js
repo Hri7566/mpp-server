@@ -145,10 +145,11 @@ module.exports = (cl) => {
         }
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = new RoomSettings(cl.channel.settings, 'user');
         cl.channel.settings.changeSettings(msg.set, admin);
-        cl.channel.updateCh();
+        // cl.channel.updateCh();
+        cl.channel.emit('update');
     });
 
-    cl.on("a", (msg, admin) => {
+    cl.on('a', (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
         if (typeof(msg.message) !== 'string') return;
@@ -394,5 +395,10 @@ module.exports = (cl) => {
                 c.userset(msg.name, true);
             }
         }
+    });
+
+    cl.on('restart', (msg, admin) => {
+        if (!admin) return;
+        cl.server.restart(msg.notification);
     });
 }
