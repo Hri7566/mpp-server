@@ -88,7 +88,8 @@ class Server extends EventEmitter {
             "unsubscribe from admin stream",
             "data",
             "channel message",
-            "channel_flag"
+            "channel_flag",
+            "name"
         ];
 
         this.welcome_motd = config.motd || "You agree to read this message.";
