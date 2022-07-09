@@ -212,15 +212,31 @@ module.exports = (cl) => {
     });
 
     cl.on('kickban', msg => {
-        if (cl.channel.crown == null) return;
-        if (!(cl.channel && cl.participantId)) return;
-        if (!cl.channel.crown.userId) return;
-        if (!(cl.user._id == cl.channel.crown.userId)) return;
+        if (!admin) {
+            if (cl.channel.crown == null) return;
+            if (!(cl.channel && cl.participantId)) return;
+            if (!cl.channel.crown.userId) return;
+            if (!(cl.user._id == cl.channel.crown.userId)) return;
+        }
         if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
             if (!cl.quotas.kickban.attempt() && !admin) return;
             let _id = msg._id;
             let ms = msg.ms || 3600000;
             cl.channel.kickban(_id, ms);
+        }
+    });
+
+    cl.on('unban', (msg, admin) => {
+        if (!admin) {
+            if (cl.channel.crown == null) return;
+            if (!(cl.channel && cl.participantId)) return;
+            if (!cl.channel.crown.userId) return;
+            if (!(cl.user._id == cl.channel.crown.userId)) return;
+        }
+        if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
+            if (!cl.quotas.kickban.attempt() && !admin) return;
+            let _id = msg._id;
+            cl.channel.unban(_id);
         }
     });
 
