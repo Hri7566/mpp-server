@@ -686,16 +686,8 @@ class Channel extends EventEmitter {
             this.setCoords(p, msg.x, msg.y);
         });
 
-        this.on("a", (msg) => {
-            if (!msg.msg) return;
-            if (!msg.participant) return;
-            if (typeof msg.msg !== 'object') return;
-            if (typeof msg.participant !== 'object') return;
-            if (!msg.msg.m) return;
-            if (msg.msg.m !== 'a') return;
-            if (!msg.participant.name) return;
-            if (!msg.participant._id) return;
-            this.chat(msg.participant, msg.msg);
+        this.on("a", (participant, msg) => {
+            this.chat(participant, msg);
         });
 
         this.on("update", (cl, set) => {
