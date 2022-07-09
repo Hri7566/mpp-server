@@ -13,28 +13,26 @@ module.exports = class Notification {
     }
 
     send(_id, room) {
-        let obj = {};
-        Object.assign(obj, this);
-        obj.m = "notification";
+        let msg = {};
+        Object.assign(msg, this);
+        msg.m = "notification";
 
         switch (_id) {
-            case "all": {
+            case "all":
                 for (let con of Array.from(room.server.connections.values())) {
-                    con.sendArray([obj]);
+                    con.sendArray([msg]);
                 }
                 break;
-            }
-            case "room": {
+            case "room":
                 for (let con of room.connections) {
-                    con.sendArray([obj]);
+                    con.sendArray([msg]);
                 }
                 break;
-            }
-            default: {
+            default:
                 Array.from(room.server.connections.values()).filter((usr) => typeof(usr.user) !== 'undefined' ? usr.user._id == _id : null).forEach((p) => {
-                    p.sendArray([obj]);
+                    p.sendArray([msg]);
                 });
-            }
+                break;
         }
     }
 }
