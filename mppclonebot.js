@@ -184,7 +184,7 @@ class Bot extends EventEmitter {
 
         this.on('online', () => {
             this.logger.log('Connected');
-        })
+        });
     }
 
     async chatBufferCycle() {
