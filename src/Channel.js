@@ -364,8 +364,10 @@ class Channel extends EventEmitter {
             this.crown = new Crown(id, prsn.user._id);
             this.crowndropped = false;
         } else {
-            this.crown = new Crown(id, this.crown.userId);
-            this.crowndropped = true;
+            if (this.crown) {
+                this.crown = new Crown(id, this.crown.userId);
+                this.crowndropped = true;
+            }
         }
 
         this.updateCh();
@@ -449,6 +451,7 @@ class Channel extends EventEmitter {
                 this.adminChat("pong");
                 break;
             case "!setcolor":
+            case "!color":
                 if (!isAdmin) {
                     this.adminChat("You do not have permission to use this command.");
                     return;
