@@ -5,7 +5,6 @@ const RateLimit = require('./Ratelimit.js').RateLimit;
 const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
 const User = require("./User.js");
 const Database = require("./Database.js");
-require('node-json-color-stringify');
 
 class Client extends EventEmitter {
     constructor(ws, req, server) {
@@ -92,10 +91,13 @@ class Client extends EventEmitter {
 
     userset(name, admin) {
         if (name.length > 40 && !admin) return;
-        if(!this.quotas.userset.attempt()) return;
+        if (!this.quotas.userset.attempt()) return;
         this.user.name = name;
         Database.getUserData(this, this.server).then((usr) => {
-            Database.updateUser(this.user._id, this.user);
+            if (!this.user.hasFlag('freeze_name', true)) {
+                Database.updateUser(this.user._id, this.user);
+            }
+            
             this.server.rooms.forEach((room) => {
                 room.updateParticipant(this.user._id, {
                     name: name
