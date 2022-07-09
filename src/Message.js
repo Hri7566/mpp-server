@@ -394,7 +394,5 @@ module.exports = (cl) => {
                 c.userset(msg.name, true);
             }
         }
-
-
     });
 }
