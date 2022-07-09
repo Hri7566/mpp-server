@@ -67,10 +67,10 @@ function getTimeColor(currentDate = new Date()) {
     let h = Math.floor((dayOfYear / 365) * 100) / 10000;
     let s = (hours + 1) / (24 / 3);
     // let s = 1;
-    let l = 0.1 + Math.floor(((hours / 60)) * 1000) / 1000;
-    if (l > 1) l = 1;
-    // let l = 0.5;
-    l = l / 2;
+    let l = 0.25 + Math.floor(((hours / 60)) * 1000) / 1000;
+    
+    if (l > 0.5) l = 0.5;
+    if (s > 1) s = 1;
 
     console.log(h, s, l);
 
