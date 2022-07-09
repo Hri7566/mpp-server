@@ -647,6 +647,20 @@ class Channel extends EventEmitter {
         })
     }
 
+    unban(_id) {
+        this.connections.filter((usr) => usr.participantId == user.participantId).forEach(u => {
+            if (user.bantime) {
+                delete user.bantime;
+            }
+
+            if (user.bannedtime) {
+                delete user.bannedtime;
+            }
+
+            this.bans.delete(user.user._id);
+        });
+    }
+
     Notification(who, title, text, html, duration, target, klass, id) {
         new Notification({
             id: id,
