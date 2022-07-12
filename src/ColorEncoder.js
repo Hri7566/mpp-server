@@ -72,8 +72,6 @@ function getTimeColor(currentDate = new Date()) {
     if (l > 0.5) l = 0.5;
     if (s > 1) s = 1;
 
-    console.log(h, s, l);
-
     // convert to rgb
     let [r, g, b] = hslToRgb(h, s, l);
 
@@ -84,5 +82,6 @@ function getTimeColor(currentDate = new Date()) {
 module.exports = {
     hashCode,
     intToRGB,
-    getTimeColor
+    getTimeColor,
+    hslToRgb
 }
