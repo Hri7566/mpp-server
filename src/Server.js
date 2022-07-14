@@ -5,7 +5,7 @@ const http = require("http");
 const fs = require('fs');
 const RoomSettings = require('./RoomSettings');
 const Logger = require("./Logger.js");
-const express = require('express');
+const Notification = require('./Notification');
 
 class Server extends EventEmitter {
     constructor(config) {
@@ -89,7 +89,11 @@ class Server extends EventEmitter {
             "sudo",
             "subscribe to admin stream",
             "unsubscribe from admin stream",
-            "data"
+            "data",
+            "channel message",
+            "channel_flag",
+            "name",
+            "restart"
         ];
 
         this.welcome_motd = config.motd || "You agree to read this message.";
@@ -129,12 +133,36 @@ class Server extends EventEmitter {
         return this.connections.get(id);
     }
 
+    getClientByParticipantID(id) {
+        for (let cl of Array.from(this.connections.values())) {
+            if (cl.participantID == id) return cl;
+        }
+        return null;
+    }
+
     getAllClientsByUserID(_id) {
         let out = [];
         for (let cl of Array.from(this.connections.values())) {
             if (cl.user._id == _id) out.push(cl);
         }
         return out;
+    }
+
+    restart(notif = {
+        m: "notification",
+        id: "server-restart",
+        title: "Notice",
+        text: "The server will restart in a few moments.",
+        target: "#piano",
+        duration: 20000,
+        class: "classic",
+    }) {
+        let n = new Notification(notif);
+        n.send("all", this.rooms.get('lobby'));
+
+        setTimeout(() => {
+            process.exit();
+        }, n.duration || 20000);
     }
 }
 

@@ -2,22 +2,27 @@ module.exports = Object.seal({
     port: 8443,
     motd: "big th0nk",
     _id_PrivateKey: process.env.SALT,
-    defaultUsername: "Anonymous",
-    // defaultRoomColor: "#3b5054",
-    defaultRoomColor: "#480505",
+
     // defaultLobbyColor: "#19b4b9",
-    // defaultLobbyColor: "#76b0db",
     // defaultLobbyColor2: "#801014",
-    // defaultLobbyColor2: "#276491",
-    defaultLobbyColor: "#9900ff",
-    defaultLobbyColor2: "#5900af",
+    defaultLobbyColor: "#76b0db",
+    defaultLobbyColor2: "#276491",
+    // defaultLobbyColor: "#9900ff",
+    // defaultLobbyColor2: "#5900af",
+
+    defaultUsername: "Anonymous",
     adminpass: process.env.ADMINPASS,
     ssl: process.env.SSL,
     serveFiles: true,
     defaultRoomSettings: {
-        color: "#3b5054",
-        color2: "#001014",
+        // color: "#3b5054",
+        // color2: "#001014",
+
+        color: "#480505",
         crownsolo: false,
         visible: true
-    }
+    },
+
+    hostDevFiles: false,
+    enableMPPCloneBot: true
 });

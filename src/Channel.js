@@ -7,6 +7,7 @@ const RoomSettings = require('./RoomSettings.js');
 const ftc = require('fancy-text-converter');
 const Notification = require('./Notification');
 const Color = require('./Color');
+const { getTimeColor } = require('./ColorEncoder.js');
 
 class Channel extends EventEmitter {
     constructor(server, _id, settings) {
@@ -16,7 +17,16 @@ class Channel extends EventEmitter {
         this.server = server;
         this.crown;
         this.crowndropped = false;
-        this.settings = settings;
+
+        if (this.isLobby(this._id)) {
+            this.settings = new RoomSettings(this.server.lobbySettings);
+            // this.settings.lobby = true;
+            // this.settings.color = this.server.lobbySettings.color;
+            // this.settings.color2 = this.server.lobbySettings.color2;
+        } else {
+            this.settings = new RoomSettings(settings, 'user');
+        }
+
         this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
@@ -32,8 +42,8 @@ class Channel extends EventEmitter {
             if (err) {
                 return;
             }
-            
-            this.settings = set.settings;
+
+            this.settings = RoomSettings.changeSettings(this.settings, true);
             this.chatmsgs = set.chat;
             this.connections.forEach(cl => {
                 cl.sendArray([{
@@ -43,6 +53,13 @@ class Channel extends EventEmitter {
             });
             this.setData();
         });
+
+        if (this.isLobby(this._id)) {
+            this.colorInterval = setInterval(() => {
+                this.setDefaultLobbyColorBasedOnDate();
+            }, 1000 * 60 * 5);
+            this.setDefaultLobbyColorBasedOnDate();
+        }
     }
 
     setChatArray(arr) {
@@ -54,40 +71,67 @@ class Channel extends EventEmitter {
         this.setData();
     }
 
+    setDefaultLobbyColorBasedOnDate() {
+        let col = getTimeColor();
+        let col2 = new Color(col.r - 0x40, col.g - 0x40, col.b - 0x40);
+
+        this.settings.changeSettings({
+            color: col.toHexa(),
+            color2: col2.toHexa()
+        });
+
+        for (let key in this.settings) {
+            this.server.lobbySettings[key] = this.settings[key];
+        }
+
+        this.emit('update');
+    }
+
     join(cl, set) { //this stuff is complicated
         let otheruser = this.connections.find((a) => a.user._id == cl.user._id)
         if (!otheruser) {
+            // we don't exist yet
+            // create id hash
             let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
 
+            // set id
             cl.user.id = participantId;
             cl.participantId = participantId;
+
+            // init quotas (TODO pass type of room in?)
             cl.initParticipantQuotas();
-            
-            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) { //user that created the room, give them the crown.
+
+            // no users / already had crown? give crown
+            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) {
+                // user owns the room
+                // we need to switch the crown to them
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
                 this.crown = new Crown(cl.participantId, cl.user._id);
 
                 this.crowndropped = false;
-                this.settings = new RoomSettings(set, 'user');
+                // this.settings = new RoomSettings(set, 'user');
             } else {
                 //cl.quotas.a.setParams(Quota.PARAMS_A_NORMAL);
 
-                if (this.isLobby(this._id)) {
-                    this.settings = new RoomSettings(this.server.lobbySettings, 'user');
-                    this.settings.visible = true;
-                    this.settings.crownsolo = false;
-                    this.settings.color = this.server.lobbySettings.color;
-                    this.settings.color2 = this.server.lobbySettings.color2;
-                    this.settings.lobby = true;
+                if (this.isLobby(this._id) && this.settings.lobby !== true) {
+                    // fix lobby setting
+                    this.settings.changeSettings({lobby: true});
+                    // this.settings.visible = true;
+                    // this.settings.crownsolo = false;
+                    // this.settings.lobby = true;
+                    // this.settings.color = this.server.lobbySettings.color;
+                    // this.settings.color2 = this.server.lobbySettings.color2;
                 } else {
-                    if (typeof(set) == 'undefined') {
-                        if (typeof(this.settings) == 'undefined') {
-                            this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                    if (!this.isLobby) {
+                        if (typeof(set) == 'undefined') {
+                            if (typeof(this.settings) == 'undefined') {
+                                this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                            } else {
+                                this.settings = new RoomSettings(cl.channel.settings, 'user');
+                            }
                         } else {
-                            this.settings = new RoomSettings(cl.channel.settings, 'user');
+                            this.settings = new RoomSettings(set, 'user');
                         }
-                    } else {
-                        this.settings = new RoomSettings(set, 'user');
                     }
                 }
             }
@@ -96,21 +140,25 @@ class Channel extends EventEmitter {
 
             this.connections.push(cl);
 
-            if (!cl.hidden) {
+            cl.sendArray([{
+                m: "c",
+                c: this.chatmsgs.slice(-1 * 32)
+            }]);
+
+            // this.updateCh(cl, this.settings);
+
+            if (!cl.user.hasFlag("hidden", true)) {
                 this.sendArray([{
-                    color: this.ppl.get(cl.participantId).user.color,
-                    id: this.ppl.get(cl.participantId).participantId,
-                    m: "p",
-                    name: this.ppl.get(cl.participantId).user.name,
+                    m: 'p',
+                    _id: cl.user._id,
+                    name: cl.user.name,
+                    color: cl.user.color,
+                    id: cl.participantId,
                     x: this.ppl.get(cl.participantId).x || 200,
-                    y: this.ppl.get(cl.participantId).y || 100,
-                    _id: cl.user._id
-                }], cl, false)
-                cl.sendArray([{
-                    m: "c",
-                    c: this.chatmsgs.slice(-1 * 32)
-                }]);
+                    y: this.ppl.get(cl.participantId).y || 100
+                }], cl, false);
             }
+
             this.updateCh(cl, this.settings);
         } else {
             cl.user.id = otheruser.participantId;
@@ -123,9 +171,40 @@ class Channel extends EventEmitter {
             }])
             this.updateCh(cl, this.settings);
         }
+
+        if (this.flags.spin == true) {
+            this.spin(cl);
+        }
     }
 
-    remove(p) { //this is complicated too
+    spin(cl) { // speeeeeeen
+        let id = cl.user._id;
+        if (!id) id = "room";
+        this.Notification(id,
+            "",
+            ``,
+            `<script>$("#piano").addClass("spin")</script>`,
+            1,
+            "#names",
+            "short"
+        );
+    }
+
+    stopSpin(cl) {
+        let id = cl.user._id;
+        if (!id) id = "room";
+        this.Notification(id,
+            "",
+            ``,
+            `<script>$("#piano").removeClass("spin")</script>`,
+            1,
+            "#names",
+            "short"
+        );
+    }
+
+    remove(p) { // remove user
+        if (!p) return;
         let otheruser = this.connections.filter((a) => a.user._id == p.user._id);
         if (!(otheruser.length > 1)) {
             this.ppl.delete(p.participantId);
@@ -145,11 +224,11 @@ class Channel extends EventEmitter {
 
     }
 
-    updateCh(cl) { //update channel for all people in channel
+    updateCh(cl, set) { //update channel for all people in channel
         if (Array.from(this.ppl.values()).length <= 0) {
             setTimeout(() => {
                 this.destroy();
-            }, 5000);
+            }, 13000);
         }
 
         this.connections.forEach((usr) => {
@@ -195,6 +274,7 @@ class Channel extends EventEmitter {
     destroy() { //destroy room
         if (this.destroyed) return;
         if (this.ppl.size > 0) return;
+        if (this._id == "lobby") return;
         this.destroyed = true;
         this._id;
         console.log(`Deleted room ${this._id}`);
@@ -209,6 +289,8 @@ class Channel extends EventEmitter {
         this.connections.forEach((usr) => {
             if (!not || (usr.participantId != not.participantId && !onlythisparticipant) || (usr.connectionid != not.connectionid && onlythisparticipant)) {
                 try {
+                    let cl = this.server.connections.get(usr.connectionid);
+                    if (!cl) return;
                     this.server.connections.get(usr.connectionid).sendArray(arr)
                 } catch (e) {
                     console.log(e);
@@ -221,6 +303,20 @@ class Channel extends EventEmitter {
         let chppl = [];
 
         [...this.ppl.values()].forEach(c => {
+            if (cl) {
+                if (c.hidden == true && c.user._id !== cl.user._id) {
+                    // client is hidden and we are that client
+                    return;
+                } else if (c.user._id == cl.user._id) {
+                    // let u = {
+                    //     _id: c.user._id,
+                    //     name: c.user.name + ' [HIDDEN]',
+                    //     color: c.user.color,
+                    //     id: c.participantId
+                    // }
+                    // chppl.push(u);
+                }
+            }
             let u = {
                 _id: c.user._id,
                 name: c.user.name,
@@ -304,8 +400,10 @@ class Channel extends EventEmitter {
             this.crown = new Crown(id, prsn.user._id);
             this.crowndropped = false;
         } else {
-            this.crown = new Crown(id, this.crown.userId);
-            this.crowndropped = true;
+            if (this.crown) {
+                this.crown = new Crown(id, this.crown.userId);
+                this.crowndropped = true;
+            }
         }
 
         this.updateCh();
@@ -326,26 +424,33 @@ class Channel extends EventEmitter {
 
     chat(p, msg) {
         if (msg.message.length > 512) return;
+
         let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
         let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
         if (regexp.test(msg.message.split(' ').join(''))) return;
+        
         if (p.participantId == 0) {
             let message = {};
+
             message.m = "a";
+            message.t = Date.now();
             message.a = msg.message;
+
             message.p = {
                 color: "#ffffff",
                 id: "0",
                 name: "mpp",
                 _id: "0"
             };
-            message.t = Date.now();
+
+
             this.sendArray([message]);
 
             this.chatmsgs.push(message);
             this.setData();
             return;
         }
+
         let prsn = this.ppl.get(p.participantId);
         if (!prsn) return;
         let message = {};
@@ -382,6 +487,7 @@ class Channel extends EventEmitter {
                 this.adminChat("pong");
                 break;
             case "!setcolor":
+            case "!color":
                 if (!isAdmin) {
                     this.adminChat("You do not have permission to use this command.");
                     return;
@@ -394,7 +500,7 @@ class Channel extends EventEmitter {
                             color: c.toHexa(),
                             _id: p.user._id
                         }, true);
-                        this.adminChat(`Your color is now: ${c.getName()} [${c.toHexa()}]`);
+                        this.adminChat(`Your color is now ${c.getName().replace('A', 'a')} [${c.toHexa()}]`);
                     } else {
                         let winner = this.server.getAllClientsByUserID(args[2])[0];
                         if (winner) {
@@ -412,6 +518,27 @@ class Channel extends EventEmitter {
                 }
                 this.updateCh();
                 break;
+            case "!users":
+                this.adminChat(`There are ${this.server.connections.size} users online.`);
+                break;
+            case "!chown":
+                if (!isAdmin) return;
+                let id = p.participantId;
+                if (args[1]) {
+                    id = args[1];
+                }
+                if (this.hasUser(id)) {
+                    this.chown(id);
+                }
+                break;
+            case "!chlist":
+            case "!channellist":
+                if (!isAdmin) return;
+                this.adminChat("Channels:");
+                for (let [_id] of this.server.rooms) {
+                    this.adminChat(`- ${_id}`);
+                }
+                break;
         }
     }
 
@@ -423,12 +550,37 @@ class Channel extends EventEmitter {
         });
     }
 
+    hasUser(id) {
+        return this.ppl.has(id);
+    }
+
     playNote(cl, note) {
-        let vel = Math.round(cl.user.flags["volume"])/100 || undefined;
+        if (cl.user.hasFlag('mute', true)) {
+            return;
+        }
+
+        if (cl.user.hasFlag('mute')) {
+            if (Array.isArray(cl.user.flags['mute'])) {
+                if (cl.user.flags['mute'].includes(this._id)) return;
+            }
+        }
+
+        let vol;
+
+        if (cl.user.hasFlag('volume')) {
+            vol = Math.round(cl.user.flags["volume"]) / 100;
+        }
+
         
-        if (vel) {
+        if (typeof vol == 'number') {
             for (let no of note.n) {
-                no.v /= vel;
+                if (no.v) {
+                    if (vol == 0) {
+                        no.v = vol;
+                    } else {
+                        no.v *= vol;
+                    }
+                }
             }
         }
 
@@ -495,6 +647,20 @@ class Channel extends EventEmitter {
         })
     }
 
+    unban(_id) {
+        this.connections.filter((usr) => usr.participantId == user.participantId).forEach(u => {
+            if (user.bantime) {
+                delete user.bantime;
+            }
+
+            if (user.bannedtime) {
+                delete user.bannedtime;
+            }
+
+            this.bans.delete(user.user._id);
+        });
+    }
+
     Notification(who, title, text, html, duration, target, klass, id) {
         new Notification({
             id: id,
@@ -512,15 +678,39 @@ class Channel extends EventEmitter {
     bindEventListeners() {
         this.on("bye", participant => {
             this.remove(participant);
-        })
+        });
 
-        this.on("m", (participant, x, y) => {
-            this.setCoords(participant, x, y);
-        })
+        this.on("m", msg => {
+            let p = this.ppl.get(msg.p);
+            if (!p) return;
+            this.setCoords(p, msg.x, msg.y);
+        });
 
         this.on("a", (participant, msg) => {
             this.chat(participant, msg);
-        })
+        });
+
+        this.on("update", (cl, set) => {
+            this.updateCh(cl, set);
+        });
+
+        this.on("remove crown", () => {
+            this.crown = undefined;
+            delete this.crown;
+            this.emit('update');
+        });
+
+        this.on("flag spin", spin => {
+            if (spin) {
+                for (let cl of this.connections) {
+                    this.spin(cl);
+                }
+            } else {
+                for (let cl of this.connections) {
+                    this.stopSpin(cl);
+                }
+            }
+        });
     }
 
     verifySet(_id, msg) {
