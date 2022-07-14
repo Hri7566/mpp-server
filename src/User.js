@@ -36,7 +36,6 @@ class User {
             this.cl.server.specialIntervals[this._id] = {};
         }
         if (this.hasFlag('rainbow', true)) {
-            console.log('rainbow on for ' + this._id);
             if (!this.cl.server.specialIntervals[this._id].hasOwnProperty('rainbow')) {
                 let h = Math.floor(Math.random() * 360);
                 let s = 50;
@@ -65,21 +64,34 @@ class User {
                     Database.updateUser(this._id, this);
 
                     this.cl.channel.updateParticipant(this._id, this);
-                }, 1000/15);
+                }, 1000 / 15);
             }
         } else if (this.hasFlag('rainbow', false)) {
-            console.log('rainbow off for ' + this._id);
-            clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
+            this.stopFlagEvents();
         }
     }
 
     stopFlagEvents() {
-        clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
+        let ints = this.cl.server.specialIntervals[this._id];
+        if (!ints) {
+            this.cl.server.specialIntervals[this._id] = {};
+            ints = this.cl.server.specialIntervals[this._id];
+        }
+        if ('rainbow' in ints) {
+            clearInterval(this.cl.server.specialIntervals[this._id].rainbow);
+            delete this.cl.server.specialIntervals[this._id].rainbow;
+        }
     }
 
     hasFlag(flag, val) {
         if (!val) return this.flags.hasOwnProperty(flag);
         return this.flags.hasOwnProperty(flag) && this.flags[flag] == val;
+    }
+
+    setFlag(flag, val) {
+        if (typeof(this.flags[flag]) == 'undefined') {
+            this.flags[flag] = val;
+        }
     }
 
     static updateUserModel(cl, user) {

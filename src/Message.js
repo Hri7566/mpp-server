@@ -66,14 +66,28 @@ module.exports = (cl) => {
     });
 
     cl.on("m", (msg, admin) => {
-        if (!cl.hasOwnProperty('channel')) return;
+        // nobody will see our cursor if we're not somewhere
+        if (!('channel' in cl)) return;
+
+        // check against cursor rate limit
         if (!cl.quotas.cursor.attempt() && !admin) return;
-        if (!(cl.channel && cl.participantId)) return;
+
+        // if we are nobody, we don't have a cursor
+        if (!cl.participantId) return;
+
+        // no values? null, not undefined
         if (!msg.hasOwnProperty("x")) msg.x = null;
         if (!msg.hasOwnProperty("y")) msg.y = null;
         if (isNaN(parseFloat(msg.x))) msg.x = null;
         if (isNaN(parseFloat(msg.y))) msg.y = null;
-        cl.channel.emit("m", cl, msg.x, msg.y);
+
+        let m = {
+            p: cl.participantId,
+            x: msg.x,
+            y: msg.y
+        }
+
+        cl.channel.emit("m", m);
     });
 
     cl.on("chown", (msg, admin) => {
@@ -83,7 +97,9 @@ module.exports = (cl) => {
         //console.log((Date.now() - cl.channel.crown.time))
         //console.log(!(cl.channel.crown.userId != cl.user._id), !((Date.now() - cl.channel.crown.time) > 15000));
 
-        if (!(cl.channel.crown.userId == cl.user._id) && !((Date.now() - cl.channel.crown.time) > 15000)) return;
+        if (!cl.channel.crown && !admin) {
+            if (!(cl.channel.crown.userId == cl.user._id) && !((Date.now() - cl.channel.crown.time) > 15000)) return;
+        }
 
         if (msg.hasOwnProperty("id")) {
             // console.log(cl.channel.crown)
@@ -128,11 +144,12 @@ module.exports = (cl) => {
             if (!(cl.user._id == cl.channel.crown.userId)) return;
         }
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = new RoomSettings(cl.channel.settings, 'user');
-        cl.channel.settings.changeSettings(msg.set);
-        cl.channel.updateCh();
+        cl.channel.settings.changeSettings(msg.set, admin);
+        // cl.channel.updateCh();
+        cl.channel.emit('update');
     });
 
-    cl.on("a", (msg, admin) => {
+    cl.on('a', (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('message')) return;
         if (typeof(msg.message) !== 'string') return;
@@ -186,39 +203,40 @@ module.exports = (cl) => {
         cl.server.roomlisteners.delete(cl.connectionid);
     });
 
-    cl.on("userset", msg => {
+    cl.on("userset", (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty("set") || !msg.set) msg.set = {};
         if (msg.set.hasOwnProperty('name') && typeof msg.set.name == "string") {
-            if (msg.set.name.length > 40) return;
-            if(!cl.quotas.userset.attempt()) return;
-            cl.user.name = msg.set.name;
-            Database.getUserData(cl, cl.server).then((usr) => {
-                // let dbentry = Database.userdb.get(cl.user._id);
-                // if (!dbentry) return;
-                // dbentry.name = msg.set.name;
-                // Database.update();
-                Database.updateUser(cl.user._id, cl.user);
-                cl.server.rooms.forEach((room) => {
-                    room.updateParticipant(cl.user._id, {
-                        name: msg.set.name
-                    });
-                })
-            })
-
+            cl.userset(msg.set.name, admin);
         }
     });
 
     cl.on('kickban', msg => {
-        if (cl.channel.crown == null) return;
-        if (!(cl.channel && cl.participantId)) return;
-        if (!cl.channel.crown.userId) return;
-        if (!(cl.user._id == cl.channel.crown.userId)) return;
+        if (!admin) {
+            if (cl.channel.crown == null) return;
+            if (!(cl.channel && cl.participantId)) return;
+            if (!cl.channel.crown.userId) return;
+            if (!(cl.user._id == cl.channel.crown.userId)) return;
+        }
         if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
             if (!cl.quotas.kickban.attempt() && !admin) return;
             let _id = msg._id;
             let ms = msg.ms || 3600000;
             cl.channel.kickban(_id, ms);
+        }
+    });
+
+    cl.on('unban', (msg, admin) => {
+        if (!admin) {
+            if (cl.channel.crown == null) return;
+            if (!(cl.channel && cl.participantId)) return;
+            if (!cl.channel.crown.userId) return;
+            if (!(cl.user._id == cl.channel.crown.userId)) return;
+        }
+        if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
+            if (!cl.quotas.kickban.attempt() && !admin) return;
+            let _id = msg._id;
+            cl.channel.unban(_id);
         }
     });
 
@@ -305,17 +323,23 @@ module.exports = (cl) => {
         });
     });
 
-    cl.on('room_flag', (msg, admin) => {
+    cl.on('channel_flag', (msg, admin) => {
         if (!admin) return;
         if (!msg.hasOwnProperty('_id') || !msg.hasOwnProperty('key') || !msg.hasOwnProperty('value')) return;
         
         try {
             let ch = cl.server.rooms.get(msg._id);
             ch.flags[msg.key] = msg.value;
+            ch.emit('flag ' + msg.key, msg.value);
         } catch(err) {
             console.error(err);
         }
     });
+
+    cl.on('room_flag', (msg, admin) => {
+        if (!admin) return;
+        cl.emit('channel_flag', msg, admin);
+    })
 
     cl.on('clear_chat', (msg, admin) => {
         if (!admin) return;
@@ -357,5 +381,40 @@ module.exports = (cl) => {
                 cl.adminStreamInterval = undefined;
             }
         }
+    });
+
+    cl.on('channel message', (msg, admin) => {
+        if (!admin) return;
+
+        if (!msg.hasOwnProperty('msg')) return;
+        if (typeof msg.msg != 'object') return;
+        if (typeof msg.msg.m != 'string') return;
+
+        if (!cl.channel) return;
+        if (!msg.hasOwnProperty('_id')) msg._id = cl.channel._id;
+
+        let ch = cl.server.rooms.get(msg._id);
+        if (!ch) return;
+        ch.emit(msg.msg.m, msg.msg);
+    });
+
+    cl.on('name', (msg, admin) => {
+        if (!admin) return;
+        
+        if (!msg.hasOwnProperty('_id')) return;
+        if (!msg.hasOwnProperty('name')) return;
+        
+        for (const [mapID, conn] of cl.server.connections) {
+            if (!conn.user) return;
+            if (conn.user._id == msg._id) {
+                let c = conn;
+                c.userset(msg.name, true);
+            }
+        }
+    });
+
+    cl.on('restart', (msg, admin) => {
+        if (!admin) return;
+        cl.server.restart(msg.notification);
     });
 }

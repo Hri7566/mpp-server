@@ -126,9 +126,9 @@ class RoomSettings {
         });
     }
 
-    static changeSettings(set) {
+    static changeSettings(set, admin) {
         Object.keys(set).forEach(key => {
-            if (RoomSettings.allowedProperties[key].allowedChange) {
+            if (RoomSettings.allowedProperties[key].allowedChange || admin == true) {
                 set[key] = RoomSettings.verifyPropertyType(key, set[key], RoomSettings.allowedProperties[key].type);
             }
         });

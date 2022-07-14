@@ -5,7 +5,7 @@ const RateLimit = require('./Ratelimit.js').RateLimit;
 const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
 const User = require("./User.js");
 const Database = require("./Database.js");
-require('node-json-color-stringify');
+const { EventEmitter } = require('events');
 
 class Client extends EventEmitter {
     constructor(ws, req, server) {
@@ -73,9 +73,7 @@ class Client extends EventEmitter {
             if (channel) this.channel.updateCh(this);
 
             this.channel = this.server.rooms.get(_id);
-            if (!this.user.hasFlag("hidden", true)) {
-                this.channel.join(this);
-            }
+            this.channel.join(this);
         } else {
             let room = new Channel(this.server, _id, settings);
             this.server.rooms.set(_id, room);
@@ -90,6 +88,23 @@ class Client extends EventEmitter {
             //console.log(`SEND: `, JSON.colorStringify(arr));
             this.ws.send(JSON.stringify(arr));
         }
+    }
+
+    userset(name, admin) {
+        if (name.length > 40 && !admin) return;
+        if (!this.quotas.userset.attempt()) return;
+        this.user.name = name;
+        Database.getUserData(this, this.server).then((usr) => {
+            if (!this.user.hasFlag('freeze_name', true)) {
+                Database.updateUser(this.user._id, this.user);
+            }
+            
+            this.server.rooms.forEach((room) => {
+                room.updateParticipant(this.user._id, {
+                    name: name
+                });
+            });
+        });
     }
 
     initParticipantQuotas() {
@@ -112,6 +127,7 @@ class Client extends EventEmitter {
     }
 
     destroy() {
+        this.user.stopFlagEvents();
         this.ws.close();
         if (this.channel) {
             this.channel.emit("bye", this);
@@ -169,6 +185,16 @@ class Client extends EventEmitter {
         };
 
         this.sendArray([data]);
+    }
+
+    /**
+     * 
+     * @param {Channel} ch 
+     * @param {Client} cl If this is present, only this client's user data will be sent(?)
+     */
+    sendChannelUpdate(ch, cl) {
+        let msg = ch.fetchChannelData(this, cl);
+        this.sendArray([msg]);
     }
 }
 
