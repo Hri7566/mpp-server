@@ -8,6 +8,7 @@ const ftc = require('fancy-text-converter');
 const Notification = require('./Notification');
 const Color = require('./Color');
 const { getTimeColor } = require('./ColorEncoder.js');
+const { InternalBot } = require('./InternalBot');
 
 class Channel extends EventEmitter {
     constructor(server, _id, settings) {
@@ -468,78 +469,14 @@ class Channel extends EventEmitter {
             name: p.user.name,
             _id: p.user._id
         };
+
         message.t = Date.now();
+
         this.sendArray([message]);
         this.chatmsgs.push(message);
         this.setData();
 
-        let isAdmin = false;
-        if (prsn.user.hasFlag('admin')) {
-            isAdmin = true;
-        }
-
-        let args = message.a.split(' ');
-        let cmd = args[0].toLowerCase();
-        let argcat = message.a.substring(args[0].length).trim();
-
-        switch (cmd) {
-            case "!ping":
-                this.adminChat("pong");
-                break;
-            case "!setcolor":
-            case "!color":
-                if (!isAdmin) {
-                    this.adminChat("You do not have permission to use this command.");
-                    return;
-                }
-                let color = this.verifyColor(args[1]);
-                if (color) {
-                    let c = new Color(color);
-                    if (!args[2]) {
-                        p.emit("color", {
-                            color: c.toHexa(),
-                            _id: p.user._id
-                        }, true);
-                        this.adminChat(`Your color is now ${c.getName().replace('A', 'a')} [${c.toHexa()}]`);
-                    } else {
-                        let winner = this.server.getAllClientsByUserID(args[2])[0];
-                        if (winner) {
-                            p.emit("color", {
-                                color: c.toHexa(),
-                                _id: winner.user._id
-                            }, true);
-                            this.adminChat(`Friend ${winner.user.name}'s color is now ${c.getName().replace('A', 'a')}.`);
-                        } else {
-                            this.adminChat("The friend you are looking for (" + args[2] + ") is not around.");
-                        }
-                    }
-                } else {
-                    this.adminChat("Invalid color.");
-                }
-                this.updateCh();
-                break;
-            case "!users":
-                this.adminChat(`There are ${this.server.connections.size} users online.`);
-                break;
-            case "!chown":
-                if (!isAdmin) return;
-                let id = p.participantId;
-                if (args[1]) {
-                    id = args[1];
-                }
-                if (this.hasUser(id)) {
-                    this.chown(id);
-                }
-                break;
-            case "!chlist":
-            case "!channellist":
-                if (!isAdmin) return;
-                this.adminChat("Channels:");
-                for (let [_id] of this.server.rooms) {
-                    this.adminChat(`- ${_id}`);
-                }
-                break;
-        }
+        InternalBot.emit('receive message', message, prsn, this);
     }
 
     adminChat(str) {
@@ -711,6 +648,14 @@ class Channel extends EventEmitter {
                 }
             }
         });
+
+        this.on("flag among us", amongus => {
+            if (amongus) {
+                this.startAmongUs();
+            } else {
+                this.stopAmongUs();
+            }
+        });
     }
 
     verifySet(_id, msg) {
@@ -742,6 +687,25 @@ class Channel extends EventEmitter {
     hasFlag(flag, val) {
         if (!val) return this.flags.hasOwnProperty(flag);
         return this.flags.hasOwnProperty(flag) && this.flags[flag] == val;
+    }
+
+    async startAmongUs() {
+        if (!this.amongus) {
+            this.amongus = {}
+        }
+
+        if (this.amongus.started) return;
+
+        if (!this.amongus.started) {
+            this.amongus.started = true;
+        }
+
+        let imposter = this.connections[Math.floor(Math.random() * this.connections.length)];
+        imposter.user.setFlag("freeze_name", true);
+    }
+
+    stopAmongUs() {
+        this.amongus.started = false;
     }
 }
 
