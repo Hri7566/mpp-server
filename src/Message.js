@@ -3,6 +3,7 @@ const User = require("./User.js");
 const Channel = require("./Channel.js");
 const RoomSettings = require('./RoomSettings');
 const Database = require('./Database');
+const { MOTDGenerator } = require('./MOTDGenerator');
 
 module.exports = (cl) => {
     cl.once("hi", (msg, admin) => {
@@ -14,7 +15,7 @@ module.exports = (cl) => {
         
         let m = {};
         m.m = "hi";
-        m.motd = cl.server.welcome_motd;
+        m.motd = MOTDGenerator.getCurrentMOTD();
         m.t = Date.now();
         m.u = {
             name: cl.user.name,
@@ -254,6 +255,7 @@ module.exports = (cl) => {
     });
 
     //admin only stuff
+    // TODO move all admin messages to their own stream
     cl.on('color', (msg, admin) => {
         if (!admin) return;
         if (typeof cl.channel.verifyColor(msg.color) != 'string') return;

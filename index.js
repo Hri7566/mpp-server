@@ -21,7 +21,8 @@ global.isObj = function(a) {
 
 let Server = require("./src/Server.js");
 let config = require('./config');
-global.SERVER = new Server(config);
+Server.start(config);
+global.SERVER = Server;
 
 // doesn't work with pm2
 
