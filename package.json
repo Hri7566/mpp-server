@@ -33,6 +33,7 @@
     "mongoose": "^5.12.7",
     "mppclone-client": "^1.0.0",
     "nodemon": "^2.0.15",
+    "unique-names-generator": "^4.7.1",
     "ws": "^7.2.3"
   }
 }
