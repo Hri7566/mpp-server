@@ -1,6 +1,6 @@
 module.exports = Object.seal({
     port: 8443,
-    motd: "big th0nk",
+    motd: "humongous clement",
     _id_PrivateKey: process.env.SALT,
 
     // defaultLobbyColor: "#19b4b9",
