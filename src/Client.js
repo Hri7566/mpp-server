@@ -1,8 +1,7 @@
 const Channel = require("./Channel.js");
 const Quota = require ("./Quota.js");
 const quotas = require('../Quotas');
-const RateLimit = require('./Ratelimit.js').RateLimit;
-const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
+const { RateLimit, RateLimitChain } = require('./Ratelimit.js');
 const User = require("./User.js");
 const Database = require("./Database.js");
 const { EventEmitter } = require('events');
@@ -97,13 +96,13 @@ class Client extends EventEmitter {
         Database.getUserData(this, this.server).then((usr) => {
             if (!this.user.hasFlag('freeze_name', true)) {
                 Database.updateUser(this.user._id, this.user);
-            }
-            
-            this.server.rooms.forEach((room) => {
-                room.updateParticipant(this.user._id, {
-                    name: name
+                
+                this.server.rooms.forEach((room) => {
+                    room.updateParticipant(this.user._id, {
+                        name: name
+                    });
                 });
-            });
+            }
         });
     }
 
@@ -179,10 +178,30 @@ class Client extends EventEmitter {
         this.server.rooms.forEach(ch => {
             channels.push(ch.fetchChannelData());
         });
+
+        let users = [];
+        this.server.connections.forEach(cl => {
+            let u = {
+                p: {
+                    _id: cl.user._id,
+                    name: cl.user.name,
+                    color: cl.user.color,
+                    flags: cl.user.flags,
+                    inventory: cl.user.inventory
+                },
+                id: cl.participantId,
+            }
+
+            users.push(u);
+        });
         
         data.channelManager = {
             channels
         };
+
+        data.clientManager = {
+            users
+        }
 
         this.sendArray([data]);
     }

@@ -364,6 +364,7 @@ module.exports = (cl) => {
         cl.isSubscribedToAdminStream = true;
         let interval = 8000;
         if ('interval_ms' in msg) interval = msg['interval_ms'];
+        cl.sendAdminData();
         cl.adminStreamInterval = setInterval(() => {
             if (cl.isSubscribedToAdminStream == true) cl.sendAdminData();
         }, interval);

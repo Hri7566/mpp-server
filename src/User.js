@@ -19,8 +19,16 @@ class User {
         this.color = data.color;
         this.flags = typeof data.flags == "object" ? data.flags : {
             volume: 100,
-            "no chat rate limit": false
+            "no chat rate limit": false,
+            freeze_name: false
         }
+
+        this.inventory = {
+            'test': {
+                display_name: 'Test',
+                count: 1
+            }
+        };
     }
 
     getPublicUser() {
