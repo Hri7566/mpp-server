@@ -10,8 +10,24 @@ const Color = require('./Color');
 const { getTimeColor } = require('./ColorEncoder.js');
 const { InternalBot } = require('./InternalBot');
 
+function ansiRegex({onlyFirst = false} = {}) {
+	const pattern = [
+		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
+	].join('|');
+
+	return new RegExp(pattern, onlyFirst ? undefined : 'g');
+}
+
+const LOGGER_PARTICIPANT = {
+    name: 'Logger',
+    color: '#72f1b8',
+    _id: 'logger',
+    id: 'logger'
+}
+
 class Channel extends EventEmitter {
-    constructor(server, _id, settings) {
+    constructor(server, _id, settings, cl) {
         super();
         this.logger = new Logger(`Room - ${_id}`);
         this._id = _id;
@@ -39,21 +55,53 @@ class Channel extends EventEmitter {
 
         this.logger.log('Created');
 
-        Database.getRoomSettings(this._id, (err, set) => {
-            if (err) {
-                return;
-            }
+        if (this._id == 'supersecretsettings') {
+            if (cl.user.hasFlag('admin')) {
+                delete this.crown;
 
-            this.settings = RoomSettings.changeSettings(this.settings, true);
-            this.chatmsgs = set.chat;
-            this.connections.forEach(cl => {
-                cl.sendArray([{
-                    m: 'c',
-                    c: this.chatmsgs.slice(-1 * 32)
-                }]);
+                Logger.buffer.forEach(str => {
+                    this.chatmsgs.push({
+                        m: 'a',
+                        p: LOGGER_PARTICIPANT,
+                        a: str.replace(ansiRegex(), '')
+                    });
+                });
+
+                Logger.on('buffer update', (str) => {
+                    this.chatmsgs.push({
+                        m: 'a',
+                        p: LOGGER_PARTICIPANT,
+                        a: str.replace(ansiRegex(), '')
+                    });
+
+                    this.sendChatArray();
+                });
+
+                this.emit('update');
+                let c = new Color(LOGGER_PARTICIPANT.color);
+                c.add(-0x40, -0x40, -0x40);
+                this.settings = RoomSettings.changeSettings({
+                    color: c.toHexa(),
+                    chat: true,
+                    crownsolo: true,
+                    lobby: false,
+                    owner_id: LOGGER_PARTICIPANT._id
+                }, true);
+            } else {
+                cl.setChannel('test/awkward');
+            }
+        } else {
+            Database.getRoomSettings(this._id, (err, set) => {
+                if (err) {
+                    return;
+                }
+
+                this.settings = RoomSettings.changeSettings(this.settings, true);
+                this.chatmsgs = set.chat;
+                this.sendChatArray();
+                this.setData();
             });
-            this.setData();
-        });
+        }
 
         if (this.isLobby(this._id)) {
             this.colorInterval = setInterval(() => {
@@ -70,6 +118,15 @@ class Channel extends EventEmitter {
             c: this.chatmsgs.slice(-1 * 32)
         }]);
         this.setData();
+    }
+
+    sendChatArray() {
+        this.connections.forEach(cl => {
+            cl.sendArray([{
+                m: 'c',
+                c: this.chatmsgs.slice(-1 * 32)
+            }]);
+        });
     }
 
     setDefaultLobbyColorBasedOnDate() {
@@ -103,7 +160,7 @@ class Channel extends EventEmitter {
             cl.initParticipantQuotas();
 
             // no users / already had crown? give crown
-            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id)) {
+            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id || this.settings['owner_id'] == cl.user._id)) {
                 // user owns the room
                 // we need to switch the crown to them
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
@@ -278,7 +335,7 @@ class Channel extends EventEmitter {
         if (this._id == "lobby") return;
         this.destroyed = true;
         this._id;
-        console.log(`Deleted room ${this._id}`);
+        this.logger.log(`Deleted room ${this._id}`);
         this.settings = undefined;
         this.ppl;
         this.connnections;

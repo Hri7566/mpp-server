@@ -1,5 +1,6 @@
 const { EventEmitter } = require('events');
 const { Command } = require('./Command');
+const Color = require('../Color');
 
 class InternalBot {
     static on = EventEmitter.prototype.on;
@@ -26,15 +27,18 @@ class InternalBot {
             }
 
             let args = msg.a.split(' ');
-            let cmd = args[0].toLowerCase();
+            let cmd = args[0].toLowerCase().substring(this.prefix.length);
             let argcat = msg.a.substring(args[0].length).trim();
+            let p = cl;
+
+            if (!args[0].startsWith(this.prefix)) return;
     
             switch (cmd) {
-                case "!ping":
-                    ch.adminChat("pong");
+                case "ping":
+                    ch.adminChat('pong');
                     break;
-                case "!setcolor":
-                case "!color":
+                case "setcolor":
+                case "color":
                     if (!isAdmin) {
                         ch.adminChat("You do not have permission to use this command.");
                         return;
@@ -65,10 +69,10 @@ class InternalBot {
                     }
                     ch.updateCh();
                     break;
-                case "!users":
+                case "users":
                     ch.adminChat(`There are ${ch.server.connections.size} users online.`);
                     break;
-                case "!chown":
+                case "chown":
                     if (!isAdmin) return;
                     let id = p.participantId;
                     if (args[1]) {
@@ -78,13 +82,21 @@ class InternalBot {
                         ch.chown(id);
                     }
                     break;
-                case "!chlist":
-                case "!channellist":
+                case "chlist":
+                case "channellist":
                     if (!isAdmin) return;
                     ch.adminChat("Channels:");
                     for (let [_id] of ch.server.rooms) {
                         ch.adminChat(`- ${_id}`);
                     }
+                    break;
+                case "restart":
+                    if (!isAdmin) return;
+                    cl.server.restart();
+                    break;
+                case "eval":
+                    if (!isAdmin) return;
+                    cl.server.eval(argcat);
                     break;
             }
         });
