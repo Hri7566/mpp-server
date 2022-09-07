@@ -7,6 +7,12 @@ const Database = require("./Database.js");
 const { EventEmitter } = require('events');
 
 class Client extends EventEmitter {
+    /**
+     * Server-side client representation
+     * @param {*} ws WebSocket object
+     * @param {*} req WebSocket request
+     * @param {*} server Server
+     */
     constructor(ws, req, server) {
         super();
         EventEmitter.call(this);
@@ -35,14 +41,28 @@ class Client extends EventEmitter {
         });
     }
 
+    /**
+     * Check if user is connected
+     * @returns boolean
+     */
     isConnected() {
         return this.ws && this.ws.readyState === WebSocket.OPEN;
     }
 
+    /**
+     * Check if user is connecting
+     * @returns boolean
+     */
     isConnecting() {
         return this.ws && this.ws.readyState === WebSocket.CONNECTING;
     }
 
+    /**
+     * Move user to channel
+     * @param {string} _id User ID
+     * @param {*} settings Settings object
+     * @returns undefined
+     */
     setChannel(_id, settings) {
         if (this.channel && this.channel._id == _id) return;
         if (this.server.rooms.get(_id)) {
@@ -74,7 +94,7 @@ class Client extends EventEmitter {
             this.channel = this.server.rooms.get(_id);
             this.channel.join(this);
         } else {
-            let room = new Channel(this.server, _id, settings);
+            let room = new Channel(this.server, _id, settings, this);
             this.server.rooms.set(_id, room);
             if (this.channel) this.channel.emit("bye", this);
             this.channel = this.server.rooms.get(_id);
@@ -82,6 +102,10 @@ class Client extends EventEmitter {
         }
     }
 
+    /**
+     * Send data to client
+     * @param {any[]} arr Array of messages
+     */
     sendArray(arr) {
         if (this.isConnected()) {
             //console.log(`SEND: `, JSON.colorStringify(arr));
@@ -89,6 +113,12 @@ class Client extends EventEmitter {
         }
     }
 
+    /**
+     * Set username in database
+     * @param {string} name Username
+     * @param {boolean} admin Is admin?
+     * @returns undefined
+     */
     userset(name, admin) {
         if (name.length > 40 && !admin) return;
         if (!this.quotas.userset.attempt()) return;
@@ -106,6 +136,9 @@ class Client extends EventEmitter {
         });
     }
 
+    /**
+     * Set rate limits
+     */
     initParticipantQuotas() {
         this.quotas = {
             //"chat": new Quota(Quota.PARAMS_A_NORMAL),
@@ -125,6 +158,9 @@ class Client extends EventEmitter {
         }
     }
 
+    /**
+     * Stop the client
+     */
     destroy() {
         this.user.stopFlagEvents();
         this.ws.close();
@@ -140,6 +176,9 @@ class Client extends EventEmitter {
         this.destroied = true;
     }
 
+    /**
+     * Internal
+     */
     bindEventListeners() {
         this.ws.on("message", (evt, admin) => {
             try {
@@ -170,6 +209,9 @@ class Client extends EventEmitter {
         });
     }
 
+    /**
+     * Send admin data bus message
+     */
     sendAdminData() {
         let data = {};
         data.m = "data";
