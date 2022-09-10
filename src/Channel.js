@@ -26,6 +26,8 @@ const LOGGER_PARTICIPANT = {
     id: 'logger'
 }
 
+const LOGGING_CHANNEL = 'lolwutsecretloggingchannel';
+
 class Channel extends EventEmitter {
     constructor(server, _id, settings, cl) {
         super();
@@ -55,7 +57,7 @@ class Channel extends EventEmitter {
 
         this.logger.log('Created');
 
-        if (this._id == 'supersecretsettings') {
+        if (this._id == LOGGING_CHANNEL) {
             if (cl.user.hasFlag('admin')) {
                 delete this.crown;
 
