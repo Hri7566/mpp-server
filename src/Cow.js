@@ -1,4 +1,4 @@
-const ung = requre('unique-names-generator');
+const ung = require('unique-names-generator');
 
 const ung_config = {
     dictionaries: [ung.adjectives, ung.colors],
