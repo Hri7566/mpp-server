@@ -96,7 +96,7 @@ class InternalBot {
                     break;
                 case "eval":
                     if (!isAdmin) return;
-                    cl.server.ev(argcat);
+                    cl.server.eval(argcat);
                     break;
             }
         });
