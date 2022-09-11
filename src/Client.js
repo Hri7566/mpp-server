@@ -122,8 +122,8 @@ class Client extends EventEmitter {
     userset(name, admin) {
         if (name.length > 40 && !admin) return;
         if (!this.quotas.userset.attempt()) return;
-        if (!this.user.hasFlag('freeze_name', true)) {
-        this.user.name = name;
+        if (!this.user.hasFlag('freeze_name', true) || admin) {
+            this.user.name = name;
             Database.getUserData(this, this.server).then((usr) => {
                 Database.updateUser(this.user._id, this.user);
                 

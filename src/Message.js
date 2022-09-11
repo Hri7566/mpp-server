@@ -247,7 +247,6 @@ module.exports = (cl) => {
     });
 
     cl.on("admin message", msg => {
-        console.log(msg);
         // if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('password') || !msg.hasOwnProperty('msg')) return;
         if (typeof msg.msg != 'object') return;
