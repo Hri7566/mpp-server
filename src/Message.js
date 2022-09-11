@@ -247,7 +247,8 @@ module.exports = (cl) => {
     });
 
     cl.on("admin message", msg => {
-        if (!(cl.channel && cl.participantId)) return;
+        console.log(msg);
+        // if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('password') || !msg.hasOwnProperty('msg')) return;
         if (typeof msg.msg != 'object') return;
         if (msg.password !== cl.server.adminpass) return;
@@ -258,7 +259,8 @@ module.exports = (cl) => {
     // TODO move all admin messages to their own stream
     cl.on('color', (msg, admin) => {
         if (!admin) return;
-        if (typeof cl.channel.verifyColor(msg.color) != 'string') return;
+        if (!msg.color) return;
+        // if (typeof cl.channel.verifyColor(msg.color) != 'string') return;
         if (!msg.hasOwnProperty('id') && !msg.hasOwnProperty('_id')) return;
         cl.server.connections.forEach(c => {
             if (c.destroied) return;

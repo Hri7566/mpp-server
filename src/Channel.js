@@ -135,10 +135,8 @@ class Channel extends EventEmitter {
         let col = getTimeColor();
         let col2 = new Color(col.r - 0x40, col.g - 0x40, col.b - 0x40);
 
-        this.settings.changeSettings({
-            color: col.toHexa(),
-            color2: col2.toHexa()
-        });
+        this.settings.color = col.toHexa();
+        this.settings.color2 = col.toHexa();
 
         for (let key in this.settings) {
             this.server.lobbySettings[key] = this.settings[key];

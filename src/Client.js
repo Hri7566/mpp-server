@@ -122,9 +122,9 @@ class Client extends EventEmitter {
     userset(name, admin) {
         if (name.length > 40 && !admin) return;
         if (!this.quotas.userset.attempt()) return;
+        if (!this.user.hasFlag('freeze_name', true)) {
         this.user.name = name;
-        Database.getUserData(this, this.server).then((usr) => {
-            if (!this.user.hasFlag('freeze_name', true)) {
+            Database.getUserData(this, this.server).then((usr) => {
                 Database.updateUser(this.user._id, this.user);
                 
                 this.server.rooms.forEach((room) => {
@@ -132,8 +132,8 @@ class Client extends EventEmitter {
                         name: name
                     });
                 });
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -218,7 +218,15 @@ class Client extends EventEmitter {
 
         let channels = [];
         this.server.rooms.forEach(ch => {
-            channels.push(ch.fetchChannelData());
+            let ppl = [];
+            for (let p of ch.fetchChannelData().ppl) {
+                ppl.push({
+                    user: p
+                });
+            }
+            channels.push({
+                participants: ppl
+            });
         });
 
         let users = [];
