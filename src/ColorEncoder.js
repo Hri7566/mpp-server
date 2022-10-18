@@ -58,6 +58,9 @@ function getTimeColor(currentDate = new Date()) {
     let differenceInTime = (currentDate - newYearsDay) + ((newYearsDay.getTimezoneOffset() - currentDate.getTimezoneOffset()) * 60 * 1000);
     let oneDayInMS = 1000 * 60 * 60 * 24;
     let dayOfYear = Math.ceil(differenceInTime / oneDayInMS);
+    dayOfYear %= 365;
+
+    console.log(dayOfYear);
 
     // get hour
     let hours = currentDate.getHours();
