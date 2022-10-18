@@ -1,6 +1,6 @@
 module.exports = Object.seal({
     port: 8443,
-    motd: "big th0nk",
+    motd: "humongous clement",
     _id_PrivateKey: process.env.SALT,
 
     // defaultLobbyColor: "#19b4b9",
@@ -13,6 +13,7 @@ module.exports = Object.seal({
     defaultUsername: "Anonymous",
     adminpass: process.env.ADMINPASS,
     ssl: process.env.SSL,
+    serveFiles: true,
     defaultRoomSettings: {
         // color: "#3b5054",
         // color2: "#001014",

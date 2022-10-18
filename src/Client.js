@@ -1,13 +1,18 @@
 const Channel = require("./Channel.js");
 const Quota = require ("./Quota.js");
 const quotas = require('../Quotas');
-const RateLimit = require('./Ratelimit.js').RateLimit;
-const RateLimitChain = require('./Ratelimit.js').RateLimitChain;
+const { RateLimit, RateLimitChain } = require('./Ratelimit.js');
 const User = require("./User.js");
 const Database = require("./Database.js");
-require('node-json-color-stringify');
+const { EventEmitter } = require('events');
 
 class Client extends EventEmitter {
+    /**
+     * Server-side client representation
+     * @param {*} ws WebSocket object
+     * @param {*} req WebSocket request
+     * @param {*} server Server
+     */
     constructor(ws, req, server) {
         super();
         EventEmitter.call(this);
@@ -36,14 +41,28 @@ class Client extends EventEmitter {
         });
     }
 
+    /**
+     * Check if user is connected
+     * @returns boolean
+     */
     isConnected() {
         return this.ws && this.ws.readyState === WebSocket.OPEN;
     }
 
+    /**
+     * Check if user is connecting
+     * @returns boolean
+     */
     isConnecting() {
         return this.ws && this.ws.readyState === WebSocket.CONNECTING;
     }
 
+    /**
+     * Move user to channel
+     * @param {string} _id User ID
+     * @param {*} settings Settings object
+     * @returns undefined
+     */
     setChannel(_id, settings) {
         if (this.channel && this.channel._id == _id) return;
         if (this.server.rooms.get(_id)) {
@@ -75,7 +94,7 @@ class Client extends EventEmitter {
             this.channel = this.server.rooms.get(_id);
             this.channel.join(this);
         } else {
-            let room = new Channel(this.server, _id, settings);
+            let room = new Channel(this.server, _id, settings, this);
             this.server.rooms.set(_id, room);
             if (this.channel) this.channel.emit("bye", this);
             this.channel = this.server.rooms.get(_id);
@@ -83,6 +102,10 @@ class Client extends EventEmitter {
         }
     }
 
+    /**
+     * Send data to client
+     * @param {any[]} arr Array of messages
+     */
     sendArray(arr) {
         if (this.isConnected()) {
             //console.log(`SEND: `, JSON.colorStringify(arr));
@@ -90,6 +113,36 @@ class Client extends EventEmitter {
         }
     }
 
+    /**
+     * Set username in database
+     * @param {string} name Username
+     * @param {boolean} admin Is admin?
+     * @returns undefined
+     */
+    userset(name, admin) {
+        if (name.length > 40 && !admin) return;
+        if (this.quotas.userset) {
+            if (!this.quotas.userset.attempt()) return;
+        }
+        if (!this.user.hasFlag('freeze_name', true) || admin) {
+            this.user.name = name;
+            if (!this.user.hasFlag('freeze_name', true)) {
+                Database.getUserData(this, this.server).then((usr) => {
+                    Database.updateUser(this.user._id, this.user);
+                    
+                    this.server.rooms.forEach((room) => {
+                        room.updateParticipant(this.user._id, {
+                            name: name
+                        });
+                    });
+                });
+            }
+        }
+    }
+
+    /**
+     * Set rate limits
+     */
     initParticipantQuotas() {
         this.quotas = {
             //"chat": new Quota(Quota.PARAMS_A_NORMAL),
@@ -109,6 +162,9 @@ class Client extends EventEmitter {
         }
     }
 
+    /**
+     * Stop the client
+     */
     destroy() {
         this.user.stopFlagEvents();
         this.ws.close();
@@ -124,6 +180,9 @@ class Client extends EventEmitter {
         this.destroied = true;
     }
 
+    /**
+     * Internal
+     */
     bindEventListeners() {
         this.ws.on("message", (evt, admin) => {
             try {
@@ -154,20 +213,61 @@ class Client extends EventEmitter {
         });
     }
 
+    /**
+     * Send admin data bus message
+     */
     sendAdminData() {
         let data = {};
         data.m = "data";
 
         let channels = [];
         this.server.rooms.forEach(ch => {
-            channels.push(ch.fetchChannelData());
+            let ppl = [];
+            for (let p of ch.fetchChannelData().ppl) {
+                ppl.push({
+                    user: p
+                });
+            }
+            channels.push({
+                participants: ppl
+            });
+        });
+
+        let users = [];
+        this.server.connections.forEach(cl => {
+            let u = {
+                p: {
+                    _id: cl.user._id,
+                    name: cl.user.name,
+                    color: cl.user.color,
+                    flags: cl.user.flags,
+                    inventory: cl.user.inventory
+                },
+                id: cl.participantId,
+            }
+
+            users.push(u);
         });
         
         data.channelManager = {
             channels
         };
 
+        data.clientManager = {
+            users
+        }
+
         this.sendArray([data]);
+    }
+
+    /**
+     * 
+     * @param {Channel} ch 
+     * @param {Client} cl If this is present, only this client's user data will be sent(?)
+     */
+    sendChannelUpdate(ch, cl) {
+        let msg = ch.fetchChannelData(this, cl);
+        this.sendArray([msg]);
     }
 }
 

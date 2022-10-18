@@ -5,11 +5,17 @@ const http = require("http");
 const fs = require('fs');
 const RoomSettings = require('./RoomSettings');
 const Logger = require("./Logger.js");
+const Notification = require('./Notification');
 
-class Server extends EventEmitter {
-    constructor(config) {
-        super();
-        EventEmitter.call(this);
+class Server {
+    static on = EventEmitter.prototype.on;
+    static off = EventEmitter.prototype.off;
+    static emit = EventEmitter.prototype.emit;
+    static once = EventEmitter.prototype.once;
+
+    static start(config) {
+        // super();
+        // EventEmitter.call(this);
 
         this.logger = new Logger("Server");
         
@@ -24,7 +30,8 @@ class Server extends EventEmitter {
                 server: this.https_server,
                 backlog: 100,
                 verifyClient: (info) => {
-                    if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                    const ip = (info.req.connection.remoteAddress).replace("::ffff:", "");
+                    if (banned.includes(ip)) return false;
                     return true;
                 }
             });
@@ -35,7 +42,8 @@ class Server extends EventEmitter {
                 port: config.port,
                 backlog: 100,
                 verifyClient: (info) => {
-                    if (banned.includes((info.req.connection.remoteAddress).replace("::ffff:", ""))) return false;
+                    const ip = (info.req.connection.remoteAddress).replace("::ffff:", "");
+                    if (banned.includes(ip)) return false;
                     return true;
                 }
             });
@@ -88,17 +96,19 @@ class Server extends EventEmitter {
             "unsubscribe from admin stream",
             "data",
             "channel message",
-            "channel_flag"
+            "channel_flag",
+            "name",
+            "restart"
         ];
 
-        this.welcome_motd = config.motd || "You agree to read this message.";
+        // this.welcome_motd = config.motd || "You agree to read this message.";
 
         this._id_Private_Key = config._id_PrivateKey || "amogus";
 
         this.adminpass = config.adminpass || "123123sucks";
     }
 
-    updateRoom(data) {
+    static updateRoom(data) {
         if (!data.ch.settings.visible) return;
 
         for (let cl of Array.from(this.roomlisteners.values())) {
@@ -114,7 +124,7 @@ class Server extends EventEmitter {
         }
     }
 
-    ev(str) {
+    static ev(str) {
         let out = "";
         try {
             out = eval(str);
@@ -124,23 +134,40 @@ class Server extends EventEmitter {
         console.log(out);
     }
 
-    getClient(id) {
+    static getClient(id) {
         return this.connections.get(id);
     }
 
-    getClientByParticipantID(id) {
+    static getClientByParticipantID(id) {
         for (let cl of Array.from(this.connections.values())) {
             if (cl.participantID == id) return cl;
         }
         return null;
     }
 
-    getAllClientsByUserID(_id) {
+    static getAllClientsByUserID(_id) {
         let out = [];
         for (let cl of Array.from(this.connections.values())) {
             if (cl.user._id == _id) out.push(cl);
         }
         return out;
+    }
+
+    static restart(notif = {
+        m: "notification",
+        id: "server-restart",
+        title: "Notice",
+        text: "The server will restart in a few moments.",
+        target: "#piano",
+        duration: 20000,
+        class: "classic",
+    }) {
+        let n = new Notification(notif);
+        n.send("all", this.rooms.get('lobby'));
+
+        setTimeout(() => {
+            process.exit();
+        }, n.duration || 20000);
     }
 }
 

@@ -12,11 +12,13 @@ var logger = new Logger("Database");
 
 mongoose.connect(process.env.MONGO_URL, {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    connectTimeoutMS: 1000
 }, err => {
     if (err) {
         console.error(err);
-        return;
+        logger.error("Unable to connect to database service");
+        process.exit(1);
     }
     logger.log("Connected");
 });
