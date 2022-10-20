@@ -1,0 +1,19 @@
+channels:
+  lobbyBackdoor: lolwutsecretlobbybackdoor
+
+server:
+  hostFiles: true
+  staticPath: mpp.hri7566.info
+  tls: false
+  keyPath: ./ssl/key.pem
+  certPath: ./ssl/cert.pem
+  port: 8443
+
+mppcBot:
+  enable: false
+
+users:
+  defaultFlags:
+    - volume: 100
+    - freeze_name: false
+  defaultName: Anonymous
