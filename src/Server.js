@@ -8,6 +8,7 @@ const https = require('https');
 const express = require('express');
 const uWebSockets = require('uWebSockets.js');
 const expressify = require('uwebsockets-express');
+const { ServerClient } = require('./ServerClient');
 
 const CONFIG_PATH = path.resolve(__dirname, '../config.yml');
 
@@ -22,11 +23,25 @@ try {
     }
 }
 
-class Server extends EventEmitter {
+class Server {
+    static on = EventEmitter.prototype.on;
+    static off = EventEmitter.prototype.off;
+    static once = EventEmitter.prototype.once;
+    static emit = EventEmitter.prototype.emit;
+    
     static config = serverConfig;
-    static logger = new Logger('Server', Logger.GREEN);
+    
+    static INCOMING_MESSAGES = [
+        'hi',
+        'bye',
+        'data',
+        't'
+    ];
+
+    static motd = this.config.server.motd || 'flask zengytes';
 
     static async start() {
+        this.logger = new Logger('Server', Logger.GREEN);
         this.logger.log('Starting...');
 
         if (this.config.server.tls == true || process.env.TLS == 'true') {
@@ -63,62 +78,54 @@ class Server extends EventEmitter {
             idleTimeout: 32,
             maxBackpressure: 1024,
             maxPayloadLength: 2048,
-            message: this.handleWSMessage
+            message: (...args) => this.handleWSMessage(...args),
+            open: ws => this.handleConnection(ws)
         }).listen(this.config.server.port, listen => {
             if (listen) {
                 this.logger.log(`Server started on port ${this.config.server.port}`);
             }
         });
+
+        this.on('hi', () => {
+
+        });
+
+        this.on('bye', () => {
+
+        });
+
+        this.on('t', (ws, msg) => {
+            console.log(msg);
+            ws.send(JSON.stringify([{
+                m: 't',
+                t: Date.now(),
+                e: msg.e
+            }]));
+        });
     }
 
     static async handleWSMessage(ws, message, isBinary) {
-        let jmsgs;
         let msgs;
-        
-        try {
-            jmsgs = Buffer.from(message).toString();
-            msgs = JSON.parse(jmsgs);
-        } catch (err) {}
 
-        let user = {
-            name: 'Anonymous',
-            color: '#8d3f50',
-            _id: 0,
-            id: 0
+        try {
+            msgs = JSON.parse(Buffer.from(message).toString());
+        } catch (err) {
+            this.logger.log("Invalid message received");
+            return;
         }
 
+        for (let msg of msgs) {
+            if (typeof msg.m == 'undefined') return;
+            
+        }
+    }
+
+    static async handleConnection(ws) {
         try {
-            for (let msg of msgs) {
-                console.log(msg);
-
-                switch (msg.m) {
-                    case 'hi':
-                        ws.send(JSON.stringify({
-                            m: 'hi',
-                            u: user,
-                            t: Date.now()
-                        }));
-
-                        ws.send(JSON.stringify({
-                            m: 'ch',
-                            ch: {
-                                _id: 'lobby',
-                                settings: {
-                                    lobby: true,
-                                    chat: true
-                                }
-                            },
-                            ppl: [
-                                user
-                            ],
-                            count: 1,
-                            id: 0
-                        }));
-                        
-                        break;
-                }
-            }
-        } catch (err) {}
+            let cl = new ServerClient(ws);
+        } catch (err) {
+            this.logger.warn('Unable to create client')
+        }
     }
 }
 

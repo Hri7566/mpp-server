@@ -8,6 +8,7 @@ server:
   keyPath: ./ssl/key.pem
   certPath: ./ssl/cert.pem
   port: 8443
+  motd: flask zengytes
 
 mppcBot:
   enable: false
