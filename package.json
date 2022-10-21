@@ -33,7 +33,7 @@
     "fancy-text-converter": "^1.0.9",
     "keccak": "^2.1.0",
     "level": "^7.0.0",
-    "mongoose": "^5.12.7",
+    "mongodb": "^4.11.0",
     "mppclone-client": "^1.0.0",
     "nodemon": "^2.0.15",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v20.14.0",

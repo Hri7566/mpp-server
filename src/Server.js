@@ -9,6 +9,8 @@ const express = require('express');
 const uWebSockets = require('uWebSockets.js');
 const expressify = require('uwebsockets-express');
 const { ServerClient } = require('./ServerClient');
+const { Crypto } = require('./Crypto');
+const { Data } = require('./Data');
 
 const CONFIG_PATH = path.resolve(__dirname, '../config.yml');
 
@@ -28,15 +30,10 @@ class Server {
     static off = EventEmitter.prototype.off;
     static once = EventEmitter.prototype.once;
     static emit = EventEmitter.prototype.emit;
+
     
     static config = serverConfig;
-    
-    static INCOMING_MESSAGES = [
-        'hi',
-        'bye',
-        'data',
-        't'
-    ];
+    static clients = new Map();
 
     static motd = this.config.server.motd || 'flask zengytes';
 
@@ -52,6 +49,8 @@ class Server {
         } else {
             this.uws = uWebSockets.App();
         }
+
+        await Data.connect(this.config.database);
 
         if (!this.uws) {
             this.logger.warn('Server not started.');
@@ -79,53 +78,89 @@ class Server {
             maxBackpressure: 1024,
             maxPayloadLength: 2048,
             message: (...args) => this.handleWSMessage(...args),
-            open: ws => this.handleConnection(ws)
+            open: ws => this.handleConnection(ws),
+            close: (ws, code, message) => this.handleDisconnection(ws, code, message)
         }).listen(this.config.server.port, listen => {
             if (listen) {
                 this.logger.log(`Server started on port ${this.config.server.port}`);
             }
         });
+    }
 
-        this.on('hi', () => {
+    static findClientByWS(ws) {
+        for (let cl of this.clients.keys()) {
+            if (cl.ws == ws) {
+                return cl;
+            }
+        }
+    }
 
-        });
-
-        this.on('bye', () => {
-
-        });
-
-        this.on('t', (ws, msg) => {
-            console.log(msg);
-            ws.send(JSON.stringify([{
-                m: 't',
-                t: Date.now(),
-                e: msg.e
-            }]));
-        });
+    static findClient(id) {
+        for (let cl of this.clients.keys()) {
+            if (id == this.clients.get(cl)) {
+                return cl;
+            }
+        }
     }
 
     static async handleWSMessage(ws, message, isBinary) {
         let msgs;
 
-        try {
-            msgs = JSON.parse(Buffer.from(message).toString());
-        } catch (err) {
-            this.logger.log("Invalid message received");
-            return;
-        }
+        let cl = this.findClientByWS(ws);
+        if (!cl) return;
+        if (cl.closed) return;
 
-        for (let msg of msgs) {
-            if (typeof msg.m == 'undefined') return;
-            
+        try {
+            let msgs = JSON.parse(Buffer.from(message).toString());
+
+            for (let msg of msgs) {
+                if (!msg.hasOwnProperty('m')) return;
+                cl.emit(msg.m, msg);
+            }
+        } catch (err) {
+            this.logger.error(err);
+            this.logger.warn('Invalid message received');
         }
     }
 
     static async handleConnection(ws) {
         try {
-            let cl = new ServerClient(ws);
+            let cl = new ServerClient(this, ws);
+            this.clients.set(cl, Crypto.randomID());
         } catch (err) {
+            this.logger.error(err);
             this.logger.warn('Unable to create client')
         }
+    }
+
+    static async handleDisconnection(ws, code, message) {
+        try {
+            let cl = this.findClientByWS(ws);
+            if (!cl) return;
+            this.logger.debug('Closing socket...');
+            cl.setClosed(true);
+            cl.destroy();
+        } catch (err) {
+            this.logger.error(err);
+            this.logger.warn('Unable to disconnect client, possibly a memory leak');
+        }
+    }
+
+    static getDefaultUser(_id) {
+        return {
+            _id,
+            name: this.config.users.defaultName,
+            flags: this.config.users.defaultFlags,
+            color: Crypto.getColor(_id)
+        }
+    }
+
+    static getParticipantID(cl) {
+        return this.clients.get(cl);
+    }
+
+    static changeID(cl, id) {
+        this.clients.set(cl, id);
     }
 }
 

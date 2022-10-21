@@ -31,6 +31,15 @@ class Util {
             obj1[key] = obj2[key];
         }
     }
+
+    static cleanParticipant(p) {
+        return {
+            _id: p._id,
+            name: p.name,
+            color: p.color,
+            id: p.id
+        }
+    }
 }
 
 module.exports = {

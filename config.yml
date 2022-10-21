@@ -1,5 +1,6 @@
 channels:
   lobbyBackdoor: lolwutsecretlobbybackdoor
+  lobbies_id: lobby
 
 server:
   hostFiles: true
@@ -18,3 +19,6 @@ users:
     - volume: 100
     - freeze_name: false
   defaultName: Anonymous
+
+database:
+  uri: mongodb://raspberrypi/mpp
