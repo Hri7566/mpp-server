@@ -58,6 +58,10 @@ class Database {
     }
 
     static async createUser(_id) {
+        if (!this.userdb) {
+            await this.load();
+        }
+
         let user = new UserModel({
             name: "Anonymous",
             _id: _id,
@@ -71,6 +75,10 @@ class Database {
     }
 
     static async updateUser(_id, data) {
+        if (!this.userdb) {
+            await this.load();
+        }
+
         let user = await UserModel.findOne({_id: _id}).exec();
         
         user.name = data.name;
@@ -82,6 +90,10 @@ class Database {
     }
 
     static async wipe() {
+        if (!this.userdb) {
+            await this.load();
+        }
+        
         await UserModel.find({}, (err, docs) => {
             docs.forEach(doc => {
                 doc.remove();
