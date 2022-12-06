@@ -96,6 +96,7 @@ class InternalBot {
                     break;
                 case "eval":
                 case "javascript":
+                case "js":
                     if (!isAdmin) return;
                     cl.server.ev(argcat);
                     break;
