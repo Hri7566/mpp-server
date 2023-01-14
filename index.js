@@ -55,7 +55,7 @@ if (config.hostDevFiles) {
 
     app.get('*', (req, res, next) => {
         let file = path.join(dir, req.path);
-        if (fs.existsSync(file)) {
+        if (fs.existsSync(file) && !file.endsWith('/') && !file.endsWith('\\')) {
             res.sendFile(file);
         } else {
             res.sendFile(path.join(dir, 'index.html'));
