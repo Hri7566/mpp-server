@@ -27,8 +27,13 @@ const LOGGER_PARTICIPANT = {
 }
 
 const LOGGING_CHANNEL = 'lolwutsecretloggingchannel';
+const BAN_CHANNEL = 'test/awkward';
 
 class Channel extends EventEmitter {
+	static loggingChannel = LOGGING_CHANNEL;
+	static loggerParticipant = LOGGER_PARTICIPANT;
+	static banChannel = BAN_CHANNEL;
+
     constructor(server, _id, settings, cl) {
         super();
         this.logger = new Logger(`Room - ${_id}`);
@@ -57,14 +62,14 @@ class Channel extends EventEmitter {
 
         this.logger.log('Created');
 
-        if (this._id == LOGGING_CHANNEL) {
+        if (this._id == this.loggingChannel) {
             if (cl.user.hasFlag('admin')) {
                 delete this.crown;
 
                 Logger.buffer.forEach(str => {
                     this.chatmsgs.push({
                         m: 'a',
-                        p: LOGGER_PARTICIPANT,
+                        p: this.loggerParticipant,
                         a: str.replace(ansiRegex(), '')
                     });
                 });
@@ -72,7 +77,7 @@ class Channel extends EventEmitter {
                 Logger.on('buffer update', (str) => {
                     this.chatmsgs.push({
                         m: 'a',
-                        p: LOGGER_PARTICIPANT,
+                        p: this.loggerParticipant,
                         a: str.replace(ansiRegex(), '')
                     });
 
@@ -80,17 +85,17 @@ class Channel extends EventEmitter {
                 });
 
                 this.emit('update');
-                let c = new Color(LOGGER_PARTICIPANT.color);
+                let c = new Color(this.loggerParticipant.color);
                 c.add(-0x40, -0x40, -0x40);
                 this.settings = RoomSettings.changeSettings({
                     color: c.toHexa(),
                     chat: true,
                     crownsolo: true,
                     lobby: false,
-                    owner_id: LOGGER_PARTICIPANT._id
+                    owner_id: this.loggerParticipant._id
                 }, true);
             } else {
-                cl.setChannel('test/awkward');
+                cl.setChannel(Channel.banChannel);
             }
         } else {
             Database.getRoomSettings(this._id, (err, set) => {
@@ -444,7 +449,7 @@ class Channel extends EventEmitter {
                     return false;
                 }
             }
-        } else if (_id.startsWith("test/") || _id.toLowerCase().includes("grant")) {
+        } else if (_id.startsWith("test/") /* || _id.toLowerCase().includes("grant") */) {
             if (_id == "test/") {
                 return false;
             } else {
@@ -611,7 +616,7 @@ class Channel extends EventEmitter {
             this.bans.set(user.user._id, user);
 
             //if (this.crown && (this.crown.userId)) {
-                u.setChannel("test/awkward", {});
+                u.setChannel(Channel.banChannel, {});
 
                 if (asd)
                     this.Notification(user.user._id,
@@ -646,17 +651,17 @@ class Channel extends EventEmitter {
     }
 
     unban(_id) {
-        this.connections.filter((usr) => usr.participantId == user.participantId).forEach(u => {
-            if (user.bantime) {
-                delete user.bantime;
-            }
+        let ban = this.bans.get(_id);
+		if (!ban) return;
+		if (ban.bantime) {
+			delete ban.bantime;
+		}
 
-            if (user.bannedtime) {
-                delete user.bannedtime;
-            }
+		if (ban.bannedtime) {
+			delete ban.bannedtime;
+		}
 
-            this.bans.delete(user.user._id);
-        });
+		this.bans.delete(ban.user._id);
     }
 
     Notification(who, title, text, html, duration, target, klass, id) {

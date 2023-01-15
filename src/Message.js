@@ -110,7 +110,7 @@ module.exports = (cl) => {
                     if (msg.id == cl.user.id) {
                         param =  Quota.N_PARAMS_RIDICULOUS;
                         param.m = "nq";
-                        cl.sendArray([param])
+                        cl.sendArray([param]);
                     }
                 }
             } else {
@@ -118,7 +118,7 @@ module.exports = (cl) => {
                 if (msg.id == cl.user.id) {
                     param =  Quota.N_PARAMS_RIDICULOUS;
                     param.m = "nq";
-                    cl.sendArray([param])
+                    cl.sendArray([param]);
                 }
             }
         } else {
@@ -127,11 +127,11 @@ module.exports = (cl) => {
                     cl.channel.chown();
                     param =  Quota.N_PARAMS_NORMAL;
                     param.m = "nq";
-                    cl.sendArray([param])
+                    cl.sendArray([param]);
                 }
             } else {
                 cl.channel.chown();
-                param =  Quota.N_PARAMS_NORMAL;
+                param =  Quota.N_PARAMS_RIDICULOUS;
                 param.m = "nq";
                 cl.sendArray([param]);
             }
@@ -155,30 +155,39 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty('message')) return;
         if (typeof(msg.message) !== 'string') return;
         if (cl.channel.settings.chat) {
-            if (cl.channel.isLobby(cl.channel._id)) {
-                if (!cl.quotas.chat.lobby.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
-            } else {
-                if (!(cl.user._id == cl.channel.crown.userId)) {
-                    if (!cl.quotas.chat.normal.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
-                } else {
-                    if (!cl.quotas.chat.insane.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
-                }
-            }
-            cl.channel.emit('a', cl, msg);
+			if (admin && msg.admin == true) {
+				cl.channel.adminChat(msg.message);
+			} else {
+				if (cl.channel.isLobby(cl.channel._id)) {
+					if (!cl.quotas.chat.lobby.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
+				} else {
+					if (!(cl.user._id == cl.channel.crown.userId)) {
+						if (!cl.quotas.chat.normal.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
+					} else {
+						if (!cl.quotas.chat.insane.attempt() && !admin && !cl.user.hasFlag('no chat rate limit', true)) return;
+					}
+				}
+				cl.channel.emit('a', cl, msg);
+			}
         }
     });
 
-    cl.on('n', msg => {
+    cl.on('n', (msg, admin) => {
         if (!(cl.channel && cl.participantId)) return;
         if (!msg.hasOwnProperty('t') || !msg.hasOwnProperty('n')) return;
         if (typeof msg.t != 'number' || typeof msg.n != 'object') return;
-        if (cl.channel.settings.crownsolo) {
-            if ((cl.channel.crown.userId == cl.user._id) && !cl.channel.crowndropped) {
-                cl.channel.playNote(cl, msg);
-            }
-        } else {
-            cl.channel.playNote(cl, msg);
-        }
+
+		if (cl.quotas.note && !admin) {
+			if (!cl.quotas.note.attempt())  return;
+		}
+		
+		if (cl.channel.settings.crownsolo) {
+			if ((cl.channel.crown.userId == cl.user._id) && !cl.channel.crowndropped) {
+				cl.channel.playNote(cl, msg);
+			}
+		} else {
+			cl.channel.playNote(cl, msg);
+		}
     });
 
     cl.on('+ls', msg => {
@@ -212,7 +221,7 @@ module.exports = (cl) => {
         }
     });
 
-    cl.on('kickban', msg => {
+    cl.on('kickban', (msg, admin) => {
         if (!admin) {
             if (cl.channel.crown == null) return;
             if (!(cl.channel && cl.participantId)) return;
@@ -222,7 +231,7 @@ module.exports = (cl) => {
         if (msg.hasOwnProperty('_id') && typeof msg._id == "string") {
             if (!cl.quotas.kickban.attempt() && !admin) return;
             let _id = msg._id;
-            let ms = msg.ms || 3600000;
+            let ms = msg.ms || 36e5;
             cl.channel.kickban(_id, ms);
         }
     });

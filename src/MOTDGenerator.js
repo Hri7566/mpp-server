@@ -4,6 +4,16 @@ let hd = new Holidays();
 
 hd.init('US');
 
+let dayOfTheWeekMOTD = [
+	'Happy Sunday!',
+	'You can chat with that thing.',
+	'I\'m tired...',
+	'Don\'t forget to bring a towel!',
+	'Never lick a pole in winter.',
+	'Everyone loves a potato monkey!',
+	'Dear Mario: Please come to the castle. I\'ve baked a cake for you. Yours truly-- Princess Toadstool'
+]
+
 class MOTDGenerator {
     static getDay() {
         let now = new Date();
@@ -18,10 +28,11 @@ class MOTDGenerator {
         let h = hd.isHoliday(Date.now());
         if (h) {
             // maybe holiday
-            return `Happy ${h[0].name}`;
+            return `Happy ${h[0].name}!`;
         } else {
-            // no holiday
-            return 'cotton-headed ninnymuggins'
+            // no holiday, get day
+			let day = new Date().getDay();
+            return dayOfTheWeekMOTD[day];
         }
     }
 }

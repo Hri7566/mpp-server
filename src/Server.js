@@ -13,6 +13,8 @@ class Server {
     static emit = EventEmitter.prototype.emit;
     static once = EventEmitter.prototype.once;
 
+	static startTime = Date.now();
+
     static start(config) {
         // super();
         // EventEmitter.call(this);
@@ -84,6 +86,7 @@ class Server {
             "userset",
             "chown",
             "kickban",
+            "unban",
             "admin message",
             "color",
             "eval",
@@ -116,10 +119,19 @@ class Server {
                 cl = undefined;
                 return;
             }
+
+			let newch = {
+				banned: typeof this.rooms.get(data.ch._id).bans.get(cl.user._id) !== 'undefined'
+			};
+
+			for (let key of Object.keys(data)) {
+				newch[key] = data.ch[key];
+			}
+
             cl.sendArray([{
                 "m": "ls",
                 "c": false,
-                "u": [data.ch]
+                "u": [newch]
             }]);
         }
     }

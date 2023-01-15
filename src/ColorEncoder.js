@@ -60,7 +60,7 @@ function getTimeColor(currentDate = new Date()) {
     let dayOfYear = Math.ceil(differenceInTime / oneDayInMS);
     dayOfYear %= 365;
 
-    console.log(dayOfYear);
+    // console.log(dayOfYear);
 
     // get hour
     let hours = currentDate.getHours();

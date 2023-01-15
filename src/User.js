@@ -1,4 +1,5 @@
 const Database = require("./Database");
+const { Cow } = require('./Cow');
 
 function hslToHex(h, s, l) {
     l /= 100;
@@ -22,13 +23,8 @@ class User {
             "no chat rate limit": false,
             freeze_name: false
         }
-
-        this.inventory = {
-            'test': {
-                display_name: 'Test',
-                count: 1
-            }
-        };
+		
+		this.inventory = {};
     }
 
     getPublicUser() {

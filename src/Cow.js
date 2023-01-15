@@ -12,7 +12,9 @@ class Cow {
     }
 
     constructor() {
-        this['🐄'] = Cow.generateRandomName();
+        this['display_name'] = Cow.generateRandomName();
+		this['emoji'] = '🐄'
+		this['count'] = 1;
     }
 }
 

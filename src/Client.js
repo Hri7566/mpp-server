@@ -83,7 +83,7 @@ class Client extends EventEmitter {
                     "#room",
                     "short"
                 );
-                this.setChannel("test/awkward", settings);
+                this.setChannel(Channel.banChannel, settings);
                 return;
             }
 
@@ -155,7 +155,8 @@ class Client extends EventEmitter {
             chown: new RateLimitChain(quotas.chown.amount, quotas.chown.time),
             userset: new RateLimitChain(quotas.userset.amount, quotas.userset.time),
             kickban: new RateLimitChain(quotas.kickban.amount, quotas.kickban.time),
-            note: new Quota(Quota.PARAMS_LOBBY),
+            // note: new Quota(Quota.PARAMS_LOBBY),
+            note: new RateLimitChain(5, 5000),
             chset: new Quota(Quota.PARAMS_USED_A_LOT),
             "+ls": new Quota(Quota.PARAMS_USED_A_LOT),
             "-ls": new Quota(Quota.PARAMS_USED_A_LOT)
@@ -235,6 +236,7 @@ class Client extends EventEmitter {
 
         let users = [];
         this.server.connections.forEach(cl => {
+			if (!cl.user) return;
             let u = {
                 p: {
                     _id: cl.user._id,
@@ -250,12 +252,16 @@ class Client extends EventEmitter {
         });
         
         data.channelManager = {
+			loggingChannel: Channel.loggingChannel,
+			loggerParticipant: Channel.loggerParticipant,
             channels
         };
 
         data.clientManager = {
             users
         }
+
+		data.uptime = Date.now() - this.server.startTime;
 
         this.sendArray([data]);
     }

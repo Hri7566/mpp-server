@@ -5,7 +5,8 @@ const ColorEncoder = require('./ColorEncoder');
 const UserModel = require('./UserModel');
 const mongoose = require('mongoose');
 const level = require('level');
-const { db } = require('./UserModel');
+const { users } = require('./UserModel');
+const { inventories } = require('./InventoryModel');
 const Logger = require('./Logger');
 
 var logger = new Logger("Database");
