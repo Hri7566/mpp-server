@@ -177,9 +177,9 @@ module.exports = (cl) => {
         if (!msg.hasOwnProperty('t') || !msg.hasOwnProperty('n')) return;
         if (typeof msg.t != 'number' || typeof msg.n != 'object') return;
 
-		if (cl.quotas.note && !admin) {
-			if (!cl.quotas.note.attempt())  return;
-		}
+		// if (cl.quotas.note && !admin) {
+		// 	if (!cl.quotas.note.attempt())  return;
+		// }
 		
 		if (cl.channel.settings.crownsolo) {
 			if ((cl.channel.crown.userId == cl.user._id) && !cl.channel.crowndropped) {
