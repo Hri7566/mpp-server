@@ -1,10 +1,10 @@
-const ung = require('unique-names-generator');
+const ung = require("unique-names-generator");
 
 const ung_config = {
-    dictionaries: [ung.adjectives, ung.colors],
-    separator: ' ',
-    length: 2
-}
+    dictionaries: [ung.names],
+    separator: " ",
+    length: 1
+};
 
 class Cow {
     static generateRandomName() {
@@ -12,12 +12,18 @@ class Cow {
     }
 
     constructor() {
-        this['display_name'] = Cow.generateRandomName();
-		this['emoji'] = '🐄'
-		this['count'] = 1;
+        this["display_name"] = Cow.generateRandomName();
+        this["emoji"] = "🐄";
+        this["count"] = 1;
+    }
+
+    toString() {
+        return `${this.emoji}${this.display_name}${
+            this.count > 1 ? `(x${this.count})` : ""
+        }`;
     }
 }
 
 module.exports = {
     Cow
-}
+};

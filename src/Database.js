@@ -1,27 +1,34 @@
-const fs = require('fs');
-const { promisify } = require('util');
-const createKeccakHash = require('keccak');
-const ColorEncoder = require('./ColorEncoder');
-const UserModel = require('./UserModel');
-const mongoose = require('mongoose');
-const level = require('level');
-const { users } = require('./UserModel');
-const { inventories } = require('./InventoryModel');
-const Logger = require('./Logger');
+const fs = require("fs");
+const { promisify } = require("util");
+const createKeccakHash = require("keccak");
+const ColorEncoder = require("./ColorEncoder");
+const UserModel = require("./UserModel");
+const mongoose = require("mongoose");
+const level = require("level");
+const { db } = require("./UserModel");
+const Logger = require("./Logger");
 
 var logger = new Logger("Database");
 
-mongoose.connect(process.env.MONGO_URL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    connectTimeoutMS: 1000
-}, err => {
-    if (err) {
-        console.error(err);
-        logger.error("Unable to connect to database service");
-        process.exit(1);
+mongoose.connect(
+    process.env.MONGO_URL,
+    {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        connectTimeoutMS: 1000
+    },
+    err => {
+        if (err) {
+            console.error(err);
+            logger.error("Unable to connect to database service");
+            process.exit(1);
+        }
+        logger.log("Connected");
     }
-    logger.log("Connected");
+);
+
+fs.mkdirSync("db/", {
+    recursive: true
 });
 
 class Database {
@@ -30,7 +37,7 @@ class Database {
 
     static async load() {
         this.userdb = mongoose.connection;
-        this.roomdb = level('db/rooms.db');
+        this.roomdb = level("db/rooms.db");
         // const writeFile = promisify(fs.writeFile);
         // const readdir = promisify(fs.readdir);
 
@@ -47,12 +54,18 @@ class Database {
         if (!this.userdb) {
             await this.load();
         }
-        
-        let _id = createKeccakHash('keccak256').update((cl.server._id_Private_Key + cl.ip)).digest('hex').substr(0, 24);
-        let user = await UserModel.findOne({ _id: _id }).exec();
-        
+
+        let _id = createKeccakHash("keccak256")
+            .update(cl.server._id_Private_Key + cl.ip)
+            .digest("hex")
+            .substr(0, 24);
+
+        let user = await UserModel.findById(_id).exec();
+        console.log("_id:", _id);
+        console.log("user:", user);
+
         if (user == null) {
-            user = this.createUser(_id);
+            user = await this.createUser(_id);
         }
 
         return user;
@@ -67,10 +80,9 @@ class Database {
             name: "Anonymous",
             _id: _id,
             color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
-            flags: {
-
-            }
+            flags: {}
         });
+
         user.save();
         return user;
     }
@@ -80,8 +92,8 @@ class Database {
             await this.load();
         }
 
-        let user = await UserModel.findOne({_id: _id}).exec();
-        
+        let user = await UserModel.findOne({ _id: _id }).exec();
+
         user.name = data.name;
         user._id = data._id;
         user.flags = data.flags;
@@ -94,7 +106,7 @@ class Database {
         if (!this.userdb) {
             await this.load();
         }
-        
+
         await UserModel.find({}, (err, docs) => {
             docs.forEach(doc => {
                 doc.remove();
@@ -103,14 +115,17 @@ class Database {
     }
 
     static strMapToObj(strMap) {
-        return [...strMap.entries()].reduce((obj, [key, value]) => (obj[key] = value, obj), {});
+        return [...strMap.entries()].reduce(
+            (obj, [key, value]) => ((obj[key] = value), obj),
+            {}
+        );
     }
 
     static getRoomSettings(_id, cb) {
-        let key = "room~"+_id;
-        
-        roomSettings
-        
+        let key = "room~" + _id;
+
+        roomSettings;
+
         this.roomdb.get(key, (err, value) => {
             if (err || !value || value == "") {
                 cb(err, value);
@@ -122,12 +137,12 @@ class Database {
 
     static setRoomSettings(_id, roomSettings, chat) {
         let roomData = new RoomDataModel(roomSettings, chat);
-        let key = "room~"+_id;
+        let key = "room~" + _id;
         this.roomdb.put(key, JSON.stringify(roomData));
     }
 
     static getRoomSettings(_id, cb) {
-        let key = "room~"+_id;
+        let key = "room~" + _id;
         this.roomdb.get(key, (err, value) => {
             if (err) {
                 cb(err);
@@ -139,12 +154,12 @@ class Database {
     }
 
     static deleteRoomSettings(_id) {
-        this.roomdb.del("room~"+_id);
+        this.roomdb.del("room~" + _id);
     }
 }
 
 class RoomDataModel {
-    constructor (settings, chat) {
+    constructor(settings, chat) {
         this.settings = settings;
         this.chat = chat;
     }

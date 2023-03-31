@@ -3,3 +3,4 @@ ssl/
 .history
 *.db/
 .env
+password.txt

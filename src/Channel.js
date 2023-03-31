@@ -1,38 +1,38 @@
-const createKeccakHash = require('keccak');
-const Crown = require('./Crown.js');
-const Database = require('./Database.js');
-const Logger = require('./Logger.js');
+const createKeccakHash = require("keccak");
+const Crown = require("./Crown.js");
+const Database = require("./Database.js");
+const Logger = require("./Logger.js");
 const Quota = require("./Quota.js");
-const RoomSettings = require('./RoomSettings.js');
-const ftc = require('fancy-text-converter');
-const Notification = require('./Notification');
-const Color = require('./Color');
-const { getTimeColor } = require('./ColorEncoder.js');
-const { InternalBot } = require('./InternalBot');
+const RoomSettings = require("./RoomSettings.js");
+const ftc = require("fancy-text-converter");
+const Notification = require("./Notification");
+const Color = require("./Color");
+const { getTimeColor } = require("./ColorEncoder.js");
+const { InternalBot } = require("./InternalBot");
 
-function ansiRegex({onlyFirst = false} = {}) {
-	const pattern = [
-		'[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-		'(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))'
-	].join('|');
+function ansiRegex({ onlyFirst = false } = {}) {
+    const pattern = [
+        "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
+        "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))"
+    ].join("|");
 
-	return new RegExp(pattern, onlyFirst ? undefined : 'g');
+    return new RegExp(pattern, onlyFirst ? undefined : "g");
 }
 
 const LOGGER_PARTICIPANT = {
-    name: 'Logger',
-    color: '#72f1b8',
-    _id: 'logger',
-    id: 'logger'
-}
+    name: "Logger",
+    color: "#72f1b8",
+    _id: "logger",
+    id: "logger"
+};
 
-const LOGGING_CHANNEL = 'lolwutsecretloggingchannel';
-const BAN_CHANNEL = 'test/awkward';
+const LOGGING_CHANNEL = "lolwutsecretloggingchannel";
+const BAN_CHANNEL = "test/awkward";
 
 class Channel extends EventEmitter {
-	static loggingChannel = LOGGING_CHANNEL;
-	static loggerParticipant = LOGGER_PARTICIPANT;
-	static banChannel = BAN_CHANNEL;
+    static loggingChannel = LOGGING_CHANNEL;
+    static loggerParticipant = LOGGER_PARTICIPANT;
+    static banChannel = BAN_CHANNEL;
 
     constructor(server, _id, settings, cl) {
         super();
@@ -48,54 +48,63 @@ class Channel extends EventEmitter {
             // this.settings.color = this.server.lobbySettings.color;
             // this.settings.color2 = this.server.lobbySettings.color2;
         } else {
-            this.settings = new RoomSettings(settings, 'user');
+            this.settings = new RoomSettings(settings, "user");
         }
 
         this.chatmsgs = [];
         this.ppl = new Map();
         this.connections = [];
         this.bindEventListeners();
-        this.server.rooms.set(_id, this);
+        this.server.channels.set(_id, this);
         this.bans = new Map();
-        this.flags = {}
+        this.flags = {};
         this.destroyed = false;
 
-        this.logger.log('Created');
+        this.logger.log("Created");
 
-        if (this._id == this.loggingChannel) {
-            if (cl.user.hasFlag('admin')) {
+        if (this._id == LOGGING_CHANNEL) {
+            if (cl.user.hasFlag("admin")) {
                 delete this.crown;
 
                 Logger.buffer.forEach(str => {
                     this.chatmsgs.push({
-                        m: 'a',
-                        p: this.loggerParticipant,
-                        a: str.replace(ansiRegex(), '')
+                        m: "a",
+                        p: LOGGER_PARTICIPANT,
+                        a: str.replace(ansiRegex(), "")
                     });
                 });
 
-                Logger.on('buffer update', (str) => {
+                Logger.on("buffer update", str => {
                     this.chatmsgs.push({
-                        m: 'a',
-                        p: this.loggerParticipant,
-                        a: str.replace(ansiRegex(), '')
+                        m: "a",
+                        p: LOGGER_PARTICIPANT,
+                        a: str.replace(ansiRegex(), "")
                     });
 
                     this.sendChatArray();
                 });
 
-                this.emit('update');
-                let c = new Color(this.loggerParticipant.color);
+                this.emit("update");
+
+                let c = new Color(LOGGER_PARTICIPANT.color);
                 c.add(-0x40, -0x40, -0x40);
-                this.settings = RoomSettings.changeSettings({
-                    color: c.toHexa(),
-                    chat: true,
-                    crownsolo: true,
-                    lobby: false,
-                    owner_id: this.loggerParticipant._id
-                }, true);
+
+                let c2 = new Color(c.toHexa());
+                c2.add(-0x40, -0x40, -0x40);
+
+                this.settings = RoomSettings.changeSettings(
+                    {
+                        color: c.toHexa(),
+                        color2: c2.toHexa(),
+                        chat: true,
+                        crownsolo: true,
+                        lobby: false,
+                        owner_id: LOGGER_PARTICIPANT._id
+                    },
+                    true
+                );
             } else {
-                cl.setChannel(Channel.banChannel);
+                cl.setChannel("test/awkward");
             }
         } else {
             Database.getRoomSettings(this._id, (err, set) => {
@@ -103,7 +112,10 @@ class Channel extends EventEmitter {
                     return;
                 }
 
-                this.settings = RoomSettings.changeSettings(this.settings, true);
+                this.settings = RoomSettings.changeSettings(
+                    this.settings,
+                    true
+                );
                 this.chatmsgs = set.chat;
                 this.sendChatArray();
                 this.setData();
@@ -113,26 +125,30 @@ class Channel extends EventEmitter {
         if (this.isLobby(this._id)) {
             this.colorInterval = setInterval(() => {
                 this.setDefaultLobbyColorBasedOnDate();
-            }, 1000 * 60 * 5);
+            }, 500);
             this.setDefaultLobbyColorBasedOnDate();
         }
     }
 
     setChatArray(arr) {
         this.chatmsgs = arr || [];
-        this.sendArray([{
-            m: 'c',
-            c: this.chatmsgs.slice(-1 * 32)
-        }]);
+        this.sendArray([
+            {
+                m: "c",
+                c: this.chatmsgs.slice(-1 * 32)
+            }
+        ]);
         this.setData();
     }
 
     sendChatArray() {
         this.connections.forEach(cl => {
-            cl.sendArray([{
-                m: 'c',
-                c: this.chatmsgs.slice(-1 * 32)
-            }]);
+            cl.sendArray([
+                {
+                    m: "c",
+                    c: this.chatmsgs.slice(-1 * 32)
+                }
+            ]);
         });
     }
 
@@ -143,7 +159,7 @@ class Channel extends EventEmitter {
         if (!this.settings) {
             this.settings = new RoomSettings(this.server.lobbySettings);
         }
-        
+
         this.settings.color = col.toHexa();
         this.settings.color2 = col.toHexa();
 
@@ -151,15 +167,19 @@ class Channel extends EventEmitter {
             this.server.lobbySettings[key] = this.settings[key];
         }
 
-        this.emit('update');
+        this.emit("update");
     }
 
-    join(cl, set) { //this stuff is complicated
-        let otheruser = this.connections.find((a) => a.user._id == cl.user._id)
+    join(cl, set) {
+        //this stuff is complicated
+        let otheruser = this.connections.find(a => a.user._id == cl.user._id);
         if (!otheruser) {
             // we don't exist yet
             // create id hash
-            let participantId = createKeccakHash('keccak256').update((Math.random().toString() + cl.ip)).digest('hex').substr(0, 24);
+            let participantId = createKeccakHash("keccak256")
+                .update(Math.random().toString() + cl.ip)
+                .digest("hex")
+                .substr(0, 24);
 
             // set id
             cl.user.id = participantId;
@@ -169,7 +189,14 @@ class Channel extends EventEmitter {
             cl.initParticipantQuotas();
 
             // no users / already had crown? give crown
-            if (((this.connections.length == 0 && Array.from(this.ppl.values()).length == 0) && this.isLobby(this._id) == false) || this.crown && (this.crown.userId == cl.user._id || this.settings['owner_id'] == cl.user._id)) {
+            if (
+                (this.connections.length == 0 &&
+                    Array.from(this.ppl.values()).length == 0 &&
+                    this.isLobby(this._id) == false) ||
+                (this.crown &&
+                    (this.crown.userId == cl.user._id ||
+                        this.settings["owner_id"] == cl.user._id))
+            ) {
                 // user owns the room
                 // we need to switch the crown to them
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
@@ -182,7 +209,7 @@ class Channel extends EventEmitter {
 
                 if (this.isLobby(this._id) && this.settings.lobby !== true) {
                     // fix lobby setting
-                    this.settings.changeSettings({lobby: true});
+                    this.settings.changeSettings({ lobby: true });
                     // this.settings.visible = true;
                     // this.settings.crownsolo = false;
                     // this.settings.lobby = true;
@@ -190,14 +217,20 @@ class Channel extends EventEmitter {
                     // this.settings.color2 = this.server.lobbySettings.color2;
                 } else {
                     if (!this.isLobby) {
-                        if (typeof(set) == 'undefined') {
-                            if (typeof(this.settings) == 'undefined') {
-                                this.settings = new RoomSettings(this.server.defaultRoomSettings, 'user');
+                        if (typeof set == "undefined") {
+                            if (typeof this.settings == "undefined") {
+                                this.settings = new RoomSettings(
+                                    this.server.defaultRoomSettings,
+                                    "user"
+                                );
                             } else {
-                                this.settings = new RoomSettings(cl.channel.settings, 'user');
+                                this.settings = new RoomSettings(
+                                    cl.channel.settings,
+                                    "user"
+                                );
                             }
                         } else {
-                            this.settings = new RoomSettings(set, 'user');
+                            this.settings = new RoomSettings(set, "user");
                         }
                     }
                 }
@@ -207,23 +240,31 @@ class Channel extends EventEmitter {
 
             this.connections.push(cl);
 
-            cl.sendArray([{
-                m: "c",
-                c: this.chatmsgs.slice(-1 * 32)
-            }]);
+            cl.sendArray([
+                {
+                    m: "c",
+                    c: this.chatmsgs.slice(-1 * 32)
+                }
+            ]);
 
             // this.updateCh(cl, this.settings);
 
             if (!cl.user.hasFlag("hidden", true)) {
-                this.sendArray([{
-                    m: 'p',
-                    _id: cl.user._id,
-                    name: cl.user.name,
-                    color: cl.user.color,
-                    id: cl.participantId,
-                    x: this.ppl.get(cl.participantId).x || 200,
-                    y: this.ppl.get(cl.participantId).y || 100
-                }], cl, false);
+                this.sendArray(
+                    [
+                        {
+                            m: "p",
+                            _id: cl.user._id,
+                            name: cl.user.name,
+                            color: cl.user.color,
+                            id: cl.participantId,
+                            x: this.ppl.get(cl.participantId).x || 200,
+                            y: this.ppl.get(cl.participantId).y || 100
+                        }
+                    ],
+                    cl,
+                    false
+                );
             }
 
             this.updateCh(cl, this.settings);
@@ -232,10 +273,12 @@ class Channel extends EventEmitter {
             cl.participantId = otheruser.participantId;
             cl.quotas = otheruser.quotas;
             this.connections.push(cl);
-            cl.sendArray([{
-                m: "c",
-                c: this.chatmsgs.slice(-1 * 32)
-            }])
+            cl.sendArray([
+                {
+                    m: "c",
+                    c: this.chatmsgs.slice(-1 * 32)
+                }
+            ]);
             this.updateCh(cl, this.settings);
         }
 
@@ -244,10 +287,12 @@ class Channel extends EventEmitter {
         }
     }
 
-    spin(cl) { // speeeeeeen
+    spin(cl) {
+        // speeeeeeen
         let id = cl.user._id;
         if (!id) id = "room";
-        this.Notification(id,
+        this.Notification(
+            id,
             "",
             ``,
             `<script>$("#piano").addClass("spin")</script>`,
@@ -260,7 +305,8 @@ class Channel extends EventEmitter {
     stopSpin(cl) {
         let id = cl.user._id;
         if (!id) id = "room";
-        this.Notification(id,
+        this.Notification(
+            id,
             "",
             ``,
             `<script>$("#piano").removeClass("spin")</script>`,
@@ -270,40 +316,58 @@ class Channel extends EventEmitter {
         );
     }
 
-    remove(p) { // remove user
+    remove(p) {
+        // remove user
         if (!p) return;
-        let otheruser = this.connections.filter((a) => a.user._id == p.user._id);
+        if (!p.user) return;
+        let otheruser = this.connections.filter(a => a.user._id == p.user._id);
         if (!(otheruser.length > 1)) {
             this.ppl.delete(p.participantId);
-            this.connections.splice(this.connections.findIndex((a) => a.connectionid == p.connectionid), 1);
-            this.sendArray([{
-                m: "bye",
-                p: p.participantId
-            }], p, false);
+            this.connections.splice(
+                this.connections.findIndex(
+                    a => a.connectionid == p.connectionid
+                ),
+                1
+            );
+            this.sendArray(
+                [
+                    {
+                        m: "bye",
+                        p: p.participantId
+                    }
+                ],
+                p,
+                false
+            );
             if (this.crown)
                 if (this.crown.userId == p.user._id && !this.crowndropped) {
                     this.chown();
                 }
             this.updateCh();
         } else {
-            this.connections.splice(this.connections.findIndex((a) => a.connectionid == p.connectionid), 1);
+            this.connections.splice(
+                this.connections.findIndex(
+                    a => a.connectionid == p.connectionid
+                ),
+                1
+            );
         }
-
     }
 
-    updateCh(cl, set) { //update channel for all people in channel
+    updateCh(cl, set) {
+        //update channel for all people in channel
         if (Array.from(this.ppl.values()).length <= 0) {
             setTimeout(() => {
                 this.destroy();
             }, 13000);
         }
 
-        this.connections.forEach((usr) => {
+        this.connections.forEach(usr => {
             let u = this.fetchChannelData(usr, cl);
             this.server.connections.get(usr.connectionid).sendArray([u]);
         });
 
-        this.server.updateRoom(this.fetchChannelData());
+        this.server.updateChannelList([this.fetchChannelData()]);
     }
 
     updateParticipant(pid, options) {
@@ -313,32 +377,37 @@ class Channel extends EventEmitter {
             if (rpg[1].user._id == pid) p = rpg[1];
         });
 
-        if (typeof(p) == 'undefined') return;
+        if (typeof p == "undefined") return;
 
-        options.name ? p.user.name = options.name : {};
-        options._id ? p.user._id = options._id : {};
-        options.color ? p.user.color = options.color : {};
+        options.name ? (p.user.name = options.name) : {};
+        options._id ? (p.user._id = options._id) : {};
+        options.color ? (p.user.color = options.color) : {};
 
-        this.connections.filter((ofo) => ofo.participantId == p.participantId).forEach((usr) => {
-            options.name ? usr.user.name = options.name : {};
-            options._id ? usr.user._id = options._id : {};
-            options.color ? usr.user.color = options.color : {};
-        });
+        this.connections
+            .filter(ofo => ofo.participantId == p.participantId)
+            .forEach(usr => {
+                options.name ? (usr.user.name = options.name) : {};
+                options._id ? (usr.user._id = options._id) : {};
+                options.color ? (usr.user.color = options.color) : {};
+            });
 
         if (!p.hidden) {
-            this.sendArray([{
-                color: p.user.color,
-                id: p.participantId,
-                m: "p",
-                name: p.user.name,
-                x: p.x || 200,
-                y: p.y || 100,
-                _id: p.user._id
-            }]);
+            this.sendArray([
+                {
+                    color: p.user.color,
+                    id: p.participantId,
+                    m: "p",
+                    name: p.user.name,
+                    x: p.x || 200,
+                    y: p.y || 100,
+                    _id: p.user._id
+                }
+            ]);
         }
     }
-    
-    destroy() { //destroy room
+
+    destroy() {
+        //destroy room
         if (this.destroyed) return;
         if (this.ppl.size > 0) return;
         if (this._id == "lobby") return;
@@ -349,16 +418,23 @@ class Channel extends EventEmitter {
         this.ppl;
         this.connnections;
         this.chatmsgs;
-        this.server.rooms.delete(this._id);
+        this.server.channels.delete(this._id);
     }
 
     sendArray(arr, not, onlythisparticipant) {
-        this.connections.forEach((usr) => {
-            if (!not || (usr.participantId != not.participantId && !onlythisparticipant) || (usr.connectionid != not.connectionid && onlythisparticipant)) {
+        this.connections.forEach(usr => {
+            if (
+                !not ||
+                (usr.participantId != not.participantId &&
+                    !onlythisparticipant) ||
+                (usr.connectionid != not.connectionid && onlythisparticipant)
+            ) {
                 try {
                     let cl = this.server.connections.get(usr.connectionid);
                     if (!cl) return;
-                    this.server.connections.get(usr.connectionid).sendArray(arr)
+                    this.server.connections
+                        .get(usr.connectionid)
+                        .sendArray(arr);
                 } catch (e) {
                     console.log(e);
                 }
@@ -389,7 +465,7 @@ class Channel extends EventEmitter {
                 name: c.user.name,
                 color: c.user.color,
                 id: c.participantId
-            }
+            };
             chppl.push(u);
         });
 
@@ -403,7 +479,7 @@ class Channel extends EventEmitter {
                 _id: this._id
             },
             ppl: chppl
-        }
+        };
 
         if (cl) {
             if (usr.connectionid == cl.connectionid) {
@@ -418,7 +494,6 @@ class Channel extends EventEmitter {
         if (data.ch.crown == null) {
             delete data.ch.crown;
         } else {
-
         }
 
         return data;
@@ -449,7 +524,10 @@ class Channel extends EventEmitter {
                     return false;
                 }
             }
-        } else if (_id.startsWith("test/") /* || _id.toLowerCase().includes("grant") */) {
+        } else if (
+            _id.startsWith("test/") ||
+            _id.toLowerCase().includes("grant")
+        ) {
             if (_id == "test/") {
                 return false;
             } else {
@@ -458,7 +536,6 @@ class Channel extends EventEmitter {
         } else {
             return false;
         }
-
     }
 
     chown(id) {
@@ -478,24 +555,26 @@ class Channel extends EventEmitter {
 
     setCoords(p, x, y) {
         if (p.participantId && this.ppl.get(p.participantId)) {
-            x ? this.ppl.get(p.participantId).x = x : {};
-            y ? this.ppl.get(p.participantId).y = y : {};
-            this.sendArray([{
-                m: "m",
-                id: p.participantId,
-                x: this.ppl.get(p.participantId).x,
-                y: this.ppl.get(p.participantId).y
-            }], p, false);
+            x ? (this.ppl.get(p.participantId).x = x) : {};
+            y ? (this.ppl.get(p.participantId).y = y) : {};
+            this.sendArray(
+                [
+                    {
+                        m: "m",
+                        id: p.participantId,
+                        x: this.ppl.get(p.participantId).x,
+                        y: this.ppl.get(p.participantId).y
+                    }
+                ],
+                p,
+                false
+            );
         }
     }
 
     chat(p, msg) {
         if (msg.message.length > 512) return;
 
-        let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
-        let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
-        if (regexp.test(msg.message.split(' ').join(''))) return;
-        
         if (p.participantId == 0) {
             let message = {};
 
@@ -503,32 +582,47 @@ class Channel extends EventEmitter {
             message.t = Date.now();
             message.a = msg.message;
 
-            message.p = {
-                color: "#ffffff",
-                id: "0",
-                name: "mpp",
-                _id: "0"
-            };
+            console.log("here:", p, msg);
+            console.log(message.length);
 
+            if (message.a.length > 0 && message.a.length <= 512) {
+                message.p = {
+                    color: "#ffffff",
+                    id: "0",
+                    name: "mpp",
+                    _id: "0"
+                };
 
-            this.sendArray([message]);
+                this.sendArray([message]);
 
-            this.chatmsgs.push(message);
-            this.setData();
-            return;
+                this.chatmsgs.push(message);
+                this.setData();
+                return;
+            }
         }
+
+        let filter = ["AMIGHTYWIND", "CHECKLYHQ"];
+        let regexp = new RegExp("\\b(" + filter.join("|") + ")\\b", "i");
+        if (regexp.test(msg.message.split(" ").join(""))) return;
 
         let prsn = this.ppl.get(p.participantId);
         if (!prsn) return;
         let message = {};
         message.m = "a";
         message.a = msg.message;
-        if (prsn.user.hasFlag('chat_curse_1')) {
-            if (prsn.user.flags['chat_curse_1'] != false) message.a = message.a.split(/[aeiou]/).join('o').split(/[AEIOU]/).join('O');
+
+        if (prsn.user.hasFlag("chat_curse_1")) {
+            if (prsn.user.flags["chat_curse_1"] != false)
+                message.a = message.a
+                    .split(/[aeiou]/)
+                    .join("o")
+                    .split(/[AEIOU]/)
+                    .join("O");
         }
-        if (prsn.user.hasFlag('chat_curse_2')) {
-            
+
+        if (prsn.user.hasFlag("chat_curse_2")) {
         }
+
         message.p = {
             color: p.user.color,
             id: p.participantId,
@@ -542,40 +636,45 @@ class Channel extends EventEmitter {
         this.chatmsgs.push(message);
         this.setData();
 
-        InternalBot.emit('receive message', message, prsn, this);
+        InternalBot.emit("receive message", message, prsn, this);
     }
 
     adminChat(str) {
-        this.chat({
-            participantId: 0
-        }, {
-            message: str
-        });
+        this.chat(
+            {
+                participantId: 0
+            },
+            {
+                message: str
+            }
+        );
     }
 
     hasUser(id) {
-        return this.ppl.has(id);
+        // return this.ppl.has(id);
+        for (const p of this.ppl.values()) {
+            if (p.id == id) return true;
+        }
     }
 
     playNote(cl, note) {
-        if (cl.user.hasFlag('mute', true)) {
+        if (cl.user.hasFlag("mute", true)) {
             return;
         }
 
-        if (cl.user.hasFlag('mute')) {
-            if (Array.isArray(cl.user.flags['mute'])) {
-                if (cl.user.flags['mute'].includes(this._id)) return;
+        if (cl.user.hasFlag("mute")) {
+            if (Array.isArray(cl.user.flags["mute"])) {
+                if (cl.user.flags["mute"].includes(this._id)) return;
             }
         }
 
         let vol;
 
-        if (cl.user.hasFlag('volume')) {
+        if (cl.user.hasFlag("volume")) {
             vol = Math.round(cl.user.flags["volume"]) / 100;
         }
 
-        
-        if (typeof vol == 'number') {
+        if (typeof vol == "number") {
             for (let no of note.n) {
                 if (no.v) {
                     if (vol == 0) {
@@ -587,57 +686,74 @@ class Channel extends EventEmitter {
             }
         }
 
-        this.sendArray([{
-            m: "n",
-            n: note.n,
-            p: cl.participantId,
-            t: note.t
-        }], cl, true);
+        this.sendArray(
+            [
+                {
+                    m: "n",
+                    n: note.n,
+                    p: cl.participantId,
+                    t: note.t
+                }
+            ],
+            cl,
+            true
+        );
     }
 
     kickban(_id, ms) {
         ms = parseInt(ms);
 
-        if (ms >= (1000 * 60 * 60)) return;
+        if (ms >= 1000 * 60 * 60) return;
         if (ms < 0) return;
 
         ms = Math.round(ms / 1000) * 1000;
 
-        let user = this.connections.find((usr) => usr.user._id == _id);
+        let user = this.connections.find(usr => usr.user._id == _id);
         if (!user) return;
         let asd = true;
         let pthatbanned = this.ppl.get(this.crown.participantId);
 
-        this.connections.filter((usr) => usr.participantId == user.participantId).forEach((u) => {
-            user.bantime = Math.floor(Math.floor(ms / 1000) / 60);
-            user.bannedtime = Date.now();
-            user.msbanned = ms;
+        this.connections
+            .filter(usr => usr.participantId == user.participantId)
+            .forEach(u => {
+                user.bantime = Math.floor(Math.floor(ms / 1000) / 60);
+                user.bannedtime = Date.now();
+                user.msbanned = ms;
 
-            this.bans.set(user.user._id, user);
+                this.bans.set(user.user._id, user);
 
-            //if (this.crown && (this.crown.userId)) {
+                //if (this.crown && (this.crown.userId)) {
                 u.setChannel(Channel.banChannel, {});
 
                 if (asd)
-                    this.Notification(user.user._id,
+                    this.Notification(
+                        user.user._id,
                         "Notice",
-                        `Banned from \"${this._id}\" for ${Math.floor(Math.floor(ms / 1000) / 60)} minutes.`,
+                        `Banned from \"${this._id}\" for ${Math.floor(
+                            Math.floor(ms / 1000) / 60
+                        )} minutes.`,
                         "",
                         7000,
                         "#room",
                         "short"
-                    )
+                    );
                 if (asd)
-                    this.Notification("room",
+                    this.Notification(
+                        "room",
                         "Notice",
-                        `${pthatbanned.user.name} banned ${user.user.name} from the channel for ${Math.floor(Math.floor(ms / 1000) / 60)} minutes.`,
+                        `${pthatbanned.user.name} banned ${
+                            user.user.name
+                        } from the channel for ${Math.floor(
+                            Math.floor(ms / 1000) / 60
+                        )} minutes.`,
                         "",
                         7000,
                         "#room",
                         "short"
-                    )
-                if (this.crown && (this.crown.userId == _id)) {
-                    this.Notification("room",
+                    );
+                if (this.crown && this.crown.userId == _id) {
+                    this.Notification(
+                        "room",
                         "Certificate of Award",
                         `Let it be known that ${user.user.name} kickbanned him/her self.`,
                         "",
@@ -645,23 +761,22 @@ class Channel extends EventEmitter {
                         "#room"
                     );
                 }
-            //}
-
-        })
+                //}
+            });
     }
 
     unban(_id) {
         let ban = this.bans.get(_id);
-		if (!ban) return;
-		if (ban.bantime) {
-			delete ban.bantime;
-		}
+        if (!ban) return;
+        if (ban.bantime) {
+            delete ban.bantime;
+        }
 
-		if (ban.bannedtime) {
-			delete ban.bannedtime;
-		}
+        if (ban.bannedtime) {
+            delete ban.bannedtime;
+        }
 
-		this.bans.delete(ban.user._id);
+        this.bans.delete(ban.user._id);
     }
 
     Notification(who, title, text, html, duration, target, klass, id) {
@@ -700,7 +815,7 @@ class Channel extends EventEmitter {
         this.on("remove crown", () => {
             this.crown = undefined;
             delete this.crown;
-            this.emit('update');
+            this.emit("update");
         });
 
         this.on("flag spin", spin => {
@@ -725,17 +840,18 @@ class Channel extends EventEmitter {
     }
 
     verifySet(_id, msg) {
-        if(typeof(msg.set) !== 'object') {
+        if (typeof msg.set !== "object") {
             msg.set = {
                 visible: true,
-                color: this.server.defaultSettings.color, chat:true,
-                crownsolo:false
-            }
+                color: this.server.defaultSettings.color,
+                chat: true,
+                crownsolo: false
+            };
         }
 
         msg.set = RoomSettings.changeSettings(msg.set);
-        
-        if (typeof(msg.set.lobby) !== 'undefined') {
+
+        if (typeof msg.set.lobby !== "undefined") {
             if (msg.set.lobby == true) {
                 if (!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
             } else {
@@ -757,7 +873,7 @@ class Channel extends EventEmitter {
 
     async startAmongUs() {
         if (!this.amongus) {
-            this.amongus = {}
+            this.amongus = {};
         }
 
         if (this.amongus.started) return;
@@ -766,7 +882,10 @@ class Channel extends EventEmitter {
             this.amongus.started = true;
         }
 
-        let imposter = this.connections[Math.floor(Math.random() * this.connections.length)];
+        let imposter =
+            this.connections[
+                Math.floor(Math.random() * this.connections.length)
+            ];
         imposter.user.setFlag("freeze_name", true);
     }
 

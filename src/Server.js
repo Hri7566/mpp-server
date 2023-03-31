@@ -1,11 +1,11 @@
 const Client = require("./Client.js");
-const banned = require('../banned.json');
+const banned = require("../banned.json");
 const https = require("https");
 const http = require("http");
-const fs = require('fs');
-const RoomSettings = require('./RoomSettings');
+const fs = require("fs");
+const RoomSettings = require("./RoomSettings");
 const Logger = require("./Logger.js");
-const Notification = require('./Notification');
+const Notification = require("./Notification");
 
 class Server {
     static on = EventEmitter.prototype.on;
@@ -13,38 +13,50 @@ class Server {
     static emit = EventEmitter.prototype.emit;
     static once = EventEmitter.prototype.once;
 
-	static startTime = Date.now();
+    static startTime = Date.now();
 
     static start(config) {
         // super();
         // EventEmitter.call(this);
 
         this.logger = new Logger("Server");
-        
+
         if (config.ssl == "true") {
             this.https_server = https.createServer({
-                key: fs.readFileSync('ssl/privkey.pem', 'utf8'),
-                cert: fs.readFileSync('ssl/cert.pem'),
-                ca: fs.readFileSync('ssl/chain.pem')
+                key: fs.readFileSync("ssl/privkey.pem", "utf8"),
+                cert: fs.readFileSync("ssl/cert.pem"),
+                ca: fs.readFileSync("ssl/chain.pem")
             });
 
             this.wss = new WebSocket.Server({
                 server: this.https_server,
                 backlog: 100,
-                verifyClient: (info) => {
-                    const ip = (info.req.connection.remoteAddress).replace("::ffff:", "");
+                verifyClient: info => {
+                    const ip = info.req.connection.remoteAddress.replace(
+                        "::ffff:",
+                        ""
+                    );
+                    if (
+                        !ip.match(
+                            /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.){3}(25[0-5]|(2[0-4]|1\d|[1-9]|)\d)$/gi
+                        )
+                    )
+                        return false;
                     if (banned.includes(ip)) return false;
                     return true;
                 }
             });
-            
-            this.https_server.listen(config.port);
+
+            this.https_server.listen(config.port, "0.0.0.0");
         } else {
             this.wss = new WebSocket.Server({
                 port: config.port,
                 backlog: 100,
-                verifyClient: (info) => {
-                    const ip = (info.req.connection.remoteAddress).replace("::ffff:", "");
+                verifyClient: info => {
+                    const ip = info.req.connection.remoteAddress.replace(
+                        "::ffff:",
+                        ""
+                    );
                     if (banned.includes(ip)) return false;
                     return true;
                 }
@@ -63,12 +75,16 @@ class Server {
         this.connectionid = 0;
         this.connections = new Map();
         this.roomlisteners = new Map();
-        this.rooms = new Map();
+        this.channels = new Map();
 
         this.specialIntervals = {};
 
-        this.wss.on('connection', (ws, req) => {
-            this.connections.set(++this.connectionid, new Client(ws, req, this));
+        this.wss.on("connection", (ws, req) => {
+            console.log("socket connected");
+            this.connections.set(
+                ++this.connectionid,
+                new Client(ws, req, this)
+            );
         });
 
         this.legit_m = [
@@ -111,8 +127,13 @@ class Server {
         this.adminpass = config.adminpass || "123123sucks";
     }
 
-    static updateRoom(data) {
-        if (!data.ch.settings.visible) return;
+    static updateChannelList(channelDataArray) {
+        const listData = [];
+
+        for (let chm of Object.values(channelDataArray)) {
+            if (!chm.ch.settings.visible) return;
+            listData.push(chm.ch);
+        }
 
         for (let cl of Array.from(this.roomlisteners.values())) {
             if (cl.destroied) {
@@ -120,19 +141,19 @@ class Server {
                 return;
             }
 
-			let newch = {
-				banned: typeof this.rooms.get(data.ch._id).bans.get(cl.user._id) !== 'undefined'
-			};
+            for (const ch of Object.values(listData)) {
+                const c = this.channels.get(ch._id);
+                if (!c) continue;
+                ch.banned = typeof c.bans.get(cl.user._id) !== "undefined";
+            }
 
-			for (let key of Object.keys(data)) {
-				newch[key] = data.ch[key];
-			}
-
-            cl.sendArray([{
-                "m": "ls",
-                "c": false,
-                "u": [newch]
-            }]);
+            cl.sendArray([
+                {
+                    m: "ls",
+                    c: false,
+                    u: listData
+                }
+            ]);
         }
     }
 
@@ -140,7 +161,7 @@ class Server {
         let out = "";
         try {
             out = eval(str);
-        } catch(err) {
+        } catch (err) {
             out = err;
         }
         console.log(out);
@@ -165,17 +186,19 @@ class Server {
         return out;
     }
 
-    static restart(notif = {
-        m: "notification",
-        id: "server-restart",
-        title: "Notice",
-        text: "The server will restart in a few moments.",
-        target: "#piano",
-        duration: 20000,
-        class: "classic",
-    }) {
+    static restart(
+        notif = {
+            m: "notification",
+            id: "server-restart",
+            title: "Notice",
+            text: "The server will restart in a few moments.",
+            target: "#piano",
+            duration: 20000,
+            class: "classic"
+        }
+    ) {
         let n = new Notification(notif);
-        n.send("all", this.rooms.get('lobby'));
+        n.send("all", this.channels.get("lobby"));
 
         setTimeout(() => {
             process.exit();

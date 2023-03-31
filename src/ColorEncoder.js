@@ -1,17 +1,16 @@
 const Color = require("./Color");
 
-function hashCode(str) { // java String#hashCode
+function hashCode(str) {
+    // java String#hashCode
     var hash = 0;
     for (var i = 0; i < str.length; i++) {
-       hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
     }
     return hash;
-} 
+}
 
-function intToRGB(i){
-    var c = (i & 0x00FFFFFF)
-        .toString(16)
-        .toUpperCase();
+function intToRGB(i) {
+    var c = (i & 0x00ffffff).toString(16).toUpperCase();
 
     return "00000".substring(0, 6 - c.length) + c;
 }
@@ -27,26 +26,26 @@ function intToRGB(i){
  * @param   {number}  l       The lightness
  * @return  {Array}           The RGB representation
  */
- function hslToRgb(h, s, l){
+function hslToRgb(h, s, l) {
     var r, g, b;
 
-    if(s == 0){
+    if (s == 0) {
         r = g = b = l; // achromatic
-    }else{
-        var hue2rgb = function hue2rgb(p, q, t){
-            if(t < 0) t += 1;
-            if(t > 1) t -= 1;
-            if(t < 1/6) return p + (q - p) * 6 * t;
-            if(t < 1/2) return q;
-            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    } else {
+        var hue2rgb = function hue2rgb(p, q, t) {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
             return p;
-        }
+        };
 
         var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
         var p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
+        r = hue2rgb(p, q, h + 1 / 3);
         g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
+        b = hue2rgb(p, q, h - 1 / 3);
     }
 
     return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
@@ -55,7 +54,12 @@ function intToRGB(i){
 function getTimeColor(currentDate = new Date()) {
     // get day of year as a number from 1-365
     let newYearsDay = new Date(currentDate.getFullYear());
-    let differenceInTime = (currentDate - newYearsDay) + ((newYearsDay.getTimezoneOffset() - currentDate.getTimezoneOffset()) * 60 * 1000);
+    let differenceInTime =
+        currentDate -
+        newYearsDay +
+        (newYearsDay.getTimezoneOffset() - currentDate.getTimezoneOffset()) *
+            60 *
+            1000;
     let oneDayInMS = 1000 * 60 * 60 * 24;
     let dayOfYear = Math.ceil(differenceInTime / oneDayInMS);
     dayOfYear %= 365;
@@ -67,13 +71,17 @@ function getTimeColor(currentDate = new Date()) {
     let seconds = currentDate.getSeconds();
 
     // get a hue based on time of day and day of year
-    let h = Math.floor((dayOfYear / 365) * 100) / 10000;
+    let h = dayOfYear / 365;
     let s = (hours + 1) / (24 / 3);
     // let s = 1;
-    let l = 0.25 + Math.floor(((hours / 60)) * 1000) / 1000;
-    
-    if (l > 0.5) l = 0.5;
-    if (s > 1) s = 1;
+    let l = 0.15 + Math.floor(((hours + 12) / 60) * 1000) / 1000;
+
+    if (l > 1 / 3) l = 1 / 3;
+    if (s > 0.75) s = 0.75;
+
+    // const h = (Date.now() % 360) / 360;
+    // const s = 1;
+    // const l = 0.5;
 
     // convert to rgb
     let [r, g, b] = hslToRgb(h, s, l);
@@ -87,4 +95,4 @@ module.exports = {
     intToRGB,
     getTimeColor,
     hslToRgb
-}
+};

@@ -1,5 +1,5 @@
 module.exports = class Notification {
-    constructor (data) {
+    constructor(data) {
         this.id = data.id;
         this.chat = data.chat;
         this.refresh = data.refresh;
@@ -30,10 +30,16 @@ module.exports = class Notification {
                 }
                 break;
             default:
-                Array.from(room.server.connections.values()).filter((usr) => typeof(usr.user) !== 'undefined' ? usr.user._id == _id : null).forEach((p) => {
-                    p.sendArray([msg]);
-                });
+                Array.from(room.server.connections.values())
+                    .filter(usr =>
+                        typeof usr.user !== "undefined"
+                            ? usr.user._id == _id
+                            : null
+                    )
+                    .forEach(p => {
+                        p.sendArray([msg]);
+                    });
                 break;
         }
     }
-}
+};

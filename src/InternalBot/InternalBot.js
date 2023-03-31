@@ -1,6 +1,6 @@
-const { EventEmitter } = require('events');
-const { Command } = require('./Command');
-const Color = require('../Color');
+const { EventEmitter } = require("events");
+const { Command } = require("./Command");
+const Color = require("../Color");
 
 class InternalBot {
     static on = EventEmitter.prototype.on;
@@ -8,14 +8,14 @@ class InternalBot {
     static emit = EventEmitter.prototype.emit;
     static once = EventEmitter.prototype.once;
 
-    static prefix = '!';
-	static commands = [];
+    static prefix = "!";
+    static commands = [];
 
     static bindEventListeners() {
         if (this.alreadyBound) return;
         this.alreadyBound = true;
 
-        this.on('receive message', (msg, cl, ch) => {
+        this.on("receive message", (msg, cl, ch) => {
             /**
              * msg.a - chat message
              * msg.p - participant
@@ -23,19 +23,28 @@ class InternalBot {
              */
 
             let isAdmin = false;
-            if (cl.user.hasFlag('admin')) {
+            if (cl.user.hasFlag("admin")) {
                 isAdmin = true;
             }
 
-            let args = msg.a.split(' ');
+            let args = msg.a.split(" ");
             let cmd = args[0].toLowerCase().substring(this.prefix.length);
             let argcat = msg.a.substring(args[0].length).trim();
             let p = cl;
 
             if (!args[0].startsWith(this.prefix)) return;
-			let prefix = this.prefix;
-			Command.handleCommand(cl, ch, cmd, prefix, args, argcat, p, isAdmin);
-    
+            let prefix = this.prefix;
+            Command.handleCommand(
+                cl,
+                ch,
+                cmd,
+                prefix,
+                args,
+                argcat,
+                p,
+                isAdmin
+            );
+
             // switch (cmd) {
             //     case "ping":
             //         ch.adminChat('pong');
@@ -89,7 +98,7 @@ class InternalBot {
             //     case "channellist":
             //         if (!isAdmin) return;
             //         ch.adminChat("Channels:");
-            //         for (let [_id] of ch.server.rooms) {
+            //         for (let [_id] of ch.server.channels) {
             //             ch.adminChat(`- ${_id}`);
             //         }
             //         break;
@@ -103,14 +112,14 @@ class InternalBot {
             //         if (!isAdmin) return;
             //         cl.server.ev(argcat);
             //         break;
-			// 	case "inventory":
-			// 	case "inv":
-			// 		if (cl.user.inventory) {
-			// 			ch.adminChat(`Inventory: ${Object.values(cl.user.inventory).map(it => `${it.display_name} (x${it.count})`)}`);
-			// 		} else {
-			// 			ch.adminChat(`Inventory: (empty)`);
-			// 		}
-			// 		break;
+            // 	case "inventory":
+            // 	case "inv":
+            // 		if (cl.user.inventory) {
+            // 			ch.adminChat(`Inventory: ${Object.values(cl.user.inventory).map(it => `${it.display_name} (x${it.count})`)}`);
+            // 		} else {
+            // 			ch.adminChat(`Inventory: (empty)`);
+            // 		}
+            // 		break;
             // }
         });
     }
@@ -120,4 +129,4 @@ InternalBot.bindEventListeners();
 
 module.exports = {
     InternalBot
-}
+};
