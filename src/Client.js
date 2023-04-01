@@ -292,12 +292,13 @@ class Client extends EventEmitter {
         let users = [];
         let clients = [];
         this.server.connections.forEach(cl => {
+            if (!cl.user) return;
             let c = {
                 ip: cl.ip,
-                participantId: cl.participantId
+                participantId: cl.participantId,
+                userId: cl.user._id
             };
             clients.push(c);
-            if (!cl.user) return;
             let u = {
                 p: {
                     _id: cl.user._id,
