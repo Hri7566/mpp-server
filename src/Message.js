@@ -4,6 +4,7 @@ const Channel = require("./Channel.js");
 const RoomSettings = require("./RoomSettings");
 const Database = require("./Database");
 const { MOTDGenerator } = require("./MOTDGenerator");
+const Notification = require("./Notification");
 
 module.exports = cl => {
     cl.once("hi", (msg, admin) => {
@@ -12,8 +13,6 @@ module.exports = cl => {
                 cl.hidden = true;
             }
         }
-
-        console.log("hi");
 
         let m = {};
         m.m = "hi";
@@ -343,6 +342,7 @@ module.exports = cl => {
         let title;
         let text;
         let html;
+        let chat = msg.chat;
 
         if (msg.hasOwnProperty("class")) {
             klass = msg.class;
@@ -357,16 +357,19 @@ module.exports = cl => {
             html = msg.html;
         }
 
-        cl.channel.Notification(
-            targetUser || targetChannel,
+        new Notification(cl.server, {
+            cl,
+            id,
+            targetChannel,
+            targetUser,
+            target,
+            class: klass,
             title,
             text,
             html,
-            duration,
-            target,
-            klass,
-            id
-        );
+            chat,
+            duration
+        }).send();
     });
 
     cl.on("user_flag", (msg, admin) => {
@@ -497,5 +500,17 @@ module.exports = cl => {
     cl.on("restart", (msg, admin) => {
         if (!admin) return;
         cl.server.restart(msg.notification);
+    });
+
+    cl.on("ipban", (msg, admin) => {
+        if (!admin) return;
+        if (!msg.ip) return;
+        cl.server.banIP(msg.ip);
+    });
+
+    cl.on("ipunban", (msg, admin) => {
+        if (!admin) return;
+        if (!msg.ip) return;
+        cl.server.unbanIP(msg.ip);
     });
 };

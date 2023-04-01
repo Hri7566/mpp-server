@@ -114,7 +114,7 @@ var fish_without_images = [
     "Tadpole",
     "Whale Shark"
 ];
-// var newfish = require("./newfish.json");
+var newfish = require("./fish");
 var pokedex = [];
 
 process.stdout.write(

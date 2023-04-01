@@ -1,6 +1,7 @@
 const Logger = require("../Logger");
 const Color = require("../Color");
 const { Cow } = require("../Cow");
+const Database = require("../Database");
 
 class Command {
     static commands = [];
@@ -40,7 +41,7 @@ class Command {
                     isAdmin,
                     a: args.join(" ")
                 });
-                console.log(out);
+                // console.log(out);
                 if (!out) return;
                 if (out !== "") {
                     ch.adminChat(out);
@@ -187,6 +188,46 @@ Command.addCommand(
             return `Cow: ${cow.emoji}${cow.display_name}`;
         },
         "user"
+    )
+);
+
+Command.addCommand(
+    new Command(
+        "inventory",
+        ["inventory", "inv"],
+        undefined,
+        `%Pinventory`,
+        0,
+        (cl, ch, msg) => {
+            if (cl.user.inventory) {
+                const items = Object.values(cl.user.inventory)
+                    .map(
+                        it =>
+                            `${it.emoji ? it.emoji : ""}${it.display_name} (x${
+                                it.count
+                            })`
+                    )
+                    .join(", ")
+                    .trim();
+
+                ch.adminChat(`Inventory: ${items == "" ? "(none)" : items}`);
+            }
+        },
+        "user"
+    )
+);
+
+Command.addCommand(
+    new Command(
+        "js",
+        ["js"],
+        undefined,
+        `%Pjs`,
+        0,
+        (cl, ch, msg) => {
+            return cl.server.ev(msg.argcat);
+        },
+        "admin"
     )
 );
 

@@ -11,7 +11,9 @@ let dayOfTheWeekMOTD = [
     "Don't forget to bring a towel!",
     "Never lick a pole in winter.",
     "Everyone loves a potato monkey!",
-    "Dear Mario: Please come to the castle. I've baked a cake for you. Yours truly-- Princess Toadstool"
+    "Dear Mario: Please come to the castle. I've baked a cake for you. Yours truly-- Princess Toadstool",
+    "The MotD generator is broken. Come back tomorrow.",
+    "There's an earthbound battle background script in my frontend files."
 ];
 
 class MOTDGenerator {

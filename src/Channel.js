@@ -160,8 +160,10 @@ class Channel extends EventEmitter {
             this.settings = new RoomSettings(this.server.lobbySettings);
         }
 
-        this.settings.color = col.toHexa();
-        this.settings.color2 = col.toHexa();
+        this.settings.changeSettings({
+            color: col.toHexa(),
+            color2: col.toHexa()
+        });
 
         for (let key in this.settings) {
             this.server.lobbySettings[key] = this.settings[key];
@@ -200,7 +202,10 @@ class Channel extends EventEmitter {
                 // user owns the room
                 // we need to switch the crown to them
                 //cl.quotas.a.setParams(Quota.PARAMS_A_CROWNED);
-                this.crown = new Crown(cl.participantId, cl.user._id);
+                this.emit("add crown", {
+                    participantId: cl.participantId,
+                    userId: cl.user._id
+                });
 
                 this.crowndropped = false;
                 // this.settings = new RoomSettings(set, 'user');
@@ -281,39 +286,6 @@ class Channel extends EventEmitter {
             ]);
             this.updateCh(cl, this.settings);
         }
-
-        if (this.flags.spin == true) {
-            this.spin(cl);
-        }
-    }
-
-    spin(cl) {
-        // speeeeeeen
-        let id = cl.user._id;
-        if (!id) id = "room";
-        this.Notification(
-            id,
-            "",
-            ``,
-            `<script>$("#piano").addClass("spin")</script>`,
-            1,
-            "#names",
-            "short"
-        );
-    }
-
-    stopSpin(cl) {
-        let id = cl.user._id;
-        if (!id) id = "room";
-        this.Notification(
-            id,
-            "",
-            ``,
-            `<script>$("#piano").removeClass("spin")</script>`,
-            1,
-            "#names",
-            "short"
-        );
     }
 
     remove(p) {
@@ -436,7 +408,7 @@ class Channel extends EventEmitter {
                         .get(usr.connectionid)
                         .sendArray(arr);
                 } catch (e) {
-                    console.log(e);
+                    this.logger.error(e);
                 }
             }
         });
@@ -582,9 +554,6 @@ class Channel extends EventEmitter {
             message.t = Date.now();
             message.a = msg.message;
 
-            console.log("here:", p, msg);
-            console.log(message.length);
-
             if (message.a.length > 0 && message.a.length <= 512) {
                 message.p = {
                     color: "#ffffff",
@@ -726,40 +695,58 @@ class Channel extends EventEmitter {
                 u.setChannel(Channel.banChannel, {});
 
                 if (asd)
-                    this.Notification(
-                        user.user._id,
-                        "Notice",
-                        `Banned from \"${this._id}\" for ${Math.floor(
+                    new Notification(this.server, {
+                        id: "",
+                        title: "Notice",
+                        text: `Banned from "${this._id}" for ${Math.floor(
                             Math.floor(ms / 1000) / 60
                         )} minutes.`,
-                        "",
-                        7000,
-                        "#room",
-                        "short"
-                    );
+                        duration: 7000,
+                        target: "#room",
+                        class: "short",
+                        targetUser: user.participantId,
+                        targetChannel: "all",
+                        cl: user
+                    }).send();
+                new Notification(this.server, {
+                    id: "",
+                    title: "Notice",
+                    text: `Banned from "${this._id}" for ${Math.floor(
+                        Math.floor(ms / 1000) / 60
+                    )} minutes.`,
+                    duration: 7000,
+                    target: "#room",
+                    class: "short",
+                    targetUser: user.participantId,
+                    targetChannel: "all",
+                    cl: user
+                }).send();
                 if (asd)
-                    this.Notification(
-                        "room",
-                        "Notice",
-                        `${pthatbanned.user.name} banned ${
+                    new Notification(this.server, {
+                        id: "",
+                        class: "short",
+                        target: "#room",
+                        title: "Notice",
+                        text: `${pthatbanned.user.name} banned ${
                             user.user.name
                         } from the channel for ${Math.floor(
                             Math.floor(ms / 1000) / 60
                         )} minutes.`,
-                        "",
-                        7000,
-                        "#room",
-                        "short"
-                    );
+                        duration: 7000,
+                        targetChannel: "room",
+                        cl: pthatbanned
+                    }).send();
                 if (this.crown && this.crown.userId == _id) {
-                    this.Notification(
-                        "room",
-                        "Certificate of Award",
-                        `Let it be known that ${user.user.name} kickbanned him/her self.`,
-                        "",
-                        7000,
-                        "#room"
-                    );
+                    new Notification(this.server, {
+                        id: "",
+                        class: "short",
+                        target: "#room",
+                        title: "Certificate of Award",
+                        text: `Let it be known that ${user.user.name} kickbanned him/her self.`,
+                        targetChannel: "room",
+                        duration: 7000,
+                        cl: pthatbanned
+                    }).send();
                 }
                 //}
             });
@@ -777,20 +764,6 @@ class Channel extends EventEmitter {
         }
 
         this.bans.delete(ban.user._id);
-    }
-
-    Notification(who, title, text, html, duration, target, klass, id) {
-        new Notification({
-            id: id,
-            chat: undefined,
-            refresh: undefined,
-            title: title,
-            text: text,
-            html: html,
-            duration: duration,
-            target: target,
-            class: klass
-        }).send(who, this);
     }
 
     bindEventListeners() {
@@ -818,24 +791,15 @@ class Channel extends EventEmitter {
             this.emit("update");
         });
 
-        this.on("flag spin", spin => {
-            if (spin) {
-                for (let cl of this.connections) {
-                    this.spin(cl);
-                }
-            } else {
-                for (let cl of this.connections) {
-                    this.stopSpin(cl);
-                }
-            }
+        this.on("add crown", msg => {
+            this.crown = new Crown(msg.participantId, msg.userId);
+            this.emit("update");
         });
 
-        this.on("flag among us", amongus => {
-            if (amongus) {
-                this.startAmongUs();
-            } else {
-                this.stopAmongUs();
-            }
+        this.on("kickban", msg => {
+            if (!msg._id) return;
+            if (!msg.ms) msg.ms = 30 * 60 * 1000;
+            this.kickban(msg._id, msg.ms);
         });
     }
 
@@ -853,7 +817,7 @@ class Channel extends EventEmitter {
 
         if (typeof msg.set.lobby !== "undefined") {
             if (msg.set.lobby == true) {
-                if (!this.isLobby(_id)) delete msg.set.lobby; // keep it nice and clean
+                if (!this.isLobby(_id)) delete msg.set.lobby;
             } else {
                 if (this.isLobby(_id)) {
                     msg.set = this.server.lobbySettings;
@@ -869,28 +833,6 @@ class Channel extends EventEmitter {
     hasFlag(flag, val) {
         if (!val) return this.flags.hasOwnProperty(flag);
         return this.flags.hasOwnProperty(flag) && this.flags[flag] == val;
-    }
-
-    async startAmongUs() {
-        if (!this.amongus) {
-            this.amongus = {};
-        }
-
-        if (this.amongus.started) return;
-
-        if (!this.amongus.started) {
-            this.amongus.started = true;
-        }
-
-        let imposter =
-            this.connections[
-                Math.floor(Math.random() * this.connections.length)
-            ];
-        imposter.user.setFlag("freeze_name", true);
-    }
-
-    stopAmongUs() {
-        this.amongus.started = false;
     }
 }
 

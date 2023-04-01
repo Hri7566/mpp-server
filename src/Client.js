@@ -78,21 +78,23 @@ class Client extends EventEmitter {
             }
 
             if (userbanned) {
-                ch.Notification(
-                    this.user._id,
-                    "Notice",
-                    `Currently banned from \"${_id}\" for ${Math.ceil(
+                new Notification(this.server, {
+                    targetUser: this.participantId,
+                    targetChannel: all,
+                    title: "Notice",
+                    text: `Currently banned from "${_id}" for ${Math.ceil(
                         Math.floor(
                             (userbanned.msbanned -
                                 (Date.now() - userbanned.bannedtime)) /
                                 1000
                         ) / 60
                     )} minutes.`,
-                    7000,
-                    "",
-                    "#room",
-                    "short"
-                );
+                    duration: 7000,
+                    id: "",
+                    target: "#room",
+                    class: "short",
+                    cl: this
+                }).send();
                 this.setChannel(Channel.banChannel, settings);
                 return;
             }
@@ -199,9 +201,22 @@ class Client extends EventEmitter {
      */
     destroy() {
         if (this.user) {
-            this.user.stopFlagEvents();
+            let lastClient = true;
+
+            for (const cl of this.server.connections.values()) {
+                if (cl.user) {
+                    if (cl.user._id == this.user._id) {
+                        lastClient = false;
+                        break;
+                    }
+                }
+            }
+
+            if (lastClient) this.user.stopFlagEvents();
         }
+
         this.ws.close();
+
         if (this.channel) {
             this.channel.emit("bye", this);
         }
@@ -235,11 +250,13 @@ class Client extends EventEmitter {
                 // this.destroy();
             }
         });
+
         this.ws.on("close", () => {
             if (!this.destroied) {
                 this.destroy();
             }
         });
+
         this.ws.addEventListener("error", err => {
             console.error(err);
             if (!this.destroied) {
@@ -258,26 +275,36 @@ class Client extends EventEmitter {
         let channels = [];
         this.server.channels.forEach(ch => {
             let ppl = [];
-            for (let p of ch.fetchChannelData().ppl) {
+            const chdata = ch.fetchChannelData();
+
+            for (let p of chdata.ppl) {
                 ppl.push({
                     user: p
                 });
             }
+
             channels.push({
+                chat: ch.chatmsgs.slice(-1 * 32),
                 participants: ppl
             });
         });
 
         let users = [];
+        let clients = [];
         this.server.connections.forEach(cl => {
+            let c = {
+                ip: cl.ip,
+                participantId: cl.participantId
+            };
+            clients.push(c);
             if (!cl.user) return;
             let u = {
                 p: {
                     _id: cl.user._id,
                     name: cl.user.name,
                     color: cl.user.color,
-                    flags: cl.user.flags,
-                    inventory: cl.user.inventory
+                    flags: cl.user.flags
+                    // inventory: cl.user.inventory
                 },
                 id: cl.participantId
             };
@@ -292,10 +319,21 @@ class Client extends EventEmitter {
         };
 
         data.clientManager = {
-            users
+            users,
+            clients
         };
 
         data.uptime = Date.now() - this.server.startTime;
+        data.config = this.server.config;
+        if (this.user) {
+            data.p = {
+                _id: this.user._id,
+                name: this.user.name,
+                color: this.user.color,
+                flags: this.user.flags
+                // inventory: this.user.inventory
+            };
+        }
 
         this.sendArray([data]);
     }

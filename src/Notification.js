@@ -1,45 +1,85 @@
+const Server = require("./Server");
+
 module.exports = class Notification {
-    constructor(data) {
+    constructor(server, data) {
+        this.server = server;
+        this.cl = data.cl;
+
         this.id = data.id;
-        this.chat = data.chat;
-        this.refresh = data.refresh;
         this.title = data.title;
         this.text = data.text;
         this.html = data.html;
         this.target = data.target;
         this.duration = data.duration;
         this.class = data.class;
-        this.id = data.id;
+        this.targetChannel = data.targetChannel;
+        this.targetUser = data.targetUser;
+
+        this.chat = data.chat;
     }
 
-    send(_id, room) {
-        let msg = {};
-        Object.assign(msg, this);
-        msg.m = "notification";
+    send() {
+        let msg = {
+            m: "notification",
+            id: this.id,
+            title: this.title,
+            text: this.text,
+            html: this.html,
+            target: this.target,
+            duration: this.duration,
+            class: this.class
+        };
 
-        switch (_id) {
-            case "all":
-                for (let con of Array.from(room.server.connections.values())) {
-                    con.sendArray([msg]);
-                }
-                break;
-            case "room":
-            case "channel":
-                for (let con of room.connections) {
-                    con.sendArray([msg]);
-                }
-                break;
-            default:
-                Array.from(room.server.connections.values())
-                    .filter(usr =>
-                        typeof usr.user !== "undefined"
-                            ? usr.user._id == _id
-                            : null
+        // Object.assign(msg, this);
+        const targets = [];
+
+        if (this.targetChannel) {
+            switch (this.targetChannel) {
+                case "all":
+                    // every channel
+                    for (const cl of this.server.connections.values()) {
+                        targets.push(cl);
+                    }
+                    break;
+                case "room":
+                case "channel":
+                    // current channel
+                    if (!this.cl) break;
+                    if (!this.cl.channel) break;
+                    for (const cl of this.server.connections.values()) {
+                        if (!cl.channel) continue;
+                        if (cl.channel._id == this.cl.channel._id) {
+                            targets.push(cl);
+                        }
+                    }
+                    break;
+                default:
+                    // specific channel
+                    for (const cl of this.server.connections.values()) {
+                        if (!cl.channel) continue;
+                        if (cl.channel._id == this.targetChannel) {
+                            targets.push(cl);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        if (!this.chat) {
+            for (const cl of targets) {
+                if (this.targetUser) {
+                    if (!cl.user) continue;
+                    if (
+                        cl.user._id == this.targetUser ||
+                        cl.participantId == this.targetUser
                     )
-                    .forEach(p => {
-                        p.sendArray([msg]);
-                    });
-                break;
+                        cl.sendArray([msg]);
+                } else {
+                    cl.sendArray([msg]);
+                }
+            }
+        } else {
+            this.cl.sendChat(this.text);
         }
     }
 };

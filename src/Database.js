@@ -34,10 +34,13 @@ fs.mkdirSync("db/", {
 class Database {
     static userdb;
     static roomdb;
+    static bandb;
 
     static async load() {
         this.userdb = mongoose.connection;
         this.roomdb = level("db/rooms.db");
+        this.bandb = level("db/ban.db");
+
         // const writeFile = promisify(fs.writeFile);
         // const readdir = promisify(fs.readdir);
 
@@ -61,8 +64,6 @@ class Database {
             .substr(0, 24);
 
         let user = await UserModel.findById(_id).exec();
-        console.log("_id:", _id);
-        console.log("user:", user);
 
         if (user == null) {
             user = await this.createUser(_id);
@@ -155,6 +156,26 @@ class Database {
 
     static deleteRoomSettings(_id) {
         this.roomdb.del("room~" + _id);
+    }
+
+    static addIPBan(ip) {
+        this.bandb.put("ipban~" + ip, true);
+    }
+
+    static removeIPBan(ip) {
+        this.bandb.del("ipban~" + ip);
+    }
+
+    static isIPBanned(ip, cb) {
+        this.roomdb.get("ipban~" + ip, (err, value) => {
+            if (err) {
+                return false;
+            }
+
+            console.log("ban:", value);
+
+            if (value == true) return true;
+        });
     }
 }
 
