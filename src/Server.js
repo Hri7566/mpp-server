@@ -59,6 +59,7 @@ class Server {
                         ""
                     );
                     if (banned.includes(ip)) return false;
+                    if (Database.isIPBanned(ip)) return false;
                     return true;
                 }
             });
