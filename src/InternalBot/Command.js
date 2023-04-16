@@ -107,10 +107,7 @@ Command.addCommand(
                 if (!msg.args[2]) {
                     cl.emit(
                         "color",
-                        {
-                            color: c.toHexa(),
-                            _id: cl.user._id
-                        },
+                        { color: c.toHexa(), _id: cl.user._id },
                         true
                     );
                     ch.adminChat(
@@ -125,10 +122,7 @@ Command.addCommand(
                     if (winner) {
                         cl.emit(
                             "color",
-                            {
-                                color: c.toHexa(),
-                                _id: winner.user._id
-                            },
+                            { color: c.toHexa(), _id: winner.user._id },
                             true
                         );
                         ch.adminChat(
@@ -231,6 +225,63 @@ Command.addCommand(
     )
 );
 
-module.exports = {
-    Command
-};
+/*
+Command.addCommand(
+    new Command(
+        "ip",
+        ["ip"],
+        undefined,
+        "%Pip",
+        0,
+        (cl, ch, msg) => {
+            if (msg.args[1]) {
+                const winner = new Array(cl.server.connections.values()).find(
+                    cl => {
+                        if (!cl.user) return false;
+                        console.log(cl.user._id);
+                        return cl.user ? cl.user._id == msg.args[1] : false;
+                    }
+                );
+                if (winner) {
+                    cl.sendArray([
+                        {
+                            m: "a",
+                            a: "IP: " + winner.ip,
+                            p: {
+                                name: "mpp",
+                                color: "#ffffff",
+                                _id: "0",
+                                id: "0"
+                            }
+                        }
+                    ]);
+                } else {
+                    cl.sendArray([
+                        {
+                            m: "a",
+                            a: "No IP found.",
+                            p: {
+                                name: "mpp",
+                                color: "#ffffff",
+                                _id: "0",
+                                id: "0"
+                            }
+                        }
+                    ]);
+                }
+            } else {
+                cl.sendArray([
+                    {
+                        m: "a",
+                        a: "ip: " + cl.ip,
+                        p: { name: "mpp", color: "#ffffff", _id: "0", id: "0" }
+                    }
+                ]);
+            }
+        },
+        "admin"
+    )
+);
+*/
+
+module.exports = { Command };

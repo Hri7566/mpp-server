@@ -8,7 +8,7 @@ const level = require("level");
 const { db } = require("./UserModel");
 const Logger = require("./Logger");
 
-var logger = new Logger("Database");
+const logger = new Logger("Database");
 
 mongoose.connect(
     process.env.MONGO_URL,
@@ -23,10 +23,11 @@ mongoose.connect(
             logger.error("Unable to connect to database service");
             process.exit(1);
         }
-        logger.log("Connected");
+        logger.log("Connected to Mongo");
     }
 );
 
+// TODO implement this with an if statement instead
 fs.mkdirSync("db/", {
     recursive: true
 });
@@ -35,11 +36,15 @@ class Database {
     static userdb;
     static roomdb;
     static bandb;
+    static utildb;
 
     static async load() {
+        logger.log("Initializing level stores...");
         this.userdb = mongoose.connection;
         this.roomdb = level("db/rooms.db");
         this.bandb = level("db/ban.db");
+        this.utildb = level("db/util.db");
+        logger.log("Level stores initialized");
 
         // const writeFile = promisify(fs.writeFile);
         // const readdir = promisify(fs.readdir);
@@ -155,18 +160,27 @@ class Database {
     }
 
     static deleteRoomSettings(_id) {
+        if (!this.bandb) return this.load();
         this.roomdb.del("room~" + _id);
     }
 
     static addIPBan(ip) {
+        if (!this.bandb) return this.load();
         this.bandb.put("ipban~" + ip, true);
     }
 
     static removeIPBan(ip) {
+        if (!this.bandb) return this.load();
         this.bandb.del("ipban~" + ip);
     }
 
     static isIPBanned(ip, cb) {
+        if (!this.bandb) {
+            // FIXME this was causing a crash :/ maybe it should be async instead of return false?
+            this.load();
+            return false;
+        }
+
         this.roomdb.get("ipban~" + ip, (err, value) => {
             if (err) {
                 return false;
@@ -176,6 +190,18 @@ class Database {
 
             if (value == true) return true;
         });
+    }
+
+    static utilSet(key, value) {
+        return this.utildb.put(key, value);
+    }
+
+    static utilGet(key) {
+        return this.utildb.get(key);
+    }
+
+    static utilDel(key) {
+        return this.utildb.del(key);
     }
 }
 

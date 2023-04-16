@@ -26,12 +26,20 @@ const LOGGER_PARTICIPANT = {
     id: "logger"
 };
 
+const SERVER_PARTICIPANT = {
+    name: "mpp",
+    color: "#ffffff",
+    _id: "0",
+    id: "0"
+};
+
 const LOGGING_CHANNEL = "lolwutsecretloggingchannel";
 const BAN_CHANNEL = "test/awkward";
 
 class Channel extends EventEmitter {
     static loggingChannel = LOGGING_CHANNEL;
     static loggerParticipant = LOGGER_PARTICIPANT;
+    static serverParticipant = SERVER_PARTICIPANT;
     static banChannel = BAN_CHANNEL;
 
     constructor(server, _id, settings, cl) {
@@ -125,7 +133,7 @@ class Channel extends EventEmitter {
         if (this.isLobby(this._id)) {
             this.colorInterval = setInterval(() => {
                 this.setDefaultLobbyColorBasedOnDate();
-            }, 500);
+            }, 5000);
             this.setDefaultLobbyColorBasedOnDate();
         }
     }
