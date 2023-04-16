@@ -9,8 +9,8 @@ process.stdout.write(
 );
 
 // var client = new Client("wss://www.multiplayerpiano.com");
-// var client = new Client("wss://mpp.hri7566.info:8443");
-var client = new Client("ws://127.0.0.1:8443");
+var client = new Client("wss://mpp.hri7566.info:8443");
+// var client = new Client("ws://127.0.0.1:8443");
 client.on("connect", function () {
     console.log("connected");
 });
