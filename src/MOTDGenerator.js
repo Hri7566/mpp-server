@@ -52,6 +52,11 @@ let dayOfTheWeekMOTD = [
     "Nutrition Facts",
     "Staying safe online is an ever growing difficulty and you could be exploited by hackers. NordVPN allows you to change your IP address, making you harder to track, securing your privacy. Check out the link in the description to get 20% off for the first two months and thank you to NordVPN for sponsering this video.",
     "MPPClone's profanity filter is a text file.",
+    "apple emoji",
+    "In a hole in the ground there lived a hobbit.",
+    "PROTEINS",
+    "Here are your bill details",
+    "Pentium FDIV bug",
     ""
 ];
 
