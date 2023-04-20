@@ -78,6 +78,7 @@ class Server {
         this.connections = new Map();
         this.roomlisteners = new Map();
         this.channels = new Map();
+        this.cycle = require("./cycle");
 
         this.specialIntervals = {};
 

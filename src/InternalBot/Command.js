@@ -284,4 +284,18 @@ Command.addCommand(
 );
 */
 
+Command.addCommand(
+    new Command(
+        "time",
+        ["time"],
+        undefined,
+        `%Ptime`,
+        0,
+        (cl, ch, msg) => {
+            return `It is ${cl.server.cycle.getCurrentGenericTime()}.`;
+        },
+        "admin"
+    )
+);
+
 module.exports = { Command };

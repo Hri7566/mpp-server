@@ -17,8 +17,8 @@ let dayOfTheWeekMOTD = [
     "Lapis doesn't own this!",
     "https://youtube.com/hri7566",
     "The most Brandon-like MPP",
-    "\"penis\" - Lapis",
-    "\"I have an OnlyFans\" - Nitsua",
+    '"penis" - Lapis',
+    '"I have an OnlyFans" - Nitsua',
     "Sola's favorite site",
     "This site has the most admin features out of any MPP.",
     "This site is older than MPPClone.",
@@ -42,7 +42,17 @@ let dayOfTheWeekMOTD = [
     "distant cat sounds",
     "NOBODY EXPECTS THE SPANISH INQUISITION!",
     "Who will Billy Mitchell sue next?",
-    "ayy lmao"
+    "ayy lmao",
+    "Khorne Bot",
+    "The greatest fantasy epic of our time.",
+    "Look out for a deranged hillbilly.",
+    "motd",
+    "Have you done today's wordle?",
+    "Give me the Nintendo.",
+    "Nutrition Facts",
+    "Staying safe online is an ever growing difficulty and you could be exploited by hackers. NordVPN allows you to change your IP address, making you harder to track, securing your privacy. Check out the link in the description to get 20% off for the first two months and thank you to NordVPN for sponsering this video.",
+    "MPPClone's profanity filter is a text file.",
+    ""
 ];
 
 class MOTDGenerator {
