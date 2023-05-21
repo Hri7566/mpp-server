@@ -339,7 +339,8 @@ class Channel extends EventEmitter {
         if (Array.from(this.ppl.values()).length <= 0) {
             setTimeout(() => {
                 this.destroy();
-            }, 13000);
+            }, 3000);
+            return;
         }
 
         this.connections.forEach(usr => {
