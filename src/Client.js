@@ -1,4 +1,4 @@
-const Channel = require("./Channel.js");
+const Channel = require("./channel/Channel.js");
 const Quota = require("./Quota.js");
 const quotas = require("../Quotas");
 const { RateLimit, RateLimitChain } = require("./Ratelimit.js");

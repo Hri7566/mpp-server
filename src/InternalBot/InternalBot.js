@@ -23,7 +23,11 @@ class InternalBot {
              */
 
             let isAdmin = false;
-            if (cl.user.hasFlag("admin")) {
+            if (cl) {
+                if (cl.user.hasFlag("admin")) {
+                    isAdmin = true;
+                }
+            } else {
                 isAdmin = true;
             }
 

@@ -1,14 +1,14 @@
 const createKeccakHash = require("keccak");
 const Crown = require("./Crown.js");
-const Database = require("./Database.js");
-const Logger = require("./Logger.js");
-const Quota = require("./Quota.js");
-const RoomSettings = require("./RoomSettings.js");
+const Database = require("../Database.js");
+const Logger = require("../Logger.js");
+const Quota = require("../Quota.js");
+const RoomSettings = require("../RoomSettings.js");
 const ftc = require("fancy-text-converter");
-const Notification = require("./Notification");
-const Color = require("./Color");
-const { getTimeColor } = require("./ColorEncoder.js");
-const { InternalBot } = require("./InternalBot");
+const Notification = require("../Notification.js");
+const Color = require("../Color.js");
+const { getTimeColor } = require("../ColorEncoder.js");
+const { InternalBot } = require("../InternalBot/index.js");
 
 function ansiRegex({ onlyFirst = false } = {}) {
     const pattern = [

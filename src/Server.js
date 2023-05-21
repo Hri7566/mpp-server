@@ -7,6 +7,13 @@ const RoomSettings = require("./RoomSettings");
 const Logger = require("./Logger.js");
 const Notification = require("./Notification");
 
+const ADMIN_PARTICIPANT = {
+    name: "mpp",
+    _id: "0",
+    id: "0",
+    color: "#fff"
+};
+
 class Server {
     static on = EventEmitter.prototype.on;
     static off = EventEmitter.prototype.off;
@@ -80,7 +87,7 @@ class Server {
         this.specialIntervals = {};
 
         this.wss.on("connection", (ws, req) => {
-            console.log("socket connected");
+            // console.log("socket connected");
             this.connections.set(
                 ++this.connectionid,
                 new Client(ws, req, this)
@@ -206,4 +213,7 @@ class Server {
     }
 }
 
-module.exports = Server;
+module.exports = {
+    Server,
+    ADMIN_PARTICIPANT
+};

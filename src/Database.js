@@ -61,8 +61,8 @@ class Database {
             .substr(0, 24);
 
         let user = await UserModel.findById(_id).exec();
-        console.log("_id:", _id);
-        console.log("user:", user);
+        // console.log("_id:", _id);
+        // console.log("user:", user);
 
         if (user == null) {
             user = await this.createUser(_id);

@@ -1,6 +1,6 @@
 const Quota = require("./Quota");
-const User = require("./User.js");
-const Channel = require("./Channel.js");
+const User = require("./User");
+const Channel = require("./channel/Channel");
 const RoomSettings = require("./RoomSettings");
 const Database = require("./Database");
 const { MOTDGenerator } = require("./MOTDGenerator");
