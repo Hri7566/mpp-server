@@ -190,6 +190,60 @@ Command.addCommand(
     )
 );
 
+Command.addCommand(
+    new Command(
+        "id",
+        ["id"],
+        undefined,
+        `%Pid`,
+        0,
+        (cl, ch, msg) => {
+            return cl.user._id;
+        },
+        "user"
+    )
+);
+
+Command.addCommand(
+    new Command(
+        "restart",
+        ["restart"],
+        undefined,
+        `%Prestart`,
+        0,
+        (cl, ch, msg) => {
+            if (!msg.isAdmin) {
+                ch.adminChat("You do not have permission to use this command.");
+                return;
+            }
+
+            cl.server.restart();
+            Command.logger.log("Scheduled restart");
+        },
+        "admin"
+    )
+);
+
+Command.addCommand(
+    new Command(
+        "restart",
+        ["restart"],
+        undefined,
+        `%Prestart`,
+        0,
+        (cl, ch, msg) => {
+            if (!msg.isAdmin) {
+                ch.adminChat("You do not have permission to use this command.");
+                return;
+            }
+
+            cl.server.restart();
+            Command.logger.log("Scheduled restart");
+        },
+        "admin"
+    )
+);
+
 module.exports = {
     Command
 };

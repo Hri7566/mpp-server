@@ -1,4 +1,4 @@
-const Client = require("./Client.js");
+const Client = require("./client/Client.js");
 const banned = require("../banned.json");
 const https = require("https");
 const http = require("http");

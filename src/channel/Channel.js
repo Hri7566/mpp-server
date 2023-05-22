@@ -583,8 +583,8 @@ class Channel extends EventEmitter {
             message.t = Date.now();
             message.a = msg.message;
 
-            console.log("here:", p, msg);
-            console.log(message.length);
+            // console.log("here:", p, msg);
+            // console.log(message.length);
 
             if (message.a.length > 0 && message.a.length <= 512) {
                 message.p = {

@@ -1,9 +1,9 @@
-const Channel = require("./channel/Channel.js");
-const Quota = require("./Quota.js");
-const quotas = require("../Quotas");
-const { RateLimit, RateLimitChain } = require("./Ratelimit.js");
-const User = require("./User.js");
-const Database = require("./Database.js");
+const Channel = require("../channel/Channel.js");
+const Quota = require("../Quota.js");
+const quotas = require("../../Quotas.js");
+const { RateLimit, RateLimitChain } = require("../Ratelimit.js");
+const User = require("../User.js");
+const Database = require("../Database.js");
 const { EventEmitter } = require("events");
 
 class Client extends EventEmitter {
@@ -301,7 +301,7 @@ class Client extends EventEmitter {
     }
 
     /**
-     *
+     * Send channel data to client
      * @param {Channel} ch
      * @param {Client} cl If this is present, only this client's user data will be sent(?)
      */

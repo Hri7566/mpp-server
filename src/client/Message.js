@@ -1,9 +1,9 @@
-const Quota = require("./Quota");
-const User = require("./User");
-const Channel = require("./channel/Channel");
-const RoomSettings = require("./RoomSettings");
-const Database = require("./Database");
-const { MOTDGenerator } = require("./MOTDGenerator");
+const Quota = require("../Quota");
+const User = require("../User");
+const Channel = require("../channel/Channel");
+const RoomSettings = require("../RoomSettings");
+const Database = require("../Database");
+const { MOTDGenerator } = require("../MOTDGenerator");
 
 module.exports = cl => {
     cl.once("hi", (msg, admin) => {
@@ -12,8 +12,6 @@ module.exports = cl => {
                 cl.hidden = true;
             }
         }
-
-        console.log("hi");
 
         let m = {};
         m.m = "hi";
@@ -312,7 +310,7 @@ module.exports = cl => {
             if (c.user._id !== msg._id && c.participantId !== msg.id) return;
 
             c.user.color = msg.color;
-            require("./Database").updateUser(c.user._id, c.user);
+            require("../Database").updateUser(c.user._id, c.user);
             cl.channel.updateParticipant(c.user._id, c.user);
         });
     });

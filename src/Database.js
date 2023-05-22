@@ -2,30 +2,31 @@ const fs = require("fs");
 const { promisify } = require("util");
 const createKeccakHash = require("keccak");
 const ColorEncoder = require("./ColorEncoder");
-const UserModel = require("./UserModel");
-const mongoose = require("mongoose");
+// const UserModel = require("./UserModel");
+// const mongoose = require("mongoose");
 const level = require("level");
-const { db } = require("./UserModel");
+// const { db } = require("./UserModel");
 const Logger = require("./Logger");
+const { PrismaClient } = require("@prisma/client");
 
 var logger = new Logger("Database");
 
-mongoose.connect(
-    process.env.MONGO_URL,
-    {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        connectTimeoutMS: 1000
-    },
-    err => {
-        if (err) {
-            console.error(err);
-            logger.error("Unable to connect to database service");
-            process.exit(1);
-        }
-        logger.log("Connected");
-    }
-);
+// mongoose.connect(
+//     process.env.MONGO_URL,
+//     {
+//         useNewUrlParser: true,
+//         useUnifiedTopology: true,
+//         connectTimeoutMS: 1000
+//     },
+//     err => {
+//         if (err) {
+//             console.error(err);
+//             logger.error("Unable to connect to database service");
+//             process.exit(1);
+//         }
+//         logger.log("Connected");
+//     }
+// );
 
 fs.mkdirSync("db/", {
     recursive: true
@@ -34,9 +35,10 @@ fs.mkdirSync("db/", {
 class Database {
     static userdb;
     static roomdb;
+    static prisma = new PrismaClient();
 
     static async load() {
-        this.userdb = mongoose.connection;
+        // this.userdb = mongoose.connection;
         this.roomdb = level("db/rooms.db");
         // const writeFile = promisify(fs.writeFile);
         // const readdir = promisify(fs.readdir);
@@ -51,67 +53,98 @@ class Database {
     }
 
     static async getUserData(cl, server) {
-        if (!this.userdb) {
-            await this.load();
-        }
+        // if (!this.userdb) {
+        //     await this.load();
+        // }
 
         let _id = createKeccakHash("keccak256")
             .update(cl.server._id_Private_Key + cl.ip)
             .digest("hex")
             .substr(0, 24);
 
-        let user = await UserModel.findById(_id).exec();
+        // let user = await UserModel.findById(_id).exec();
         // console.log("_id:", _id);
         // console.log("user:", user);
+
+        let user = await this.prisma.users.findUnique({
+            where: {
+                id: _id
+            }
+        });
 
         if (user == null) {
             user = await this.createUser(_id);
         }
 
+        const t = Date.now();
         return user;
     }
 
     static async createUser(_id) {
-        if (!this.userdb) {
-            await this.load();
-        }
+        // if (!this.userdb) {
+        //     await this.load();
+        // }
 
-        let user = new UserModel({
-            name: "Anonymous",
-            _id: _id,
-            color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
-            flags: {}
+        // let user = new UserModel({
+        //     name: "Anonymous",
+        //     _id: _id,
+        //     color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
+        //     flags: {}
+        // });
+
+        // user.save();
+
+        await this.prisma.users.create({
+            data: {
+                name: "Anonymous",
+                id: _id,
+                color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
+                flags: {}
+            }
         });
 
-        user.save();
         return user;
     }
 
     static async updateUser(_id, data) {
-        if (!this.userdb) {
-            await this.load();
-        }
+        // if (!this.userdb) {
+        //     await this.load();
+        // }
 
-        let user = await UserModel.findOne({ _id: _id }).exec();
+        // let user = await UserModel.findOne({ _id: _id }).exec();
 
-        user.name = data.name;
-        user._id = data._id;
-        user.flags = data.flags;
-        user.color = data.color;
+        // user.name = data.name;
+        // user._id = data._id;
+        // user.flags = data.flags;
+        // user.color = data.color;
 
-        await user.save();
+        // await user.save();
+
+        await this.prisma.users.updateMany({
+            where: {
+                id: _id
+            },
+            data: {
+                // id: data._id,
+                name: data.name,
+                color: data.color,
+                flags: data.flags
+            }
+        });
     }
 
     static async wipe() {
-        if (!this.userdb) {
-            await this.load();
-        }
+        // if (!this.userdb) {
+        //     await this.load();
+        // }
 
-        await UserModel.find({}, (err, docs) => {
-            docs.forEach(doc => {
-                doc.remove();
-            });
-        }).exec();
+        // await UserModel.find({}, (err, docs) => {
+        //     docs.forEach(doc => {
+        //         doc.remove();
+        //     });
+        // }).exec();
+
+        await this.prisma.users.deleteMany();
     }
 
     static strMapToObj(strMap) {
@@ -164,5 +197,7 @@ class RoomDataModel {
         this.chat = chat;
     }
 }
+
+Database.load();
 
 module.exports = Database;
