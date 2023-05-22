@@ -104,7 +104,8 @@ class Database {
                 name: "Anonymous",
                 id: _id,
                 color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
-                flags: {}
+                flags: {},
+                v: 1
             }
         });
 
