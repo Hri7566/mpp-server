@@ -310,7 +310,7 @@ module.exports = cl => {
             if (c.user._id !== msg._id && c.participantId !== msg.id) return;
 
             c.user.color = msg.color;
-            require("../Database").updateUser(c.user._id, c.user);
+            Database.updateUser(c.user._id, c.user);
             cl.channel.updateParticipant(c.user._id, c.user);
         });
     });
