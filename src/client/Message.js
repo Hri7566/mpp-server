@@ -1,9 +1,9 @@
-const Quota = require("./Quota");
-const User = require("./User.js");
-const Channel = require("./Channel.js");
-const RoomSettings = require("./RoomSettings");
-const Database = require("./Database");
-const { MOTDGenerator } = require("./MOTDGenerator");
+const Quota = require("../Quota");
+const User = require("../User.js");
+const Channel = require("../channel/Channel.js");
+const ChannelSettings = require("../ChannelSettings");
+const Database = require("../Database");
+const { MOTDGenerator } = require("../MOTDGenerator");
 
 module.exports = cl => {
     cl.once("hi", (msg, admin) => {
@@ -12,8 +12,6 @@ module.exports = cl => {
                 cl.hidden = true;
             }
         }
-
-        console.log("hi");
 
         let m = {};
         m.m = "hi";
@@ -159,7 +157,7 @@ module.exports = cl => {
             if (!(cl.user._id == cl.channel.crown.userId)) return;
         }
         if (!msg.hasOwnProperty("set") || !msg.set)
-            msg.set = new RoomSettings(cl.channel.settings, "user");
+            msg.set = new ChannelSettings(cl.channel.settings, "user");
         cl.channel.settings.changeSettings(msg.set, admin);
         // cl.channel.updateCh();
         cl.channel.emit("update");

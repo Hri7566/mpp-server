@@ -1,16 +1,16 @@
 const config = require("../config");
 
-class RoomSettings {
+class ChannelSettings {
     static allowedProperties = {
         color: {
             type: "color",
-            default: config.defaultRoomSettings.color,
+            default: config.defaultChannelSettings.color,
             allowedChange: true,
             required: true
         },
         color2: {
             type: "color2",
-            default: config.defaultRoomSettings.color2,
+            default: config.defaultChannelSettings.color2,
             allowedChange: true,
             required: false
         },
@@ -55,21 +55,23 @@ class RoomSettings {
     };
 
     constructor(set, context) {
-        Object.keys(RoomSettings.allowedProperties).forEach(key => {
+        Object.keys(ChannelSettings.allowedProperties).forEach(key => {
             if (
-                typeof RoomSettings.allowedProperties[key].default !==
+                typeof ChannelSettings.allowedProperties[key].default !==
                 "undefined"
             ) {
-                if (this[key] !== RoomSettings.allowedProperties[key].default) {
-                    this[key] = RoomSettings.allowedProperties[key].default;
+                if (
+                    this[key] !== ChannelSettings.allowedProperties[key].default
+                ) {
+                    this[key] = ChannelSettings.allowedProperties[key].default;
                 }
             }
         });
 
-        Object.keys(RoomSettings.allowedProperties).forEach(key => {
-            if (RoomSettings.allowedProperties[key].required == true) {
+        Object.keys(ChannelSettings.allowedProperties).forEach(key => {
+            if (ChannelSettings.allowedProperties[key].required == true) {
                 if (typeof this[key] == "undefined") {
-                    this[key] = RoomSettings.allowedProperties[key].default;
+                    this[key] = ChannelSettings.allowedProperties[key].default;
                 }
             }
         });
@@ -78,25 +80,26 @@ class RoomSettings {
             Object.keys(set).forEach(key => {
                 if (typeof set[key] == "undefined") return;
                 if (
-                    Object.keys(RoomSettings.allowedProperties).indexOf(key) !==
-                    -1
+                    Object.keys(ChannelSettings.allowedProperties).indexOf(
+                        key
+                    ) !== -1
                 ) {
                     if (typeof context == "undefined") {
                         this[key] = this.verifyPropertyType(
                             key,
                             set[key],
-                            RoomSettings.allowedProperties[key].type
+                            ChannelSettings.allowedProperties[key].type
                         );
                     } else {
                         if (context == "user") {
                             if (
-                                RoomSettings.allowedProperties[key]
+                                ChannelSettings.allowedProperties[key]
                                     .allowedChange
                             ) {
                                 this[key] = this.verifyPropertyType(
                                     key,
                                     set[key],
-                                    RoomSettings.allowedProperties[key].type
+                                    ChannelSettings.allowedProperties[key].type
                                 );
                             }
                         }
@@ -109,31 +112,31 @@ class RoomSettings {
     verifyPropertyType(key, pr, type) {
         let ret;
 
-        if (typeof RoomSettings.allowedProperties[key] !== "object") return;
+        if (typeof ChannelSettings.allowedProperties[key] !== "object") return;
 
         switch (type) {
             case "color":
                 if (/^#[0-9a-f]{6}$/i.test(pr)) {
                     ret = pr;
                 } else {
-                    ret = RoomSettings.allowedProperties[key].default;
+                    ret = ChannelSettings.allowedProperties[key].default;
                 }
                 break;
             case "color2":
                 if (/^#[0-9a-f]{6}$/i.test(pr)) {
                     ret = pr;
                 } else {
-                    ret = RoomSettings.allowedProperties[key].default;
+                    ret = ChannelSettings.allowedProperties[key].default;
                 }
                 break;
             default:
                 if (typeof pr == type) {
                     ret = pr;
                 } else if (
-                    typeof RoomSettings.allowedProperties[key].default !==
+                    typeof ChannelSettings.allowedProperties[key].default !==
                     "undefined"
                 ) {
-                    ret = RoomSettings.allowedProperties[key].default;
+                    ret = ChannelSettings.allowedProperties[key].default;
                 } else {
                     ret = undefined;
                 }
@@ -145,11 +148,11 @@ class RoomSettings {
 
     changeSettings(set) {
         Object.keys(set).forEach(key => {
-            if (RoomSettings.allowedProperties[key].allowedChange) {
+            if (ChannelSettings.allowedProperties[key].allowedChange) {
                 this[key] = this.verifyPropertyType(
                     key,
                     set[key],
-                    RoomSettings.allowedProperties[key].type
+                    ChannelSettings.allowedProperties[key].type
                 );
             }
         });
@@ -158,13 +161,13 @@ class RoomSettings {
     static changeSettings(set, admin) {
         Object.keys(set).forEach(key => {
             if (
-                RoomSettings.allowedProperties[key].allowedChange ||
+                ChannelSettings.allowedProperties[key].allowedChange ||
                 admin == true
             ) {
-                set[key] = RoomSettings.verifyPropertyType(
+                set[key] = ChannelSettings.verifyPropertyType(
                     key,
                     set[key],
-                    RoomSettings.allowedProperties[key].type
+                    ChannelSettings.allowedProperties[key].type
                 );
             }
         });
@@ -174,31 +177,31 @@ class RoomSettings {
     static verifyPropertyType(key, pr, type) {
         let ret;
 
-        if (typeof RoomSettings.allowedProperties[key] !== "object") return;
+        if (typeof ChannelSettings.allowedProperties[key] !== "object") return;
 
         switch (type) {
             case "color":
                 if (/^#[0-9a-f]{6}$/i.test(pr)) {
                     ret = pr;
                 } else {
-                    ret = RoomSettings.allowedProperties[key].default;
+                    ret = ChannelSettings.allowedProperties[key].default;
                 }
                 break;
             case "color2":
                 if (/^#[0-9a-f]{6}$/i.test(pr)) {
                     ret = pr;
                 } else {
-                    ret = RoomSettings.allowedProperties[key].default;
+                    ret = ChannelSettings.allowedProperties[key].default;
                 }
                 break;
             default:
                 if (typeof pr == type) {
                     ret = pr;
                 } else if (
-                    typeof RoomSettings.allowedProperties[key].default !==
+                    typeof ChannelSettings.allowedProperties[key].default !==
                     "undefined"
                 ) {
-                    ret = RoomSettings.allowedProperties[key].default;
+                    ret = ChannelSettings.allowedProperties[key].default;
                 } else {
                     ret = undefined;
                 }
@@ -209,4 +212,4 @@ class RoomSettings {
     }
 }
 
-module.exports = RoomSettings;
+module.exports = ChannelSettings;

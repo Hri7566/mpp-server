@@ -35,12 +35,12 @@ fs.mkdirSync("db/", {
 
 class Database {
     static userdb;
-    static roomdb;
+    static channeldb;
     static prisma = new PrismaClient();
 
     static async load() {
         // this.userdb = mongoose.connection;
-        this.roomdb = level("db/rooms.db");
+        this.channeldb = level("db/rooms.db");
         this.bandb = level("db/ban.db");
         this.utildb = level("db/util.db");
         logger.log("Level stores initialized");
@@ -159,12 +159,10 @@ class Database {
         );
     }
 
-    static getRoomSettings(_id, cb) {
+    static getChannelSettings(_id, cb) {
         let key = "room~" + _id;
 
-        roomSettings;
-
-        this.roomdb.get(key, (err, value) => {
+        this.channeldb.get(key, (err, value) => {
             if (err || !value || value == "") {
                 cb(err, value);
                 return;
@@ -173,15 +171,15 @@ class Database {
         });
     }
 
-    static setRoomSettings(_id, roomSettings, chat) {
-        let roomData = new RoomDataModel(roomSettings, chat);
+    static setChannelSettings(_id, channelSettings, chat) {
+        let roomData = new RoomDataModel(channelSettings, chat);
         let key = "room~" + _id;
-        this.roomdb.put(key, JSON.stringify(roomData));
+        this.channeldb.put(key, JSON.stringify(roomData));
     }
 
-    static getRoomSettings(_id, cb) {
+    static getChannelSettings(_id, cb) {
         let key = "room~" + _id;
-        this.roomdb.get(key, (err, value) => {
+        this.channeldb.get(key, (err, value) => {
             if (err) {
                 cb(err);
                 return;
@@ -191,9 +189,9 @@ class Database {
         });
     }
 
-    static deleteRoomSettings(_id) {
+    static deleteChannelSettings(_id) {
         if (!this.bandb) return this.load();
-        this.roomdb.del("room~" + _id);
+        this.channeldb.del("room~" + _id);
     }
 
     static addIPBan(ip) {
@@ -213,7 +211,7 @@ class Database {
             return false;
         }
 
-        this.roomdb.get("ipban~" + ip, (err, value) => {
+        this.channeldb.get("ipban~" + ip, (err, value) => {
             if (err) {
                 return false;
             }

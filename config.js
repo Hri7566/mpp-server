@@ -14,7 +14,7 @@ module.exports = Object.seal({
     adminpass: process.env.ADMINPASS,
     ssl: process.env.SSL,
     serveFiles: true,
-    defaultRoomSettings: {
+    defaultChannelSettings: {
         // color: "#3b5054",
         // color2: "#001014",
 

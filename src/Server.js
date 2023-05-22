@@ -3,7 +3,7 @@ const banned = require("../banned.json");
 const https = require("https");
 const http = require("http");
 const fs = require("fs");
-const RoomSettings = require("./RoomSettings");
+const ChannelSettings = require("./ChannelSettings.js");
 const Logger = require("./Logger.js");
 const Notification = require("./Notification");
 const Database = require("./Database.js");
@@ -73,9 +73,11 @@ class Server {
         }
 
         this.defaultUsername = config.defaultUsername;
-        this.defaultRoomSettings = new RoomSettings(config.defaultRoomSettings);
+        this.defaultChannelSettings = new ChannelSettings(
+            config.defaultChannelSettings
+        );
 
-        this.lobbySettings = new RoomSettings(config.defaultRoomSettings);
+        this.lobbySettings = new ChannelSettings(config.defaultChannelSettings);
         this.lobbySettings.lobby = true;
         this.lobbySettings.color = config.defaultLobbyColor || "#9900ff";
         this.lobbySettings.color2 = config.defaultLobbyColor2 || "#9900ff";
