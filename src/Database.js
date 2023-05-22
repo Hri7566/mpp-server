@@ -9,7 +9,7 @@ const level = require("level");
 const Logger = require("./Logger");
 const { PrismaClient } = require("@prisma/client");
 
-var logger = new Logger("Database");
+const logger = new Logger("Database");
 
 // mongoose.connect(
 //     process.env.MONGO_URL,
@@ -28,6 +28,7 @@ var logger = new Logger("Database");
 //     }
 // );
 
+// TODO implement this with an if statement instead
 fs.mkdirSync("db/", {
     recursive: true
 });
@@ -40,6 +41,10 @@ class Database {
     static async load() {
         // this.userdb = mongoose.connection;
         this.roomdb = level("db/rooms.db");
+        this.bandb = level("db/ban.db");
+        this.utildb = level("db/util.db");
+        logger.log("Level stores initialized");
+
         // const writeFile = promisify(fs.writeFile);
         // const readdir = promisify(fs.readdir);
 
@@ -187,7 +192,48 @@ class Database {
     }
 
     static deleteRoomSettings(_id) {
+        if (!this.bandb) return this.load();
         this.roomdb.del("room~" + _id);
+    }
+
+    static addIPBan(ip) {
+        if (!this.bandb) return this.load();
+        this.bandb.put("ipban~" + ip, true);
+    }
+
+    static removeIPBan(ip) {
+        if (!this.bandb) return this.load();
+        this.bandb.del("ipban~" + ip);
+    }
+
+    static isIPBanned(ip, cb) {
+        if (!this.bandb) {
+            // FIXME this was causing a crash :/ maybe it should be async instead of return false?
+            this.load();
+            return false;
+        }
+
+        this.roomdb.get("ipban~" + ip, (err, value) => {
+            if (err) {
+                return false;
+            }
+
+            console.log("ban:", value);
+
+            if (value == true) return true;
+        });
+    }
+
+    static utilSet(key, value) {
+        return this.utildb.put(key, value);
+    }
+
+    static utilGet(key) {
+        return this.utildb.get(key);
+    }
+
+    static utilDel(key) {
+        return this.utildb.del(key);
     }
 }
 

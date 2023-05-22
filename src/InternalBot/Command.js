@@ -1,6 +1,7 @@
 const Logger = require("../Logger");
 const Color = require("../Color");
 const { Cow } = require("../Cow");
+const Database = require("../Database");
 
 class Command {
     static commands = [];
@@ -40,7 +41,7 @@ class Command {
                     isAdmin,
                     a: args.join(" ")
                 });
-                console.log(out);
+                // console.log(out);
                 if (!out) return;
                 if (out !== "") {
                     ch.adminChat(out);
@@ -106,10 +107,7 @@ Command.addCommand(
                 if (!msg.args[2]) {
                     cl.emit(
                         "color",
-                        {
-                            color: c.toHexa(),
-                            _id: cl.user._id
-                        },
+                        { color: c.toHexa(), _id: cl.user._id },
                         true
                     );
                     ch.adminChat(
@@ -124,10 +122,7 @@ Command.addCommand(
                     if (winner) {
                         cl.emit(
                             "color",
-                            {
-                                color: c.toHexa(),
-                                _id: winner.user._id
-                            },
+                            { color: c.toHexa(), _id: winner.user._id },
                             true
                         );
                         ch.adminChat(
@@ -192,13 +187,25 @@ Command.addCommand(
 
 Command.addCommand(
     new Command(
-        "id",
-        ["id"],
+        "inventory",
+        ["inventory", "inv"],
         undefined,
-        `%Pid`,
+        `%Pinventory`,
         0,
         (cl, ch, msg) => {
-            return cl.user._id;
+            if (cl.user.inventory) {
+                const items = Object.values(cl.user.inventory)
+                    .map(
+                        it =>
+                            `${it.emoji ? it.emoji : ""}${it.display_name} (x${
+                                it.count
+                            })`
+                    )
+                    .join(", ")
+                    .trim();
+
+                ch.adminChat(`Inventory: ${items == "" ? "(none)" : items}`);
+            }
         },
         "user"
     )
@@ -206,19 +213,86 @@ Command.addCommand(
 
 Command.addCommand(
     new Command(
-        "restart",
-        ["restart"],
+        "js",
+        ["js"],
         undefined,
-        `%Prestart`,
+        `%Pjs`,
         0,
         (cl, ch, msg) => {
-            if (!msg.isAdmin) {
-                ch.adminChat("You do not have permission to use this command.");
-                return;
-            }
+            return cl.server.ev(msg.argcat);
+        },
+        "admin"
+    )
+);
 
-            cl.server.restart();
-            Command.logger.log("Scheduled restart");
+/*
+Command.addCommand(
+    new Command(
+        "ip",
+        ["ip"],
+        undefined,
+        "%Pip",
+        0,
+        (cl, ch, msg) => {
+            if (msg.args[1]) {
+                const winner = new Array(cl.server.connections.values()).find(
+                    cl => {
+                        if (!cl.user) return false;
+                        console.log(cl.user._id);
+                        return cl.user ? cl.user._id == msg.args[1] : false;
+                    }
+                );
+                if (winner) {
+                    cl.sendArray([
+                        {
+                            m: "a",
+                            a: "IP: " + winner.ip,
+                            p: {
+                                name: "mpp",
+                                color: "#ffffff",
+                                _id: "0",
+                                id: "0"
+                            }
+                        }
+                    ]);
+                } else {
+                    cl.sendArray([
+                        {
+                            m: "a",
+                            a: "No IP found.",
+                            p: {
+                                name: "mpp",
+                                color: "#ffffff",
+                                _id: "0",
+                                id: "0"
+                            }
+                        }
+                    ]);
+                }
+            } else {
+                cl.sendArray([
+                    {
+                        m: "a",
+                        a: "ip: " + cl.ip,
+                        p: { name: "mpp", color: "#ffffff", _id: "0", id: "0" }
+                    }
+                ]);
+            }
+        },
+        "admin"
+    )
+);
+*/
+
+Command.addCommand(
+    new Command(
+        "time",
+        ["time"],
+        undefined,
+        `%Ptime`,
+        0,
+        (cl, ch, msg) => {
+            return `It is ${cl.server.cycle.getCurrentGenericTime()}.`;
         },
         "admin"
     )
@@ -244,6 +318,4 @@ Command.addCommand(
     )
 );
 
-module.exports = {
-    Command
-};
+module.exports = { Command };

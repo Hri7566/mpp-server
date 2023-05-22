@@ -44,6 +44,7 @@ class User {
         if (typeof this.cl.server.specialIntervals[this._id] == "undefined") {
             this.cl.server.specialIntervals[this._id] = {};
         }
+
         if (this.hasFlag("rainbow", true)) {
             if (
                 !this.cl.server.specialIntervals[this._id].hasOwnProperty(

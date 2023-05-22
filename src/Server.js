@@ -6,6 +6,7 @@ const fs = require("fs");
 const RoomSettings = require("./RoomSettings");
 const Logger = require("./Logger.js");
 const Notification = require("./Notification");
+const Database = require("./Database.js");
 
 const ADMIN_PARTICIPANT = {
     name: "mpp",
@@ -65,6 +66,7 @@ class Server {
                         ""
                     );
                     if (banned.includes(ip)) return false;
+                    if (Database.isIPBanned(ip)) return false;
                     return true;
                 }
             });
@@ -83,6 +85,7 @@ class Server {
         this.connections = new Map();
         this.roomlisteners = new Map();
         this.channels = new Map();
+        this.cycle = require("./cycle");
 
         this.specialIntervals = {};
 
@@ -124,7 +127,9 @@ class Server {
             "channel message",
             "channel_flag",
             "name",
-            "restart"
+            "restart",
+            "ipban",
+            "ipunban"
         ];
 
         // this.welcome_motd = config.motd || "You agree to read this message.";
@@ -171,7 +176,8 @@ class Server {
         } catch (err) {
             out = err;
         }
-        console.log(out);
+        // console.log(out);
+        return `(${typeof out}) ${out}`;
     }
 
     static getClient(id) {
@@ -201,15 +207,30 @@ class Server {
             text: "The server will restart in a few moments.",
             target: "#piano",
             duration: 20000,
-            class: "classic"
+            class: "classic",
+            targetChannel: "all"
         }
     ) {
-        let n = new Notification(notif);
-        n.send("all", this.channels.get("lobby"));
+        let n = new Notification(this, notif);
+        n.send();
 
         setTimeout(() => {
             process.exit();
         }, n.duration || 20000);
+    }
+
+    static banIP(ip) {
+        Database.addIPBan(ip);
+
+        for (const cl of this.connections.values()) {
+            if (cl.ip == ip) {
+                cl.destroy();
+            }
+        }
+    }
+
+    static unbanIP(ip) {
+        Database.removeIPBan(ip);
     }
 }
 
