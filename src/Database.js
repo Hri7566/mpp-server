@@ -104,7 +104,7 @@ class Database {
         const user = await this.prisma.users.create({
             data: {
                 name: "Anonymous",
-                id: _id,
+                _id: _id,
                 color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
                 flags: {},
                 v: 1
