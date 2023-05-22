@@ -82,6 +82,8 @@ class Database {
         }
 
         const t = Date.now();
+        user._id = user.id;
+        delete user.id;
         return user;
     }
 
@@ -104,7 +106,7 @@ class Database {
         const user = await this.prisma.users.create({
             data: {
                 name: "Anonymous",
-                _id: _id,
+                id: _id,
                 color: "#" + ColorEncoder.intToRGB(ColorEncoder.hashCode(_id)),
                 flags: {},
                 v: 1
