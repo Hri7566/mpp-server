@@ -99,6 +99,8 @@ class Database {
 
         // user.save();
 
+        console.log(_id);
+
         const user = await this.prisma.users.create({
             data: {
                 name: "Anonymous",
