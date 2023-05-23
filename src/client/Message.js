@@ -4,9 +4,10 @@ const Channel = require("../channel/Channel.js");
 const ChannelSettings = require("../ChannelSettings");
 const Database = require("../Database");
 const { MOTDGenerator } = require("../MOTDGenerator");
+const { Server } = require("../Server");
 
 module.exports = cl => {
-    cl.once("hi", (msg, admin) => {
+    cl.once("hi", async (msg, admin) => {
         if (msg.hasOwnProperty("password")) {
             if (msg.password == "hideme") {
                 cl.hidden = true;
@@ -17,6 +18,7 @@ module.exports = cl => {
         m.m = "hi";
         m.motd = MOTDGenerator.getCurrentMOTD();
         m.t = Date.now();
+
         m.u = {
             name: cl.user.name,
             _id: cl.user._id,
@@ -25,6 +27,26 @@ module.exports = cl => {
         };
 
         m.v = "2.0";
+
+        if (msg.hasOwnProperty("id")) {
+            let id = parseInt(msg.id);
+            if (id) {
+                if (id > 0 && id < 5000) {
+                    m.u._id = cl.user._id + `-${id}`;
+                    console.log("here");
+                    let us = await Database.getUserData(
+                        m.u._id,
+                        cl.server,
+                        cl.ip
+                    );
+                    cl.user = new User(cl, us);
+                    m.u.color = us.color;
+                    cl.sendArray([m]);
+                    return;
+                }
+            }
+        }
+
         cl.sendArray([m]);
     });
 

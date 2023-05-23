@@ -63,7 +63,7 @@ class Database {
         // }
 
         let _id = createKeccakHash("keccak256")
-            .update(cl.server._id_Private_Key + cl.ip)
+            .update(server._id_Private_Key + cl.ip)
             .digest("hex")
             .substr(0, 24);
 
