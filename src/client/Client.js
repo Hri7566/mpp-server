@@ -33,7 +33,7 @@ class Client extends EventEmitter {
         this.ip = req.connection.remoteAddress.replace("::ffff:", "");
         this.hidden = false;
 
-        Database.getUserData(this, server).then(data => {
+        Database.getUserData(this.ip, server).then(data => {
             this.user = new User(this, data);
             this.destroied = false;
             this.bindEventListeners();
@@ -142,7 +142,7 @@ class Client extends EventEmitter {
             this.user.name = name;
 
             if (!this.user.hasFlag("freeze_name", true)) {
-                Database.getUserData(this, this.server).then(usr => {
+                Database.getUserData(this.ip, this.server).then(usr => {
                     Database.updateUser(this.user._id, this.user);
 
                     this.server.channels.forEach(channel => {

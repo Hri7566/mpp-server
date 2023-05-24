@@ -30,16 +30,13 @@ module.exports = cl => {
 
         if (msg.hasOwnProperty("id")) {
             let id = parseInt(msg.id);
-            if (id) {
+            if (id && !isNaN(id)) {
                 if (id > 0 && id < 5000) {
-                    m.u._id = cl.user._id + `-${id}`;
-                    console.log("here");
-                    let us = await Database.getUserData(
-                        m.u._id,
-                        cl.server,
-                        cl.ip
-                    );
+                    let newid = cl.user._id + `-${id}`;
+                    let us = await Database.getUserData(newid, cl.server);
                     cl.user = new User(cl, us);
+                    console.log(m.u._id, us);
+                    m.u._id = cl.user._id;
                     m.u.color = us.color;
                     cl.sendArray([m]);
                     return;

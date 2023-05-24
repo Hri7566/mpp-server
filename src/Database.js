@@ -57,13 +57,13 @@ class Database {
         // }
     }
 
-    static async getUserData(cl, server) {
+    static async getUserData(ip, server) {
         // if (!this.userdb) {
         //     await this.load();
         // }
 
         let _id = createKeccakHash("keccak256")
-            .update(server._id_Private_Key + cl.ip)
+            .update(server._id_Private_Key + ip)
             .digest("hex")
             .substr(0, 24);
 
