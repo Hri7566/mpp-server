@@ -1,0 +1,6 @@
+alwaysLoad:
+  - lobby
+  - test/awkward
+
+lobbySettings:
+  lobby: true
