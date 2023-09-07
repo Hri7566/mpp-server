@@ -14,4 +14,5 @@ model User {
   id    String @id @unique @map("_id")
   name  String @default("Anonymous")
   color String @default("#ffffff")
+  flags String // JSON flags object
 }
