@@ -4,3 +4,11 @@ alwaysLoad:
 
 lobbySettings:
   lobby: true
+  chat: true
+  crownsolo: false
+
+lobbyRegexes:
+  - "^lobby\\d\\d$"
+  - "^test/.*$"
+
+lobbyBackdoor: "lolwutsecretlobbybackdoor"

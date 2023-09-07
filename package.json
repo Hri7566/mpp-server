@@ -11,6 +11,7 @@
   "author": "Hri7566",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "5.2.0",
     "@t3-oss/env-core": "^0.6.1",
     "date-holidays": "^3.21.5",
     "dotenv": "^8.6.0",
