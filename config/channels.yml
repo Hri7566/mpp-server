@@ -1,14 +1,14 @@
-alwaysLoad:
-  - lobby
-  - test/awkward
+forceLoad:
+    - lobby
+    - test/awkward
 
 lobbySettings:
-  lobby: true
-  chat: true
-  crownsolo: false
+    lobby: true
+    chat: true
+    crownsolo: false
 
 lobbyRegexes:
-  - "^lobby\\d\\d$"
-  - "^test/.*$"
+    - "^lobby\\d\\d$"
+    - "^test/.*$"
 
 lobbyBackdoor: "lolwutsecretlobbybackdoor"
