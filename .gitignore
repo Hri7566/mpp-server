@@ -1,6 +1,11 @@
+# Node
 node_modules
-ssl/
-.history
-*.db/
+
+# Environment variables
 .env
-password.txt
+
+# SQLite databases
+prisma/*.db
+
+# TS build
+/out
