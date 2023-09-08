@@ -5,7 +5,11 @@ import { createUserID } from "../util/id";
 const logger = new Logger("WebSocket Server");
 
 export const app = App()
-    .get("/", (res, req) => {})
+    .get("/", (res, req) => {
+        const url = req.getUrl();
+        logger.debug(`${req.getMethod()} ${url} ${req}`);
+        res.writeStatus(`200 OK`).end("HI!");
+    })
     .ws("/*", {
         idleTimeout: 30,
         maxBackpressure: 1024,
