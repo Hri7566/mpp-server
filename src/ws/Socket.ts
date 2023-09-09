@@ -1,4 +1,3 @@
-import { WebSocket } from "uWebSockets.js";
 import { createColor, createID, createUserID } from "../util/id";
 import { decoder, encoder } from "../util/helpers";
 import EventEmitter from "events";
@@ -8,6 +7,8 @@ import { createUser, readUser } from "../data/user";
 import { eventGroups } from "./events";
 import { loadConfig } from "../util/config";
 import { Gateway } from "./Gateway";
+import { Channel, channelList } from "../channel/Channel";
+import { ServerWebSocket } from "bun";
 
 interface UsersConfig {
     defaultName: string;
@@ -31,17 +32,17 @@ export class Socket extends EventEmitter {
 
     public desiredChannel: {
         _id: string | undefined;
-        set: Partial<ChannelSettings>;
+        set: Partial<ChannelSettings> | undefined;
     } = {
         _id: undefined,
         set: {}
     };
 
-    constructor(private ws: WebSocket<unknown>) {
-        super();
-        this.ip = decoder.decode(this.ws.getRemoteAddressAsText());
+    public currentChannelID: string | undefined;
 
-        // Participant ID
+    constructor(private ws: ServerWebSocket<unknown>) {
+        super();
+        this.ip = ws.remoteAddress; // Participant ID
         this.id = createID();
 
         // User ID
@@ -61,9 +62,40 @@ export class Socket extends EventEmitter {
         return this._id;
     }
 
-    public setChannel(_id: string, set: Partial<ChannelSettings>) {
+    public getParticipantID() {
+        return this.id;
+    }
+
+    public setChannel(_id: string, set?: Partial<ChannelSettings>) {
+        if (this.isDestroyed()) return;
+
         this.desiredChannel._id = _id;
         this.desiredChannel.set = set;
+
+        let channel;
+        try {
+            for (const ch of channelList.values()) {
+                if (ch.getID() == this.desiredChannel._id) {
+                    channel = ch;
+                    break;
+                }
+            }
+        } catch (err) {}
+
+        // Does channel exist?
+        if (channel) {
+            // Exists, join normally
+            channel.join(this);
+        } else {
+            // Doesn't exist, join with crown
+            channel = new Channel(
+                this.desiredChannel._id,
+                this.desiredChannel.set
+            );
+
+            channel.join(this);
+            // TODO Give the crown upon joining
+        }
     }
 
     private bindEventListeners() {
@@ -80,7 +112,8 @@ export class Socket extends EventEmitter {
     public sendArray<EventID extends keyof ClientEvents>(
         arr: ClientEvents[EventID][]
     ) {
-        this.ws.send(encoder.encode(JSON.stringify(arr)));
+        if (this.isDestroyed()) return;
+        this.ws.send(JSON.stringify(arr));
     }
 
     private async loadUser() {
@@ -142,7 +175,27 @@ export class Socket extends EventEmitter {
         }
     }
 
-    public getParticipantID() {
-        return this.id;
+    private destroyed = false;
+
+    public destroy() {
+        // Socket was closed or should be closed, clear data
+
+        // Simulate closure
+        try {
+            this.ws.close();
+        } catch (err) {}
+
+        if (this.currentChannelID) {
+            const foundCh = channelList.find(
+                ch => ch.getID() == this.currentChannelID
+            );
+            if (foundCh) foundCh.leave(this);
+        }
+
+        this.destroyed = true;
+    }
+
+    public isDestroyed() {
+        return this.destroyed == true;
     }
 }

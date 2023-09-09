@@ -6,9 +6,20 @@ lobbySettings:
     lobby: true
     chat: true
     crownsolo: false
+    color: "#eeeeee"
+    color2: "#888888"
+    visible: true
+
+defaultSettings:
+    chat: true
+    crownsolo: false
+    color: "#480505"
+    color2: "#000000"
+    visible: true
 
 lobbyRegexes:
-    - "^lobby\\d\\d$"
-    - "^test/.*$"
+    - "^lobby[1-9]?[1-9]?$"
+    - "^test/.+$"
 
 lobbyBackdoor: "lolwutsecretlobbybackdoor"
+fullChannel: "test/awkward"

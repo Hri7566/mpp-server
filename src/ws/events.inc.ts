@@ -1,2 +1,3 @@
-import "./events/user";
-import "./events/admin";
+// Bun hoists import, but not require?
+require("./events/user");
+require("./events/admin");

@@ -1,4 +1,3 @@
-import { WebSocket } from "uWebSockets.js";
 import { Logger } from "../util/Logger";
 import { Socket } from "./Socket";
 import { hasOwn } from "../util/helpers";

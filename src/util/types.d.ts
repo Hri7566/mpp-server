@@ -100,9 +100,10 @@ declare interface ChannelInfo {
     id: string;
     _id: string;
     crown?: Crown;
-    settings: ChannelSettings;
+    settings: Partial<ChannelSettings>;
 }
 
+// Events copied from Hri7566/mppclone-client typedefs
 declare interface ServerEvents {
     a: {
         m: "a";
@@ -246,6 +247,7 @@ declare interface ClientEvents {
         m: "ch";
         p: string;
         ch: ChannelInfo;
+        ppl: Participant[];
     };
 
     custom: {
@@ -284,6 +286,7 @@ declare interface ClientEvents {
     };
 
     notification: {
+        m: "notification";
         duration?: number;
         class?: string;
         id?: string;
