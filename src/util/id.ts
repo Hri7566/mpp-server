@@ -6,5 +6,21 @@ export function createID() {
 }
 
 export function createUserID(ip: string) {
-    return createHash("sha-256").update(ip).update(env.SALT).digest("hex");
+    return createHash("sha256")
+        .update(ip)
+        .update(env.SALT)
+        .digest("hex")
+        .substring(0, 24);
+}
+
+export function createColor(ip: string) {
+    return (
+        "#" +
+        createHash("sha256")
+            .update(ip)
+            .update(env.SALT)
+            .update("color")
+            .digest("hex")
+            .substring(0, 6)
+    );
 }
