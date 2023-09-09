@@ -50,3 +50,9 @@ The commit history includes BopItFreak's server because this server is (debatabl
     ```
     $ bun start
     ```
+
+## Development
+
+```
+$ bun dev
+```
