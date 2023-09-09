@@ -1,13 +1,6 @@
 import { User } from "@prisma/client";
 import { prisma } from "./prisma";
-
-export interface UserFlags {
-    freeze_name: number;
-    "no chat rate limit": number;
-    chat_curse_1: number;
-    chat_curse_2: number;
-    override_id: string;
-}
+import { UserFlags } from "../util/types";
 
 export async function createUser(
     _id: string,
@@ -33,12 +26,14 @@ export async function readUser(_id: string) {
 
     if (!data) return null;
 
-    return {
-        _id: data.id,
-        name: data.name,
-        color: data.color,
-        flags: data.flags
-    };
+    // return {
+    //     _id: data.id,
+    //     name: data.name,
+    //     color: data.color,
+    //     flags: data.flags
+    // };
+
+    return data;
 }
 
 export async function updateUser(
