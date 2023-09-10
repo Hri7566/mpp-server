@@ -1,13 +1,15 @@
+import EventEmitter from "events";
 import { Logger } from "../util/Logger";
 import { loadConfig } from "../util/config";
 import {
     ChannelSettingValue,
     ChannelSettings,
+    ClientEvents,
     Participant
 } from "../util/types";
 import { Socket } from "../ws/Socket";
-import { app, findSocketByPartID } from "../ws/server";
 import { validateChannelSettings } from "./settings";
+import { socketsBySocketID } from "../ws/server";
 
 interface ChannelConfig {
     forceLoad: string[];
@@ -41,7 +43,7 @@ export const config = loadConfig<ChannelConfig>("config/channels.yml", {
 
 export const channelList = new Array<Channel>();
 
-export class Channel {
+export class Channel extends EventEmitter {
     private settings: Partial<ChannelSettings> = config.defaultSettings;
     private ppl = new Array<Participant>();
 
@@ -50,6 +52,8 @@ export class Channel {
     // TODO Add the crown
 
     constructor(private _id: string, set?: Partial<ChannelSettings>) {
+        super();
+
         this.logger = new Logger("Channel - " + _id);
 
         // Validate settings in set
@@ -66,9 +70,10 @@ export class Channel {
         }
 
         if (this.isLobby()) {
-            this.logger.debug(config.lobbySettings);
             this.settings = config.lobbySettings;
         }
+
+        this.bindEventListeners();
     }
 
     public getID() {
@@ -113,37 +118,40 @@ export class Channel {
     }
 
     public join(socket: Socket) {
-        const part = socket.getParticipant();
+        const part = socket.getParticipant() as Participant;
 
         // Unknown side-effects, but for type safety...
-        if (!part) return;
+        // if (!part) return;
 
         let hasChangedChannel = false;
+        let oldChannelID = socket.currentChannelID;
 
-        this.logger.debug("Has user?", this.hasUser(part._id));
+        // this.logger.debug("Has user?", this.hasUser(part._id));
 
         // Is user in this channel?
         if (this.hasUser(part._id)) {
-            // Alreay in channel, add this part ID to IDs list
-            // TODO
+            // Alreay in channel, don't add to list, but tell them they're here
+            hasChangedChannel = true;
+            this.ppl.push(part);
         } else {
             // Are we full?
             if (!this.isFull()) {
                 // Add to channel
-                this.ppl.push(part);
                 hasChangedChannel = true;
+                this.ppl.push(part);
             } else {
                 // Put us in full channel
-                socket.setChannel(config.fullChannel);
+                return socket.setChannel(config.fullChannel);
             }
         }
 
         if (hasChangedChannel) {
-            // Is user in any channel that isn't this one?
-            for (const ch of channelList) {
-                if (ch == this) continue;
-                if (ch.hasUser(part._id)) {
-                    ch.leave(socket);
+            if (socket.currentChannelID) {
+                const ch = channelList.find(
+                    ch => ch._id == socket.currentChannelID
+                );
+                if (ch) {
+                    ch?.leave(socket);
                 }
             }
 
@@ -160,29 +168,62 @@ export class Channel {
             }
         ]);
 
-        // TODO Broadcast channel update
+        const cursorPos = socket.getCursorPos();
+
+        // Broadcast participant update
+        this.sendArray([
+            {
+                m: "p",
+                _id: part._id,
+                name: part.name,
+                color: part.color,
+                id: part.id,
+                x: cursorPos.x,
+                y: cursorPos.y
+            }
+        ]);
     }
 
     public leave(socket: Socket) {
-        this.logger.debug("Leave called");
-        const part = socket.getParticipant();
+        // this.logger.debug("Leave called");
+        const part = socket.getParticipant() as Participant;
 
-        // Unknown side-effects, but for type safety...
-        if (!part) return;
-
-        if (this.hasUser(part._id)) {
-            this.ppl.splice(this.ppl.indexOf(part), 1);
+        let dupeCount = 0;
+        for (const s of socketsBySocketID.values()) {
+            if (s.getParticipantID() == part.id) {
+                if (s.currentChannelID == this.getID()) {
+                    dupeCount++;
+                }
+            }
         }
 
-        // TODO Broadcast channel update
+        // this.logger.debug("Dupes:", dupeCount);
+
+        if (dupeCount == 1) {
+            const p = this.ppl.find(p => p.id == socket.getParticipantID());
+
+            if (p) {
+                this.ppl.splice(this.ppl.indexOf(p), 1);
+            }
+        }
+
+        // Broadcast bye
+        this.sendArray([
+            {
+                m: "bye",
+                p: part.id
+            }
+        ]);
+
+        this.emit("update");
     }
 
     public isFull() {
         // TODO Use limit setting
 
-        if (this.isLobby() && this.ppl.length >= 20) {
-            return true;
-        }
+        // if (this.isLobby() && this.ppl.length >= 20) {
+        //     return true;
+        // }
 
         return false;
     }
@@ -208,6 +249,44 @@ export class Channel {
     public hasParticipant(id: string) {
         const foundPart = this.ppl.find(p => p.id == id);
         return !!foundPart;
+    }
+
+    public sendArray<EventID extends keyof ClientEvents>(
+        arr: ClientEvents[EventID][]
+    ) {
+        let i = 0;
+        for (const socket of socketsBySocketID.values()) {
+            for (const p of this.ppl) {
+                if (p.id == socket.getParticipantID()) {
+                    // this.logger.debug(
+                    //     `Sending to ${socket.getParticipant()?.name} [${i}]:`,
+                    //     arr
+                    // );
+                    socket.sendArray(arr);
+                    i++;
+                }
+            }
+        }
+    }
+
+    private alreadyBound = false;
+
+    private bindEventListeners() {
+        if (this.alreadyBound) return;
+        this.alreadyBound = true;
+
+        this.on("update", () => {
+            for (const socket of socketsBySocketID.values()) {
+                for (const p of this.ppl) {
+                    if (socket.getParticipantID() == p.id) {
+                        socket.sendChannelUpdate(
+                            this.getInfo(),
+                            this.getParticipantList()
+                        );
+                    }
+                }
+            }
+        });
     }
 }
 

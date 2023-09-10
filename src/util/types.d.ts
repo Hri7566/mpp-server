@@ -274,8 +274,8 @@ declare interface ClientEvents {
 
     m: {
         m: "m";
-        x: number;
-        y: number;
+        x: string;
+        y: string;
         id: string;
     };
 
@@ -306,14 +306,19 @@ declare interface ClientEvents {
 
     p: {
         m: "p";
-        x: number;
-        y: number;
+        x: number | string;
+        y: number | string;
     } & Participant;
 
     t: {
         m: "t";
         t: number;
         e: number;
+    };
+
+    bye: {
+        m: "bye";
+        p: string;
     };
 }
 

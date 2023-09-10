@@ -12,7 +12,7 @@ export const hi: ServerEventListener<"hi"> = {
                 _id: socket.getUserID(),
                 name: "Anonymous",
                 color: "#777",
-                id: socket.getUserID()
+                id: ""
             };
         }
 

@@ -1,7 +1,13 @@
 import { createColor, createID, createUserID } from "../util/id";
 import { decoder, encoder } from "../util/helpers";
 import EventEmitter from "events";
-import { ChannelSettings, ClientEvents, UserFlags } from "../util/types";
+import {
+    ChannelInfo,
+    ChannelSettings,
+    ClientEvents,
+    Participant,
+    UserFlags
+} from "../util/types";
 import { User } from "@prisma/client";
 import { createUser, readUser } from "../data/user";
 import { eventGroups } from "./events";
@@ -43,8 +49,12 @@ export class Socket extends EventEmitter {
     };
 
     public currentChannelID: string | undefined;
+    private cursorPos = {
+        x: "-10.00",
+        y: "-10.00"
+    };
 
-    constructor(private ws: ServerWebSocket<unknown>) {
+    constructor(private ws: ServerWebSocket<unknown>, public socketID: string) {
         super();
         this.ip = ws.remoteAddress; // Participant ID
 
@@ -56,12 +66,14 @@ export class Socket extends EventEmitter {
         let foundSocket;
 
         for (const socket of socketsBySocketID.values()) {
-            if (socket == this) continue;
+            if (socket.socketID == this.socketID) continue;
 
             if (socket.getUserID() == this.getUserID()) {
                 foundSocket = socket;
             }
         }
+
+        // logger.debug("Found socket?", foundSocket);
 
         if (!foundSocket) {
             // Use new session ID
@@ -72,7 +84,6 @@ export class Socket extends EventEmitter {
         }
 
         this.loadUser();
-
         this.bindEventListeners();
     }
 
@@ -202,18 +213,23 @@ export class Socket extends EventEmitter {
 
     public destroy() {
         // Socket was closed or should be closed, clear data
+        // logger.debug("Destroying UID:", this._id);
+
+        const foundCh = channelList.find(
+            ch => ch.getID() === this.currentChannelID
+        );
+
+        // logger.debug("(Destroying) Found channel:", foundCh);
+
+        if (foundCh) {
+            foundCh.leave(this);
+        }
 
         // Simulate closure
         try {
             this.ws.close();
-        } catch (err) {}
-
-        if (this.currentChannelID) {
-            const foundCh = channelList.find(
-                ch => ch.getID() == this.currentChannelID
-            );
-
-            if (foundCh) foundCh.leave(this);
+        } catch (err) {
+            logger.warn("Problem closing socket:", err);
         }
 
         this.destroyed = true;
@@ -221,5 +237,53 @@ export class Socket extends EventEmitter {
 
     public isDestroyed() {
         return this.destroyed == true;
+    }
+
+    public getCursorPos() {
+        return this.cursorPos;
+    }
+
+    public setCursorPos(x: number | string, y: number | string) {
+        if (typeof x == "number") {
+            x = x.toFixed(2);
+        }
+
+        if (typeof y == "number") {
+            y = y.toFixed(2);
+        }
+
+        this.cursorPos.x = x;
+        this.cursorPos.y = y;
+
+        // Send through channel
+        const ch = this.getCurrentChannel();
+        if (!ch) return;
+
+        const part = this.getParticipant();
+        if (!part) return;
+
+        ch.sendArray([
+            {
+                m: "m",
+                id: part.id,
+                x: this.cursorPos.x,
+                y: this.cursorPos.y
+            }
+        ]);
+    }
+
+    public getCurrentChannel() {
+        return channelList.find(ch => ch.getID() == this.currentChannelID);
+    }
+
+    public sendChannelUpdate(ch: ChannelInfo, ppl: Participant[]) {
+        this.sendArray([
+            {
+                m: "ch",
+                ch,
+                p: this.getParticipantID(),
+                ppl
+            }
+        ]);
     }
 }

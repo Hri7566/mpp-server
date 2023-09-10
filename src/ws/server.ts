@@ -20,7 +20,7 @@ export function findSocketByPartID(id: string) {
 
 export function findSocketByUserID(_id: string) {
     for (const socket of socketsBySocketID.values()) {
-        logger.debug("User ID:", socket.getUserID());
+        // logger.debug("User ID:", socket.getUserID());
         if (socket.getUserID() == _id) return socket;
     }
 }
@@ -35,6 +35,7 @@ export function findSocketByIP(ip: string) {
 
 export const app = Bun.serve({
     port: env.PORT,
+    hostname: "0.0.0.0",
     fetch: (req, server) => {
         if (server.upgrade(req)) {
             return;
@@ -64,11 +65,11 @@ export const app = Bun.serve({
     },
     websocket: {
         open: ws => {
-            const socket = new Socket(ws);
+            const socket = new Socket(ws, createSocketID());
             (ws as unknown as any).socket = socket;
-            logger.debug("Connection at " + socket.getIP());
+            // logger.debug("Connection at " + socket.getIP());
 
-            socketsBySocketID.set(createSocketID(), socket);
+            socketsBySocketID.set(socket.socketID, socket);
         },
 
         message: (ws, message) => {
@@ -77,7 +78,7 @@ export const app = Bun.serve({
         },
 
         close: (ws, code, message) => {
-            logger.debug("Close called");
+            // logger.debug("Close called");
             const socket = (ws as unknown as any).socket as Socket;
             socket.destroy();
 
@@ -91,3 +92,5 @@ export const app = Bun.serve({
         }
     }
 });
+
+logger.info("Listening on port", env.PORT);
