@@ -18,6 +18,7 @@ export function handleMessage(socket: Socket, text: string) {
         } else {
             for (const msg of transmission) {
                 if (!hasOwn(msg, "m")) continue;
+                if (socket.isDestroyed()) continue;
                 socket.emit(msg.m, msg, socket);
             }
         }

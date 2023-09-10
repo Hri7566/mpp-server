@@ -5,7 +5,8 @@ import {
     ChannelSettingValue,
     ChannelSettings,
     ClientEvents,
-    Participant
+    Participant,
+    ServerEvents
 } from "../util/types";
 import { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
@@ -48,6 +49,7 @@ export class Channel extends EventEmitter {
     private ppl = new Array<Participant>();
 
     public logger: Logger;
+    public chatHistory = new Array<ClientEvents["a"]>();
 
     // TODO Add the crown
 
@@ -165,6 +167,10 @@ export class Channel extends EventEmitter {
                 ch: this.getInfo(),
                 p: part.id,
                 ppl: this.getParticipantList()
+            },
+            {
+                m: "c",
+                c: this.chatHistory.slice(-50)
             }
         ]);
 
@@ -254,17 +260,16 @@ export class Channel extends EventEmitter {
     public sendArray<EventID extends keyof ClientEvents>(
         arr: ClientEvents[EventID][]
     ) {
-        let i = 0;
-        for (const socket of socketsBySocketID.values()) {
-            for (const p of this.ppl) {
-                if (p.id == socket.getParticipantID()) {
-                    // this.logger.debug(
-                    //     `Sending to ${socket.getParticipant()?.name} [${i}]:`,
-                    //     arr
-                    // );
-                    socket.sendArray(arr);
-                    i++;
-                }
+        let sentSocketIDs = new Array<string>();
+
+        for (const p of this.ppl) {
+            socketLoop: for (const socket of socketsBySocketID.values()) {
+                if (socket.isDestroyed()) continue socketLoop;
+                if (socket.getParticipantID() != p.id) continue socketLoop;
+                if (sentSocketIDs.includes(socket.socketID))
+                    continue socketLoop;
+                socket.sendArray(arr);
+                sentSocketIDs.push(socket.socketID);
             }
         }
     }
@@ -286,6 +291,20 @@ export class Channel extends EventEmitter {
                     }
                 }
             }
+        });
+
+        this.on("a", (msg: ServerEvents["a"], socket: Socket) => {
+            if (!msg.message) return;
+
+            let outgoing: ClientEvents["a"] = {
+                m: "a",
+                a: msg.message,
+                t: Date.now(),
+                p: socket.getParticipant() as Participant
+            };
+
+            this.sendArray([outgoing]);
+            this.chatHistory.push(outgoing);
         });
     }
 }

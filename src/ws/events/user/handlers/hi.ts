@@ -1,5 +1,4 @@
 import { ServerEventListener } from "../../../../util/types";
-import { eventGroups } from "../../../events";
 
 export const hi: ServerEventListener<"hi"> = {
     id: "hi",
