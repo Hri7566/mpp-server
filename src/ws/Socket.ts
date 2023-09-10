@@ -9,7 +9,7 @@ import {
     UserFlags
 } from "../util/types";
 import { User } from "@prisma/client";
-import { createUser, readUser } from "../data/user";
+import { createUser, readUser, updateUser } from "../data/user";
 import { eventGroups } from "./events";
 import { loadConfig } from "../util/config";
 import { Gateway } from "./Gateway";
@@ -21,13 +21,15 @@ import { Logger } from "../util/Logger";
 interface UsersConfig {
     defaultName: string;
     defaultFlags: UserFlags;
+    enableColorChanging: boolean;
 }
 
 const usersConfig = loadConfig<UsersConfig>("config/users.yml", {
     defaultName: "Anonymous",
     defaultFlags: {
         volume: 100
-    }
+    },
+    enableColorChanging: false
 });
 
 const logger = new Logger("Sockets");
@@ -114,7 +116,7 @@ export class Socket extends EventEmitter {
             }
         }
 
-        logger.debug("Found channel:", channel);
+        // logger.debug("Found channel:", channel);
 
         // Does channel exist?
         if (channel) {
@@ -292,5 +294,40 @@ export class Socket extends EventEmitter {
                 ppl
             }
         ]);
+    }
+
+    public async userset(name?: string, color?: string) {
+        let isColor = false;
+
+        if (color && usersConfig.enableColorChanging) {
+            isColor =
+                typeof color === "string" && !!color.match(/^#[0-9a-f]{6}$/i);
+        }
+
+        await updateUser(this._id, {
+            name: typeof name == "string" ? name : undefined,
+            color: color ? (isColor ? color : undefined) : undefined
+        });
+
+        await this.loadUser();
+
+        const ch = this.getCurrentChannel();
+
+        if (ch) {
+            let part = this.getParticipant() as Participant;
+            let cursorPos = this.getCursorPos();
+
+            ch.sendArray([
+                {
+                    m: "p",
+                    _id: part._id,
+                    color: part.color,
+                    id: part.id,
+                    name: part.name,
+                    x: cursorPos.x,
+                    y: cursorPos.y
+                }
+            ]);
+        }
     }
 }

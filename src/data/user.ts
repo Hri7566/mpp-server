@@ -38,7 +38,7 @@ export async function readUser(_id: string) {
 
 export async function updateUser(
     _id: string,
-    data: Omit<User, "id"> & { _id: string }
+    data: Partial<Omit<User, "id"> & { _id: string }>
 ) {
     return await prisma.user.update({
         where: { id: _id },

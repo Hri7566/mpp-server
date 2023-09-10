@@ -1,3 +1,4 @@
 defaultName: "Anonymous"
 defaultFlags:
     volume: 100
+enableColorChanging: false
