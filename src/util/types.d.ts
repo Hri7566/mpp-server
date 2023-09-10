@@ -306,8 +306,8 @@ declare interface ClientEvents {
 
     p: {
         m: "p";
-        x: number | string;
-        y: number | string;
+        x: number | string | undefined;
+        y: number | string | undefined;
     } & Participant;
 
     t: {

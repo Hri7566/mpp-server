@@ -76,6 +76,9 @@ export class Channel extends EventEmitter {
         }
 
         this.bindEventListeners();
+
+        channelList.push(this);
+        // TODO channel closing
     }
 
     public getID() {
@@ -174,7 +177,10 @@ export class Channel extends EventEmitter {
             }
         ]);
 
-        const cursorPos = socket.getCursorPos();
+        const cursorPos: {
+            x: string | number | undefined;
+            y: string | number | undefined;
+        } = socket.getCursorPos();
 
         // Broadcast participant update
         this.sendArray([
@@ -313,7 +319,7 @@ export class Channel extends EventEmitter {
 let hasFullChannel = false;
 
 for (const id of config.forceLoad) {
-    channelList.push(new Channel(id));
+    new Channel(id);
     if (id == config.fullChannel) hasFullChannel = true;
 }
 

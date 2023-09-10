@@ -49,10 +49,12 @@ export class Socket extends EventEmitter {
     };
 
     public currentChannelID: string | undefined;
-    private cursorPos = {
-        x: "-10.00",
-        y: "-10.00"
-    };
+    private cursorPos:
+        | {
+              x: string | number | undefined;
+              y: string | number | undefined;
+          }
+        | undefined;
 
     constructor(private ws: ServerWebSocket<unknown>, public socketID: string) {
         super();
@@ -239,6 +241,11 @@ export class Socket extends EventEmitter {
     }
 
     public getCursorPos() {
+        if (!this.cursorPos)
+            this.cursorPos = {
+                x: undefined,
+                y: undefined
+            };
         return this.cursorPos;
     }
 
@@ -251,6 +258,7 @@ export class Socket extends EventEmitter {
             y = y.toFixed(2);
         }
 
+        if (!this.cursorPos) this.cursorPos = { x, y };
         this.cursorPos.x = x;
         this.cursorPos.y = y;
 
