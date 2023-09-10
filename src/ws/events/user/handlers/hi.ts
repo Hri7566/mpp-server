@@ -22,7 +22,11 @@ export const hi: ServerEventListener<"hi"> = {
                 accountInfo: undefined,
                 permissions: undefined,
                 t: Date.now(),
-                u: part
+                u: {
+                    _id: part._id,
+                    color: part.color,
+                    name: part.name
+                }
             }
         ]);
     }

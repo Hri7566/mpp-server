@@ -141,8 +141,6 @@ export class Channel {
             socket.currentChannelID = this.getID();
         }
 
-        this.logger.debug("Participant list:", this.ppl);
-
         // Send our data back
         socket.sendArray([
             {
