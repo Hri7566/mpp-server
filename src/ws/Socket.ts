@@ -106,21 +106,20 @@ export class Socket extends EventEmitter {
         this.desiredChannel.set = set;
 
         let channel;
-        try {
-            for (const ch of channelList.values()) {
-                if (ch.getID() == this.desiredChannel._id) {
-                    channel = ch;
-                    break;
-                }
+        for (const ch of channelList) {
+            if (ch.getID() == _id) {
+                channel = ch;
             }
-        } catch (err) {}
+        }
+
+        logger.debug("Found channel:", channel);
 
         // Does channel exist?
         if (channel) {
             // Exists, join normally
             channel.join(this);
         } else {
-            // Doesn't exist, join with crown
+            // Doesn't exist, create
             channel = new Channel(
                 this.desiredChannel._id,
                 this.desiredChannel.set

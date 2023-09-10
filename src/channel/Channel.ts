@@ -293,7 +293,7 @@ export class Channel extends EventEmitter {
             }
         });
 
-        this.on("a", (msg: ServerEvents["a"], socket: Socket) => {
+        this.on("message", (msg: ServerEvents["a"], socket: Socket) => {
             if (!msg.message) return;
 
             let outgoing: ClientEvents["a"] = {

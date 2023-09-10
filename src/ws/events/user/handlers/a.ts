@@ -7,6 +7,6 @@ export const a: ServerEventListener<"a"> = {
         const ch = socket.getCurrentChannel();
         if (!ch) return;
 
-        ch.emit("a", msg, socket);
+        ch.emit("message", msg, socket);
     }
 };
