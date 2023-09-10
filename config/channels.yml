@@ -6,9 +6,9 @@ lobbySettings:
     lobby: true
     chat: true
     crownsolo: false
+    visible: true
     color: "#eeeeee"
     color2: "#888888"
-    visible: true
 
 defaultSettings:
     chat: true

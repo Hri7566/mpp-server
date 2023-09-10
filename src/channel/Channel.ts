@@ -49,19 +49,26 @@ export class Channel {
 
     // TODO Add the crown
 
-    constructor(
-        private _id: string,
-        set: Partial<ChannelSettings> = config.defaultSettings
-    ) {
+    constructor(private _id: string, set?: Partial<ChannelSettings>) {
         this.logger = new Logger("Channel - " + _id);
-        // Verify default settings just in case
-        this.changeSettings(this.settings, true);
 
-        if (this.isLobby()) {
-            set = config.lobbySettings;
+        // Validate settings in set
+        // Set the verified settings
+
+        if (set && !this.isLobby()) {
+            const validatedSet = validateChannelSettings(set);
+
+            for (const key in Object.keys(validatedSet)) {
+                if (!(validatedSet as any)[key]) continue;
+
+                (this.settings as any)[key] = (set as any)[key];
+            }
         }
 
-        this.changeSettings(set);
+        if (this.isLobby()) {
+            this.logger.debug(config.lobbySettings);
+            this.settings = config.lobbySettings;
+        }
     }
 
     public getID() {
@@ -88,6 +95,8 @@ export class Channel {
             if (set.lobby) set.lobby = undefined;
             if (set.owner_id) set.owner_id = undefined;
         }
+
+        if (this.isLobby() && !admin) return;
 
         // Verify settings
         const validSettings = validateChannelSettings(set);
@@ -164,6 +173,7 @@ export class Channel {
         if (this.hasUser(part._id)) {
             this.ppl.splice(this.ppl.indexOf(part), 1);
         }
+
         // TODO Broadcast channel update
     }
 

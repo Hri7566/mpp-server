@@ -32,13 +32,14 @@ declare type ChannelSettings = {
     crownsolo: boolean;
     chat: boolean;
     visible: boolean;
-    limit: number;
 } & Partial<{
     color2: string;
     lobby: boolean;
     owner_id: string;
     "lyrical notes": boolean;
     "no cussing": boolean;
+
+    limit: number;
     noindex: boolean;
 }>;
 

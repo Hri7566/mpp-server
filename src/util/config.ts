@@ -6,10 +6,9 @@ export function loadConfig<T>(filepath: string, def: T) {
         const data = readFileSync(filepath).toString();
         const parsed = YAML.parse(data);
 
-        return parsed as T || def;
+        return parsed as T;
     } catch (err) {
         console.error("Unable to load config:", err);
-    } finally {
         return def;
     }
 }
