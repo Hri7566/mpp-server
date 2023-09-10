@@ -13,6 +13,10 @@ export function createUserID(ip: string) {
         .substring(0, 24);
 }
 
+export function createSocketID() {
+    return crypto.randomUUID();
+}
+
 export function createColor(ip: string) {
     return (
         "#" +

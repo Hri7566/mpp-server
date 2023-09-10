@@ -111,21 +111,12 @@ export class Channel {
 
         let hasChangedChannel = false;
 
-        this.logger.debug("Has user?", this.hasUser(part));
+        this.logger.debug("Has user?", this.hasUser(part._id));
 
         // Is user in this channel?
-        if (this.hasUser(part)) {
-            // Alreay in channel, disconnect old
-
-            const oldSocket = findSocketByPartID(part.id);
-
-            if (oldSocket) {
-                oldSocket.destroy();
-            }
-
-            // Add to channel
-            this.ppl.push(part);
-            hasChangedChannel = true;
+        if (this.hasUser(part._id)) {
+            // Alreay in channel, add this part ID to IDs list
+            // TODO
         } else {
             // Are we full?
             if (!this.isFull()) {
@@ -142,10 +133,12 @@ export class Channel {
             // Is user in any channel that isn't this one?
             for (const ch of channelList) {
                 if (ch == this) continue;
-                if (ch.hasUser(part)) {
+                if (ch.hasUser(part._id)) {
                     ch.leave(socket);
                 }
             }
+
+            socket.currentChannelID = this.getID();
         }
 
         this.logger.debug("Participant list:", this.ppl);
@@ -167,10 +160,10 @@ export class Channel {
         this.logger.debug("Leave called");
         const part = socket.getParticipant();
 
-        // Same as above...
+        // Unknown side-effects, but for type safety...
         if (!part) return;
 
-        if (this.hasUser(part)) {
+        if (this.hasUser(part._id)) {
             this.ppl.splice(this.ppl.indexOf(part), 1);
         }
         // TODO Broadcast channel update
@@ -199,8 +192,13 @@ export class Channel {
         return this.ppl;
     }
 
-    public hasUser(part: Participant) {
-        const foundPart = this.ppl.find(p => p._id == part._id);
+    public hasUser(_id: string) {
+        const foundPart = this.ppl.find(p => p._id == _id);
+        return !!foundPart;
+    }
+
+    public hasParticipant(id: string) {
+        const foundPart = this.ppl.find(p => p.id == id);
         return !!foundPart;
     }
 }

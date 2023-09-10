@@ -9,6 +9,8 @@ import { loadConfig } from "../util/config";
 import { Gateway } from "./Gateway";
 import { Channel, channelList } from "../channel/Channel";
 import { ServerWebSocket } from "bun";
+import { findSocketByUserID, socketsBySocketID } from "./server";
+import { Logger } from "../util/Logger";
 
 interface UsersConfig {
     defaultName: string;
@@ -21,6 +23,8 @@ const usersConfig = loadConfig<UsersConfig>("config/users.yml", {
         volume: 100
     }
 });
+
+const logger = new Logger("Sockets");
 
 export class Socket extends EventEmitter {
     private id: string;
@@ -43,11 +47,29 @@ export class Socket extends EventEmitter {
     constructor(private ws: ServerWebSocket<unknown>) {
         super();
         this.ip = ws.remoteAddress; // Participant ID
-        this.id = createID();
 
         // User ID
         this._id = createUserID(this.getIP());
-        // *cough* lapis
+
+        // Check if we're already connected
+        // We need to skip ourselves, so we loop here instead of using a helper
+        let foundSocket;
+
+        for (const socket of socketsBySocketID.values()) {
+            if (socket == this) continue;
+
+            if (socket.getUserID() == this.getUserID()) {
+                foundSocket = socket;
+            }
+        }
+
+        if (!foundSocket) {
+            // Use new session ID
+            this.id = createID();
+        } else {
+            // Use original session ID
+            this.id = foundSocket.id;
+        }
 
         this.loadUser();
 
@@ -94,6 +116,7 @@ export class Socket extends EventEmitter {
             );
 
             channel.join(this);
+
             // TODO Give the crown upon joining
         }
     }
@@ -189,6 +212,7 @@ export class Socket extends EventEmitter {
             const foundCh = channelList.find(
                 ch => ch.getID() == this.currentChannelID
             );
+
             if (foundCh) foundCh.leave(this);
         }
 
