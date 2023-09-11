@@ -14,7 +14,13 @@ The commit history includes BopItFreak's server because this server is (debatabl
     $ curl -fsSL https://bun.sh/install | bash
     ```
 
-1. Configure
+1. Setup Git submodules
+
+    ```
+    $ git submodule update --init
+    ```
+
+2. Configure
 
     - Copy environment variables
 
@@ -26,26 +32,26 @@ The commit history includes BopItFreak's server because this server is (debatabl
 
     - Edit the files in the `config` folder to match your needs
 
-2. Install packages
+3. Install packages
 
     ```
     $ bun i
     ```
 
-3. Setup database
+4. Setup database
 
     ```
     $ bunx prisma generate
     $ bunx prisma db push
     ```
 
-4. Build
+5. Build
 
     ```
     $ bun run build
     ```
 
-5. Run
+6. Run
 
     ```
     $ bun start
