@@ -17,7 +17,7 @@ The commit history includes BopItFreak's server because this server is (debatabl
 1. Setup Git submodules
 
     ```
-    $ git submodule update --init
+    $ git submodule update --init --recursive
     ```
 
 2. Configure
