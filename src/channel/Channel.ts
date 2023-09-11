@@ -27,13 +27,15 @@ export const config = loadConfig<ChannelConfig>("config/channels.yml", {
         lobby: true,
         chat: true,
         crownsolo: false,
-        visible: true
+        visible: true,
+        color: "#73b3cc",
+        color2: "#273546"
     },
     defaultSettings: {
         chat: true,
         crownsolo: false,
-        color: "#480505",
-        color2: "#000000",
+        color: "#3b5054",
+        color2: "#001014",
         visible: true
     },
     // TODO Test this regex
