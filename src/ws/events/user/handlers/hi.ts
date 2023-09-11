@@ -3,7 +3,9 @@ import { ServerEventListener } from "../../../../util/types";
 export const hi: ServerEventListener<"hi"> = {
     id: "hi",
     callback: (msg, socket) => {
+        // Handshake message
         // TODO Hi message tokens
+        if (socket.gateway.hasProcessedHi) return;
         let part = socket.getParticipant();
 
         if (!part) {
@@ -28,5 +30,7 @@ export const hi: ServerEventListener<"hi"> = {
                 }
             }
         ]);
+
+        socket.gateway.hasProcessedHi = true;
     }
 };

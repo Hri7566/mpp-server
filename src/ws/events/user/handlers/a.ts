@@ -3,7 +3,8 @@ import { ServerEventListener } from "../../../../util/types";
 export const a: ServerEventListener<"a"> = {
     id: "a",
     callback: (msg, socket) => {
-        // Send chat message
+        // Chat message
+        if (!socket.rateLimits?.normal.a.attempt()) return;
         const ch = socket.getCurrentChannel();
         if (!ch) return;
 

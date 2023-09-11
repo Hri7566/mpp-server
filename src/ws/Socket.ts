@@ -1,5 +1,4 @@
 import { createColor, createID, createUserID } from "../util/id";
-import { decoder, encoder } from "../util/helpers";
 import EventEmitter from "events";
 import {
     ChannelInfo,
@@ -15,8 +14,12 @@ import { loadConfig } from "../util/config";
 import { Gateway } from "./Gateway";
 import { Channel, channelList } from "../channel/Channel";
 import { ServerWebSocket } from "bun";
-import { findSocketByUserID, socketsBySocketID } from "./server";
+import { socketsBySocketID } from "./server";
 import { Logger } from "../util/Logger";
+import { RateLimitConstructorList, RateLimitList } from "./ratelimit/config";
+import { adminLimits } from "./ratelimit/limits/admin";
+import { userLimits } from "./ratelimit/limits/user";
+import { NoteQuota } from "./ratelimit/NoteQuota";
 
 interface UsersConfig {
     defaultName: string;
@@ -41,6 +44,9 @@ export class Socket extends EventEmitter {
     private user: User | null = null;
 
     public gateway = new Gateway();
+
+    public rateLimits: RateLimitList | undefined;
+    public noteQuota = new NoteQuota(this.onQuota);
 
     public desiredChannel: {
         _id: string | undefined;
@@ -88,6 +94,12 @@ export class Socket extends EventEmitter {
         }
 
         this.loadUser();
+
+        // TODO Permissions
+        let isAdmin = false;
+
+        this.setRateLimits(isAdmin ? adminLimits : userLimits);
+
         this.bindEventListeners();
     }
 
@@ -330,4 +342,31 @@ export class Socket extends EventEmitter {
             ]);
         }
     }
+
+    public setRateLimits(list: RateLimitConstructorList) {
+        this.rateLimits = {
+            normal: {},
+            chains: {}
+        } as RateLimitList;
+
+        for (const key of Object.keys(list.normal)) {
+            (this.rateLimits.normal as any)[key] = (list.normal as any)[key]();
+        }
+
+        for (const key of Object.keys(list.chains)) {
+            (this.rateLimits.chains as any)[key] = (list.chains as any)[key]();
+        }
+
+        // Send note quota
+        this.sendArray([
+            {
+                m: "nq",
+                allowance: this.noteQuota.allowance,
+                max: this.noteQuota.max,
+                maxHistLen: this.noteQuota.maxHistLen
+            }
+        ]);
+    }
+
+    public onQuota(points: number) {}
 }
