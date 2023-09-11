@@ -93,14 +93,16 @@ export class Socket extends EventEmitter {
             this.id = foundSocket.id;
         }
 
-        this.loadUser();
+        (async () => {
+            await this.loadUser();
 
-        // TODO Permissions
-        let isAdmin = false;
+            // TODO Permissions
+            let isAdmin = false;
 
-        this.setRateLimits(isAdmin ? adminLimits : userLimits);
+            this.setRateLimits(isAdmin ? adminLimits : userLimits);
 
-        this.bindEventListeners();
+            this.bindEventListeners();
+        })();
     }
 
     public getIP() {
@@ -133,7 +135,10 @@ export class Socket extends EventEmitter {
         // Does channel exist?
         if (channel) {
             // Exists, join normally
-            channel.join(this);
+            (async () => {
+                await this.loadUser();
+                channel.join(this);
+            })();
         } else {
             // Doesn't exist, create
             channel = new Channel(
