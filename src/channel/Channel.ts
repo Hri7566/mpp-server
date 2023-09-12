@@ -103,6 +103,7 @@ export class Channel extends EventEmitter {
         set: Partial<ChannelSettings>,
         admin: boolean = false
     ) {
+        if (this.isDestroyed()) return;
         if (!admin) {
             if (set.lobby) set.lobby = undefined;
             if (set.owner_id) set.owner_id = undefined;
@@ -125,6 +126,7 @@ export class Channel extends EventEmitter {
     }
 
     public join(socket: Socket) {
+        if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
 
         // Unknown side-effects, but for type safety...
@@ -289,6 +291,7 @@ export class Channel extends EventEmitter {
         this.alreadyBound = true;
 
         this.on("update", () => {
+            // Send updated info
             for (const socket of socketsBySocketID.values()) {
                 for (const p of this.ppl) {
                     if (socket.getParticipantID() == p.id) {
@@ -298,6 +301,10 @@ export class Channel extends EventEmitter {
                         );
                     }
                 }
+            }
+
+            if (this.ppl.length == 0) {
+                this.destroy();
             }
         });
 
@@ -314,6 +321,53 @@ export class Channel extends EventEmitter {
             this.sendArray([outgoing]);
             this.chatHistory.push(outgoing);
         });
+    }
+
+    public playNotes(msg: ServerEvents["n"], socket: Socket) {
+        if (this.isDestroyed()) return;
+        const part = socket.getParticipant();
+        if (!part) return;
+
+        let clientMsg: ClientEvents["n"] = {
+            m: "n",
+            n: msg.n,
+            t: msg.t,
+            p: part.id
+        };
+
+        let sentSocketIDs = new Array<string>();
+
+        for (const p of this.ppl) {
+            socketLoop: for (const socket of socketsBySocketID.values()) {
+                if (socket.isDestroyed()) continue socketLoop;
+                if (socket.getParticipantID() != p.id) continue socketLoop;
+                if (socket.getParticipantID() == part.id) continue socketLoop;
+                if (sentSocketIDs.includes(socket.socketID))
+                    continue socketLoop;
+                socket.sendArray([clientMsg]);
+                sentSocketIDs.push(socket.socketID);
+            }
+        }
+    }
+
+    private destroyed = false;
+
+    public destroy() {
+        if (this.destroyed) return;
+        this.destroyed = true;
+
+        if (this.ppl.length > 0) {
+            for (const socket of socketsBySocketID.values()) {
+                if (socket.currentChannelID !== this.getID()) continue;
+                socket.setChannel(config.fullChannel);
+            }
+        }
+
+        channelList.splice(channelList.indexOf(this), 1);
+    }
+
+    public isDestroyed() {
+        return this.destroyed == true;
     }
 }
 

@@ -14,7 +14,7 @@ export class NoteQuota {
         maxHistLen: 3
     };
 
-    constructor(public cb: (points: number) => void) {
+    constructor(public cb?: (points: number) => void) {
         this.setParams();
         this.resetPoints();
     }

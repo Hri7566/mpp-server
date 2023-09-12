@@ -313,7 +313,7 @@ declare interface ClientEvents {
     t: {
         m: "t";
         t: number;
-        e: number;
+        e: number | undefined;
     };
 
     bye: {

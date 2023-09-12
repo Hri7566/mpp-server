@@ -5,12 +5,12 @@ import {
     ChannelSettings,
     ClientEvents,
     Participant,
+    ServerEvents,
     UserFlags
 } from "../util/types";
 import { User } from "@prisma/client";
 import { createUser, readUser, updateUser } from "../data/user";
 import { eventGroups } from "./events";
-import { loadConfig } from "../util/config";
 import { Gateway } from "./Gateway";
 import { Channel, channelList } from "../channel/Channel";
 import { ServerWebSocket } from "bun";
@@ -20,20 +20,7 @@ import { RateLimitConstructorList, RateLimitList } from "./ratelimit/config";
 import { adminLimits } from "./ratelimit/limits/admin";
 import { userLimits } from "./ratelimit/limits/user";
 import { NoteQuota } from "./ratelimit/NoteQuota";
-
-interface UsersConfig {
-    defaultName: string;
-    defaultFlags: UserFlags;
-    enableColorChanging: boolean;
-}
-
-const usersConfig = loadConfig<UsersConfig>("config/users.yml", {
-    defaultName: "Anonymous",
-    defaultFlags: {
-        volume: 100
-    },
-    enableColorChanging: false
-});
+import { config } from "./usersConfig";
 
 const logger = new Logger("Sockets");
 
@@ -46,7 +33,7 @@ export class Socket extends EventEmitter {
     public gateway = new Gateway();
 
     public rateLimits: RateLimitList | undefined;
-    public noteQuota = new NoteQuota(this.onQuota);
+    public noteQuota = new NoteQuota();
 
     public desiredChannel: {
         _id: string | undefined;
@@ -176,9 +163,9 @@ export class Socket extends EventEmitter {
         if (!user) {
             await createUser(
                 this._id,
-                usersConfig.defaultName,
+                config.defaultName,
                 createColor(this.ip),
-                usersConfig.defaultFlags
+                config.defaultFlags
             );
 
             user = await readUser(this._id);
@@ -316,7 +303,7 @@ export class Socket extends EventEmitter {
     public async userset(name?: string, color?: string) {
         let isColor = false;
 
-        if (color && usersConfig.enableColorChanging) {
+        if (color && config.enableColorChanging) {
             isColor =
                 typeof color === "string" && !!color.match(/^#[0-9a-f]{6}$/i);
         }
@@ -373,5 +360,9 @@ export class Socket extends EventEmitter {
         ]);
     }
 
-    public onQuota(points: number) {}
+    public playNotes(msg: ServerEvents["n"]) {
+        const ch = this.getCurrentChannel();
+        if (!ch) return;
+        ch.playNotes(msg, this);
+    }
 }
