@@ -1,3 +1,5 @@
+![MPP](https://github.com/multiplayerpiano/mpp-frontend-v1/blob/master/static/128-piano.png?raw=true)
+
 # mpp-server-dev2
 
 This is a new MPP server currently in development for [MPP.dev](https://www.multiplayerpiano.dev). The original server is old and it needs a new one.
