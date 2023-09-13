@@ -12,9 +12,7 @@ export const n: ServerEventListener<"n"> = {
         for (const n of msg.n) {
             if (typeof n.n != "string") return;
 
-            // TODO Check for config.enableCustomNoteData here
-            // For whatever reason, Bun likes to crash when we access that config object
-            continue;
+            if (config.enableCustomNoteData) continue;
 
             if (n.s) {
                 if (typeof n.s !== "number") return;
