@@ -52,7 +52,9 @@ export function validateChannelSettings(set: Partial<ChannelSettings>) {
     return record;
 }
 
-function validate(value: any, validator: Validator) {
+export default validateChannelSettings;
+
+export function validate(value: any, validator: Validator) {
     // What type of validator?
     if (typeof validator == "function") {
         // We are copying Zod's functionality
