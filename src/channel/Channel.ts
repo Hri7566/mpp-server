@@ -11,6 +11,7 @@ import {
 import { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
 import { socketsBySocketID } from "../ws/server";
+import Crown from "./Crown";
 
 interface ChannelConfig {
     forceLoad: string[];
@@ -54,8 +55,14 @@ export class Channel extends EventEmitter {
     public chatHistory = new Array<ClientEvents["a"]>();
 
     // TODO Add the crown
+    public crown?: Crown;
 
-    constructor(private _id: string, set?: Partial<ChannelSettings>) {
+    constructor(
+        private _id: string,
+        set?: Partial<ChannelSettings>,
+        creator?: Socket,
+        owner_id?: string
+    ) {
         super();
 
         this.logger = new Logger("Channel - " + _id);
@@ -63,13 +70,24 @@ export class Channel extends EventEmitter {
         // Validate settings in set
         // Set the verified settings
 
-        if (set && !this.isLobby()) {
-            const validatedSet = validateChannelSettings(set);
+        if (!this.isLobby()) {
+            if (set) {
+                const validatedSet = validateChannelSettings(set);
 
-            for (const key in Object.keys(validatedSet)) {
-                if (!(validatedSet as any)[key]) continue;
+                for (const key in Object.keys(validatedSet)) {
+                    if (!(validatedSet as any)[key]) continue;
 
-                (this.settings as any)[key] = (set as any)[key];
+                    (this.settings as any)[key] = (set as any)[key];
+                }
+            }
+
+            this.crown = new Crown();
+
+            if (creator) {
+                if (this.crown.canBeSetBy(creator)) {
+                    const part = creator.getParticipant();
+                    if (part) this.giveCrown(part);
+                }
             }
         }
 
@@ -83,10 +101,79 @@ export class Channel extends EventEmitter {
         // TODO channel closing
     }
 
+    private alreadyBound = false;
+
+    private bindEventListeners() {
+        if (this.alreadyBound) return;
+        this.alreadyBound = true;
+
+        this.on("update", () => {
+            // Send updated info
+            for (const socket of socketsBySocketID.values()) {
+                for (const p of this.ppl) {
+                    if (socket.getParticipantID() == p.id) {
+                        socket.sendChannelUpdate(
+                            this.getInfo(),
+                            this.getParticipantList()
+                        );
+                    }
+                }
+            }
+
+            if (this.ppl.length == 0) {
+                this.destroy();
+            }
+        });
+
+        this.on("message", (msg: ServerEvents["a"], socket: Socket) => {
+            if (!msg.message) return;
+
+            const userFlags = socket.getUserFlags();
+
+            this.logger.debug(userFlags);
+
+            if (userFlags) {
+                if (userFlags.cant_chat) return;
+            }
+
+            // Sanitize
+            msg.message = msg.message
+                .replace(/\p{C}+/gu, "")
+                .replace(/(\p{Mc}{5})\p{Mc}+/gu, "$1")
+                .trim();
+
+            let outgoing: ClientEvents["a"] = {
+                m: "a",
+                a: msg.message,
+                t: Date.now(),
+                p: socket.getParticipant() as Participant
+            };
+
+            this.sendArray([outgoing]);
+            this.chatHistory.push(outgoing);
+
+            try {
+                if (msg.message.startsWith("/")) {
+                    this.emit("command", msg, socket);
+                }
+            } catch (err) {
+                this.logger.debug(err);
+            }
+        });
+    }
+
+    /**
+     * Get this channel's ID (channel name)
+     * @returns Channel ID
+     */
     public getID() {
         return this._id;
     }
 
+    /**
+     * Determine whether this channel is a lobby (uses regex from config)
+     * @returns Boolean
+     */
     public isLobby() {
         for (const reg of config.lobbyRegexes) {
             let exp = new RegExp(reg, "g");
@@ -99,6 +186,12 @@ export class Channel extends EventEmitter {
         return false;
     }
 
+    /**
+     * Change this channel's settings
+     * @param set Channel settings
+     * @param admin Whether a user is changing the settings (set to true to force the changes)
+     * @returns undefined
+     */
     public changeSettings(
         set: Partial<ChannelSettings>,
         admin: boolean = false
@@ -125,6 +218,20 @@ export class Channel extends EventEmitter {
         }
     }
 
+    /**
+     * Get a channel setting's value
+     * @param setting Channel setting to get
+     * @returns Value of setting
+     */
+    public getSetting(setting: keyof ChannelSettings) {
+        return this.settings[setting];
+    }
+
+    /**
+     * Make a socket join this channel
+     * @param socket Socket that is joining
+     * @returns undefined
+     */
     public join(socket: Socket) {
         if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
@@ -200,6 +307,10 @@ export class Channel extends EventEmitter {
         ]);
     }
 
+    /**
+     * Make a socket leave this channel
+     * @param socket Socket that is leaving
+     */
     public leave(socket: Socket) {
         // this.logger.debug("Leave called");
         const part = socket.getParticipant() as Participant;
@@ -234,6 +345,10 @@ export class Channel extends EventEmitter {
         this.emit("update");
     }
 
+    /**
+     * Determine whether this channel has too many users
+     * @returns Boolean
+     */
     public isFull() {
         // TODO Use limit setting
 
@@ -244,29 +359,52 @@ export class Channel extends EventEmitter {
         return false;
     }
 
+    /**
+     * Get this channel's information
+     * @returns Channel info object (includes ID, number of users, settings, and the crown)
+     */
     public getInfo() {
         return {
             _id: this.getID(),
             id: this.getID(),
             count: this.ppl.length,
-            settings: this.settings
+            settings: this.settings,
+            crown: JSON.parse(JSON.stringify(this.crown))
         };
     }
 
+    /**
+     * Get the people in this channel
+     * @returns List of people
+     */
     public getParticipantList() {
         return this.ppl;
     }
 
+    /**
+     * Determine whether a user is in this channel (by user ID)
+     * @param _id User ID
+     * @returns Boolean
+     */
     public hasUser(_id: string) {
         const foundPart = this.ppl.find(p => p._id == _id);
         return !!foundPart;
     }
 
+    /**
+     * Determine whether a user is in this channel (by participant ID)
+     * @param id Participant ID
+     * @returns Boolean
+     */
     public hasParticipant(id: string) {
         const foundPart = this.ppl.find(p => p.id == id);
         return !!foundPart;
     }
 
+    /**
+     * Send messages to everyone in this channel
+     * @param arr List of events to send to clients
+     */
     public sendArray<EventID extends keyof ClientEvents>(
         arr: ClientEvents[EventID][]
     ) {
@@ -284,45 +422,12 @@ export class Channel extends EventEmitter {
         }
     }
 
-    private alreadyBound = false;
-
-    private bindEventListeners() {
-        if (this.alreadyBound) return;
-        this.alreadyBound = true;
-
-        this.on("update", () => {
-            // Send updated info
-            for (const socket of socketsBySocketID.values()) {
-                for (const p of this.ppl) {
-                    if (socket.getParticipantID() == p.id) {
-                        socket.sendChannelUpdate(
-                            this.getInfo(),
-                            this.getParticipantList()
-                        );
-                    }
-                }
-            }
-
-            if (this.ppl.length == 0) {
-                this.destroy();
-            }
-        });
-
-        this.on("message", (msg: ServerEvents["a"], socket: Socket) => {
-            if (!msg.message) return;
-
-            let outgoing: ClientEvents["a"] = {
-                m: "a",
-                a: msg.message,
-                t: Date.now(),
-                p: socket.getParticipant() as Participant
-            };
-
-            this.sendArray([outgoing]);
-            this.chatHistory.push(outgoing);
-        });
-    }
-
+    /**
+     * Play notes (usually from a socket)
+     * @param msg Note message
+     * @param socket Socket that is sending notes
+     * @returns undefined
+     */
     public playNotes(msg: ServerEvents["n"], socket: Socket) {
         if (this.isDestroyed()) return;
         const part = socket.getParticipant();
@@ -352,6 +457,10 @@ export class Channel extends EventEmitter {
 
     private destroyed = false;
 
+    /**
+     * Set this channel to the destroyed state
+     * @returns undefined
+     */
     public destroy() {
         if (this.destroyed) return;
         this.destroyed = true;
@@ -366,12 +475,61 @@ export class Channel extends EventEmitter {
         channelList.splice(channelList.indexOf(this), 1);
     }
 
+    /**
+     * Determine whether the channel is in a destroyed state
+     * @returns Boolean
+     */
     public isDestroyed() {
         return this.destroyed == true;
     }
+
+    /**
+     * Change ownership (don't forget to use crown.canBeSetBy if you're letting a user call this)
+     * @param part Participant to give crown to (or undefined to drop crown)
+     */
+    public chown(part?: Participant) {
+        if (this.crown) {
+            if (part) {
+                this.giveCrown(part);
+            } else {
+                this.dropCrown();
+            }
+        }
+    }
+
+    /**
+     * Give the crown to a user (no matter what)
+     * @param part Participant to give crown to
+     * @param force Whether or not to force-create a crown (useful for lobbies)
+     */
+    public giveCrown(part: Participant, force?: boolean) {
+        if (force) {
+            if (!this.crown) this.crown = new Crown();
+        }
+
+        if (this.crown) {
+            this.crown.userId = part._id;
+            this.crown.participantId = part.id;
+            this.crown.time = Date.now();
+            this.emit("update");
+        }
+    }
+
+    /**
+     * Drop the crown (remove from user)
+     */
+    public dropCrown() {
+        if (this.crown) {
+            delete this.crown.participantId;
+            this.crown.time = Date.now();
+            this.emit("update");
+        }
+    }
 }
 
-// Forceloader
+export default Channel;
+
+// Channel forceloader (cringe)
 let hasFullChannel = false;
 
 for (const id of config.forceLoad) {
