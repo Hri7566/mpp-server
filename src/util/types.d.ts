@@ -9,6 +9,8 @@ declare type UserFlags = Partial<{
     chat_curse_2: number;
     override_id: string;
     volume: number;
+    cant_chat: number;
+    cansetcrowns: number;
 }>;
 
 declare interface Tag {
