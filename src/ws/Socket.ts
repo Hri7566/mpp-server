@@ -1,3 +1,9 @@
+/**
+ * Socket connection module
+ * 
+ * Represents user connections
+ */
+
 import { createColor, createID, createUserID } from "../util/id";
 import EventEmitter from "events";
 import {
@@ -303,6 +309,7 @@ export class Socket extends EventEmitter {
     public async userset(name?: string, color?: string) {
         let isColor = false;
 
+        // Color changing
         if (color && config.enableColorChanging) {
             isColor =
                 typeof color === "string" && !!color.match(/^#[0-9a-f]{6}$/i);
