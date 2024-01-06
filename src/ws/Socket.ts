@@ -1,6 +1,6 @@
 /**
  * Socket connection module
- * 
+ *
  * Represents user connections
  */
 
@@ -8,17 +8,18 @@ import { createColor, createID, createUserID } from "../util/id";
 import EventEmitter from "events";
 import {
     ChannelInfo,
-    ChannelSettings,
+    IChannelSettings,
     ClientEvents,
     Participant,
     ServerEvents,
-    UserFlags
+    UserFlags,
+    Vector2
 } from "../util/types";
 import { User } from "@prisma/client";
 import { createUser, readUser, updateUser } from "../data/user";
 import { eventGroups } from "./events";
 import { Gateway } from "./Gateway";
-import { Channel, channelList } from "../channel/Channel";
+import { channelList, Channel } from "../channel/Channel";
 import { ServerWebSocket } from "bun";
 import { socketsBySocketID } from "./server";
 import { Logger } from "../util/Logger";
@@ -29,6 +30,8 @@ import { NoteQuota } from "./ratelimit/NoteQuota";
 import { config } from "./usersConfig";
 
 const logger = new Logger("Sockets");
+
+type CursorValue = string | number;
 
 export class Socket extends EventEmitter {
     private id: string;
@@ -43,19 +46,14 @@ export class Socket extends EventEmitter {
 
     public desiredChannel: {
         _id: string | undefined;
-        set: Partial<ChannelSettings> | undefined;
+        set: Partial<IChannelSettings> | undefined;
     } = {
         _id: undefined,
         set: {}
     };
 
     public currentChannelID: string | undefined;
-    private cursorPos:
-        | {
-              x: string | number | undefined;
-              y: string | number | undefined;
-          }
-        | undefined;
+    private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
 
     constructor(private ws: ServerWebSocket<unknown>, public socketID: string) {
         super();
@@ -110,7 +108,7 @@ export class Socket extends EventEmitter {
         return this.id;
     }
 
-    public setChannel(_id: string, set?: Partial<ChannelSettings>) {
+    public setChannel(_id: string, set?: Partial<IChannelSettings>) {
         if (this.isDestroyed()) return;
 
         this.desiredChannel._id = _id;
@@ -136,7 +134,8 @@ export class Socket extends EventEmitter {
             // Doesn't exist, create
             channel = new Channel(
                 this.desiredChannel._id,
-                this.desiredChannel.set
+                this.desiredChannel.set,
+                this
             );
 
             channel.join(this);
@@ -255,13 +254,13 @@ export class Socket extends EventEmitter {
     public getCursorPos() {
         if (!this.cursorPos)
             this.cursorPos = {
-                x: undefined,
-                y: undefined
+                x: "-10.00",
+                y: "-10.00"
             };
         return this.cursorPos;
     }
 
-    public setCursorPos(x: number | string, y: number | string) {
+    public setCursorPos(x: CursorValue, y: CursorValue) {
         if (typeof x == "number") {
             x = x.toFixed(2);
         }

@@ -1,10 +1,20 @@
-import { Participant } from "../util/types";
+import { Participant, Vector2 } from "../util/types";
 import { Socket } from "../ws/Socket";
 
 export class Crown {
     public userId: string | undefined;
     public participantId: string | undefined;
     public time: number = Date.now();
+
+    public startPos: Vector2 = {
+        x: 50,
+        y: 50
+    };
+
+    public endPos: Vector2 = {
+        x: 50,
+        y: 50
+    };
 
     public canBeSetBy(socket: Socket) {
         // can claim, drop, or give if...

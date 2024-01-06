@@ -3,20 +3,21 @@ import { Logger } from "../util/Logger";
 import { loadConfig } from "../util/config";
 import {
     ChannelSettingValue,
-    ChannelSettings,
+    IChannelSettings,
     ClientEvents,
     Participant,
-    ServerEvents
+    ServerEvents,
+    IChannelInfo
 } from "../util/types";
 import { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
-import { socketsBySocketID } from "../ws/server";
+import { findSocketByPartID, socketsBySocketID } from "../ws/server";
 import Crown from "./Crown";
 
 interface ChannelConfig {
     forceLoad: string[];
-    lobbySettings: Partial<ChannelSettings>;
-    defaultSettings: Partial<ChannelSettings>;
+    lobbySettings: Partial<IChannelSettings>;
+    defaultSettings: Partial<IChannelSettings>;
     lobbyRegexes: string[];
     lobbyBackdoor: string;
     fullChannel: string;
@@ -48,7 +49,7 @@ export const config = loadConfig<ChannelConfig>("config/channels.yml", {
 export const channelList = new Array<Channel>();
 
 export class Channel extends EventEmitter {
-    private settings: Partial<ChannelSettings> = config.defaultSettings;
+    private settings: Partial<IChannelSettings> = config.defaultSettings;
     private ppl = new Array<Participant>();
 
     public logger: Logger;
@@ -59,7 +60,7 @@ export class Channel extends EventEmitter {
 
     constructor(
         private _id: string,
-        set?: Partial<ChannelSettings>,
+        set?: Partial<IChannelSettings>,
         creator?: Socket,
         owner_id?: string
     ) {
@@ -193,7 +194,7 @@ export class Channel extends EventEmitter {
      * @returns undefined
      */
     public changeSettings(
-        set: Partial<ChannelSettings>,
+        set: Partial<IChannelSettings>,
         admin: boolean = false
     ) {
         if (this.isDestroyed()) return;
@@ -223,7 +224,7 @@ export class Channel extends EventEmitter {
      * @param setting Channel setting to get
      * @returns Value of setting
      */
-    public getSetting(setting: keyof ChannelSettings) {
+    public getSetting(setting: keyof IChannelSettings) {
         return this.settings[setting];
     }
 
@@ -369,8 +370,10 @@ export class Channel extends EventEmitter {
             id: this.getID(),
             count: this.ppl.length,
             settings: this.settings,
-            crown: JSON.parse(JSON.stringify(this.crown))
-        };
+            crown: this.crown
+                ? JSON.parse(JSON.stringify(this.crown))
+                : undefined
+        } as IChannelInfo;
     }
 
     /**
@@ -520,8 +523,34 @@ export class Channel extends EventEmitter {
      */
     public dropCrown() {
         if (this.crown) {
-            delete this.crown.participantId;
             this.crown.time = Date.now();
+
+            let socket;
+            if (this.crown.participantId)
+                socket = findSocketByPartID(this.crown.participantId);
+
+            let x = Math.random() * 100;
+            let y1 = Math.random() * 100;
+            let y2 = y1 + Math.random() * (100 - y1);
+
+            if (socket) {
+                const cursorPos = socket.getCursorPos();
+
+                let cursorX = cursorPos.x;
+                if (typeof cursorPos.x == "string")
+                    cursorX = parseInt(cursorPos.x);
+
+                let cursorY = cursorPos.y;
+                if (typeof cursorPos.y == "string")
+                    cursorY = parseInt(cursorPos.y);
+            }
+
+            // Screen positions
+            this.crown.startPos = { x, y: y1 };
+            this.crown.endPos = { x, y: y2 };
+
+            delete this.crown.participantId;
+
             this.emit("update");
         }
     }

@@ -29,7 +29,7 @@ declare interface Participant extends User {
     id: string; // participant id (same as user id on mppclone)
 }
 
-declare type ChannelSettings = {
+declare type IChannelSettings = {
     color: string;
     crownsolo: boolean;
     chat: boolean;
@@ -87,14 +87,8 @@ declare interface Crown {
     userId: string;
     partcipantId?: string;
     time: number;
-    startPos: {
-        x: number;
-        y: number;
-    };
-    endPos: {
-        x: number;
-        y: number;
-    };
+    startPos: Vector2;
+    endPos: Vector2;
 }
 
 declare interface ChannelInfo {
@@ -103,7 +97,7 @@ declare interface ChannelInfo {
     id: string;
     _id: string;
     crown?: Crown;
-    settings: Partial<ChannelSettings>;
+    settings: Partial<IChannelSettings>;
 }
 
 // Events copied from Hri7566/mppclone-client typedefs
@@ -120,7 +114,7 @@ declare interface ServerEvents {
     ch: {
         m: "ch";
         _id: string;
-        set: ChannelSettings;
+        set: IChannelSettings;
     };
 
     chown: {
@@ -130,7 +124,7 @@ declare interface ServerEvents {
 
     chset: {
         m: "chset";
-        set: ChannelSettings;
+        set: IChannelSettings;
     };
 
     custom: {
@@ -328,3 +322,29 @@ declare type ServerEventListener<EventID extends keyof ServerEvents> = {
     id: EventID;
     callback: (msg: ServerEvents[EventID], socket: Socket) => void;
 };
+
+declare type Vector2<T = number> = {
+    x: T;
+    y: T;
+};
+
+declare interface ICrown {
+    // User who had the crown (remove participantId if there is none, no userId if there hasn't been one)
+    userId?: string;
+    participantId?: string;
+
+    // Crown position when dropped (beginning and end of slide animation)
+    startPos: Vector2;
+    endPos: Vector2;
+
+    // Timestamp from the latest crown update
+    time: number;
+}
+
+declare interface IChannelInfo {
+    _id: string;
+    id: string;
+    count: number;
+    settings: Partial<IChannelSettings>;
+    crown?: ICrown;
+}
