@@ -47,16 +47,10 @@ The commit history includes BopItFreak's server because this server is (debatabl
     $ bunx prisma db push
     ```
 
-5. Build
+5. Run
 
     ```
-    $ bun run build
-    ```
-
-6. Run
-
-    ```
-    $ bun start
+    $ bun .
     ```
 
 ## Development
