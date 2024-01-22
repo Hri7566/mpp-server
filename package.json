@@ -1,28 +1,27 @@
 {
-    "name": "mpp-server",
-    "version": "2.0.0",
-    "description": "Hri7566's MPP Server",
-    "main": "src/index.ts",
-    "keywords": [],
-    "author": "Hri7566",
-    "license": "ISC",
-    "dependencies": {
-        "@prisma/client": "5.7.0",
-        "@t3-oss/env-core": "^0.6.1",
-        "bun-types": "^1.0.1",
-        "commander": "^11.1.0",
-        "date-holidays": "^3.21.5",
-        "dotenv": "^8.6.0",
-        "events": "^3.3.0",
-        "fancy-text-converter": "^1.0.9",
-        "keccak": "^2.1.0",
-        "unique-names-generator": "^4.7.1",
-        "yaml": "^2.3.2",
-        "zod": "^3.22.2"
-    },
-    "devDependencies": {
-        "@types/node": "^20.5.9",
-        "prisma": "5.7.0",
-        "typescript": "^5.2.2"
-    }
+  "name": "mpp-server",
+  "version": "2.0.0",
+  "description": "Hri7566's MPP Server",
+  "main": "src/index.ts",
+  "keywords": [],
+  "author": "Hri7566",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "5.7.0",
+    "@t3-oss/env-core": "^0.6.1",
+    "bun-types": "^1.0.1",
+    "commander": "^11.1.0",
+    "date-holidays": "^3.21.5",
+    "events": "^3.3.0",
+    "fancy-text-converter": "^1.0.9",
+    "keccak": "^2.1.0",
+    "unique-names-generator": "^4.7.1",
+    "yaml": "^2.3.2",
+    "zod": "^3.22.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.9",
+    "prisma": "5.7.0",
+    "typescript": "^5.2.2"
+  }
 }
