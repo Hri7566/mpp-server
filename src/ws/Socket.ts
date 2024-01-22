@@ -395,7 +395,13 @@ export class Socket extends EventEmitter {
         ch.playNotes(msg, this);
     }
 
-    public subscribeToChannelList() {}
+    public subscribeToChannelList() {
+        // TODO Channel list subbing
+    }
+
+    public unsubscribeFromChannelList() {
+        // TODO Channel list unsubbing
+    }
 }
 
 export const socketsBySocketID = new Map<string, Socket>();
