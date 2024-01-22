@@ -53,14 +53,14 @@ export class Channel extends EventEmitter {
     public logger: Logger;
     public chatHistory = new Array<ClientEvents["a"]>();
 
-    // TODO Add the crown
     public crown?: Crown;
 
     constructor(
         private _id: string,
         set?: Partial<IChannelSettings>,
         creator?: Socket,
-        owner_id?: string
+        owner_id?: string,
+        public stays: boolean = false
     ) {
         super();
 
@@ -120,7 +120,7 @@ export class Channel extends EventEmitter {
                 }
             }
 
-            if (this.ppl.length == 0) {
+            if (this.ppl.length == 0 && !this.stays) {
                 this.destroy();
             }
         });
@@ -562,10 +562,10 @@ export default Channel;
 let hasFullChannel = false;
 
 for (const id of config.forceLoad) {
-    new Channel(id);
+    new Channel(id, undefined, undefined, undefined, true);
     if (id == config.fullChannel) hasFullChannel = true;
 }
 
 if (!hasFullChannel) {
-    new Channel(config.fullChannel);
+    new Channel(config.fullChannel, undefined, undefined, undefined, true);
 }
