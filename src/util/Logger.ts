@@ -2,6 +2,10 @@ import { padNum, unimportant } from "./helpers";
 
 export class Logger {
     private static log(method: string, ...args: any[]) {
+        // Clear current line
+        process.stdout.write("\x1b[2K\r");
+
+        // Log our stuff
         (console as unknown as Record<string, (..._args: any[]) => any>)[
             method
         ](
@@ -9,6 +13,10 @@ export class Logger {
             unimportant(this.getHHMMSSMS()),
             ...args
         );
+
+        // Fix the readline prompt (spooky code)
+        if ((globalThis as unknown as any).rl)
+            (globalThis as unknown as any).rl.prompt();
     }
 
     public static getHHMMSSMS() {

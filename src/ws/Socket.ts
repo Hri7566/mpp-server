@@ -7,7 +7,7 @@
 import { createColor, createID, createUserID } from "../util/id";
 import EventEmitter from "events";
 import {
-    ChannelInfo,
+    IChannelInfo,
     IChannelSettings,
     ClientEvents,
     Participant,
@@ -19,7 +19,8 @@ import { User } from "@prisma/client";
 import { createUser, readUser, updateUser } from "../data/user";
 import { eventGroups } from "./events";
 import { Gateway } from "./Gateway";
-import { channelList, Channel } from "../channel/Channel";
+import { Channel } from "../channel/Channel";
+import { ChannelList } from "../channel/ChannelList";
 import { ServerWebSocket } from "bun";
 import { Logger } from "../util/Logger";
 import { RateLimitConstructorList, RateLimitList } from "./ratelimit/config";
@@ -114,7 +115,7 @@ export class Socket extends EventEmitter {
         this.desiredChannel.set = set;
 
         let channel;
-        for (const ch of channelList) {
+        for (const ch of ChannelList.getList()) {
             if (ch.getID() == _id) {
                 channel = ch;
             }
@@ -138,18 +139,22 @@ export class Socket extends EventEmitter {
             );
 
             channel.join(this);
-
-            // TODO Give the crown upon joining
         }
     }
 
+    public admin = new EventEmitter();
+
     private bindEventListeners() {
         for (const group of eventGroups) {
-            // TODO Check event group permissions
-            if (group.id == "admin") continue;
-
-            for (const event of group.eventList) {
-                this.on(event.id, event.callback);
+            if (group.id == "admin") {
+                for (const event of group.eventList) {
+                    this.admin.on(event.id, event.callback);
+                }
+            } else {
+                // TODO Check event group permissions
+                for (const event of group.eventList) {
+                    this.on(event.id, event.callback);
+                }
             }
         }
     }
@@ -198,6 +203,23 @@ export class Socket extends EventEmitter {
         }
     }
 
+    public async setUserFlag(key: keyof UserFlags, value: unknown) {
+        if (this.user) {
+            try {
+                const flags = JSON.parse(this.user.flags) as Partial<UserFlags>;
+                if (!flags) return false;
+                (flags as unknown as Record<string, unknown>)[key] = value;
+                this.user.flags = JSON.stringify(flags);
+                await updateUser(this.user.id, this.user);
+                return true;
+            } catch (err) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     public getParticipant() {
         if (this.user) {
             const flags = this.getUserFlags();
@@ -226,7 +248,7 @@ export class Socket extends EventEmitter {
         // Socket was closed or should be closed, clear data
         // logger.debug("Destroying UID:", this._id);
 
-        const foundCh = channelList.find(
+        const foundCh = ChannelList.getList().find(
             ch => ch.getID() === this.currentChannelID
         );
 
@@ -290,10 +312,12 @@ export class Socket extends EventEmitter {
     }
 
     public getCurrentChannel() {
-        return channelList.find(ch => ch.getID() == this.currentChannelID);
+        return ChannelList.getList().find(
+            ch => ch.getID() == this.currentChannelID
+        );
     }
 
-    public sendChannelUpdate(ch: ChannelInfo, ppl: Participant[]) {
+    public sendChannelUpdate(ch: IChannelInfo, ppl: Participant[]) {
         this.sendArray([
             {
                 m: "ch",
@@ -370,6 +394,8 @@ export class Socket extends EventEmitter {
         if (!ch) return;
         ch.playNotes(msg, this);
     }
+
+    public subscribeToChannelList() {}
 }
 
 export const socketsBySocketID = new Map<string, Socket>();
@@ -380,11 +406,15 @@ export function findSocketByPartID(id: string) {
     }
 }
 
-export function findSocketByUserID(_id: string) {
+export function findSocketsByUserID(_id: string) {
+    const sockets = [];
+
     for (const socket of socketsBySocketID.values()) {
         // logger.debug("User ID:", socket.getUserID());
-        if (socket.getUserID() == _id) return socket;
+        if (socket.getUserID() == _id) sockets.push(socket);
     }
+
+    return sockets;
 }
 
 export function findSocketByIP(ip: string) {

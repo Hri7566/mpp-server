@@ -13,6 +13,7 @@ import { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
 import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
+import { ChannelList } from "./ChannelList";
 
 interface ChannelConfig {
     forceLoad: string[];
@@ -40,13 +41,10 @@ export const config = loadConfig<ChannelConfig>("config/channels.yml", {
         color2: "#001014",
         visible: true
     },
-    // TODO Test this regex
-    lobbyRegexes: ["^lobby[1-9]?[1-9]?$", "^test/.+$"],
+    lobbyRegexes: ["^lobby[0-9][0-9]$", "^lobby[1-9]$", "^test/.+$"],
     lobbyBackdoor: "lolwutsecretlobbybackdoor",
     fullChannel: "test/awkward"
 });
-
-export const channelList = new Array<Channel>();
 
 export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings> = config.defaultSettings;
@@ -75,9 +73,8 @@ export class Channel extends EventEmitter {
             if (set) {
                 const validatedSet = validateChannelSettings(set);
 
-                for (const key in Object.keys(validatedSet)) {
-                    if (!(validatedSet as any)[key]) continue;
-
+                for (const key of Object.keys(set)) {
+                    if ((validatedSet as any)[key] === false) continue;
                     (this.settings as any)[key] = (set as any)[key];
                 }
             }
@@ -85,10 +82,10 @@ export class Channel extends EventEmitter {
             this.crown = new Crown();
 
             if (creator) {
-                if (this.crown.canBeSetBy(creator)) {
-                    const part = creator.getParticipant();
-                    if (part) this.giveCrown(part);
-                }
+                // if (this.crown.canBeSetBy(creator)) {
+                const part = creator.getParticipant();
+                if (part) this.giveCrown(part);
+                // }
             }
         }
 
@@ -98,8 +95,10 @@ export class Channel extends EventEmitter {
 
         this.bindEventListeners();
 
-        channelList.push(this);
+        ChannelList.add(this);
         // TODO channel closing
+
+        this.logger.info("Created");
     }
 
     private alreadyBound = false;
@@ -264,7 +263,7 @@ export class Channel extends EventEmitter {
 
         if (hasChangedChannel) {
             if (socket.currentChannelID) {
-                const ch = channelList.find(
+                const ch = ChannelList.getList().find(
                     ch => ch._id == socket.currentChannelID
                 );
                 if (ch) {
@@ -475,7 +474,8 @@ export class Channel extends EventEmitter {
             }
         }
 
-        channelList.splice(channelList.indexOf(this), 1);
+        ChannelList.remove(this);
+        this.logger.info("Destroyed");
     }
 
     /**
@@ -567,5 +567,5 @@ for (const id of config.forceLoad) {
 }
 
 if (!hasFullChannel) {
-    channelList.push(new Channel(config.fullChannel));
+    new Channel(config.fullChannel);
 }

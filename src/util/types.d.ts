@@ -91,15 +91,6 @@ declare interface Crown {
     endPos: Vector2;
 }
 
-declare interface ChannelInfo {
-    banned?: boolean;
-    count: number;
-    id: string;
-    _id: string;
-    crown?: Crown;
-    settings: Partial<IChannelSettings>;
-}
-
 // Events copied from Hri7566/mppclone-client typedefs
 declare interface ServerEvents {
     a: {
@@ -200,6 +191,12 @@ declare interface ServerEvents {
         set: { name?: string; color?: string };
     };
 
+    "admin message": {
+        m: "admin message";
+        password: string;
+        msg: ServerEvents<keyof ServerEvents>;
+    };
+
     // Admin
 
     color: {
@@ -243,7 +240,7 @@ declare interface ClientEvents {
     ch: {
         m: "ch";
         p: string;
-        ch: ChannelInfo;
+        ch: IChannelInfo;
         ppl: Participant[];
     };
 
@@ -342,6 +339,7 @@ declare interface ICrown {
 }
 
 declare interface IChannelInfo {
+    banned?: boolean;
     _id: string;
     id: string;
     count: number;

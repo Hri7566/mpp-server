@@ -1,0 +1,34 @@
+import { readUser, updateUser } from "../../../../data/user";
+import { ServerEventListener } from "../../../../util/types";
+import { findSocketsByUserID } from "../../../Socket";
+
+export const user_flag: ServerEventListener<"user_flag"> = {
+    id: "user_flag",
+    callback: async (msg, socket) => {
+        if (typeof msg._id !== "string") return;
+        if (typeof msg.key !== "string") return;
+        if (typeof msg.value == "undefined") return;
+
+        socket.getCurrentChannel()?.logger.debug(msg);
+
+        // Find the user data we're modifying
+        const user = await readUser(msg._id);
+        if (!user) return;
+
+        // Set the flag
+        const flags = JSON.parse(user.flags);
+        flags[msg.key] = msg.value;
+        user.flags = JSON.stringify(flags);
+
+        // Save the user data
+        await updateUser(user.id, user);
+
+        // Update this data for loaded users as well
+        const socks = findSocketsByUserID(user.id);
+        socks.forEach(sock => {
+            sock.setUserFlag(msg.key, msg.value);
+        });
+
+        socket.getCurrentChannel()?.logger.debug("socks:", socks);
+    }
+};

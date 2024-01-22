@@ -12,3 +12,5 @@ import "./ws/server";
 import { Logger } from "./util/Logger";
 
 const logger = new Logger("Main");
+
+import "./util/readline";

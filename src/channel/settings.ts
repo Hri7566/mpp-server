@@ -1,8 +1,9 @@
-import { ChannelSettings } from "../util/types";
+import { Logger } from "../util/Logger";
+import { IChannelSettings } from "../util/types";
 
-type Validator = "boolean" | "string" | "number" | ((val: any) => boolean);
+type Validator = "boolean" | "string" | "number" | ((val: unknown) => boolean);
 
-const validationRecord: Record<keyof ChannelSettings, Validator> = {
+const validationRecord: Record<keyof IChannelSettings, Validator> = {
     // Brandon
     lobby: "boolean",
     visible: "boolean",
@@ -25,13 +26,12 @@ const validationRecord: Record<keyof ChannelSettings, Validator> = {
 
 /**
  * Check the validity of channel settings
- * @param set Unknown data
+ * @param set Dirty settings
  * @returns Record of which settings are correct
  */
-export function validateChannelSettings(set: Partial<ChannelSettings>) {
+export function validateChannelSettings(set: Partial<IChannelSettings>) {
     // Create record
-    let keys = Object.keys(validationRecord);
-    let record: Partial<Record<keyof ChannelSettings, boolean>> = {};
+    let record: Partial<Record<keyof IChannelSettings, boolean>> = {};
 
     for (const key of Object.keys(set)) {
         let val = (set as Record<string, any>)[key];
@@ -46,7 +46,7 @@ export function validateChannelSettings(set: Partial<ChannelSettings>) {
         }
 
         // Set valid status
-        record[key as keyof ChannelSettings] = validate(val, validator);
+        record[key as keyof IChannelSettings] = validate(val, validator);
     }
 
     return record;
