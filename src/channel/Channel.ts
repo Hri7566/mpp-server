@@ -130,8 +130,6 @@ export class Channel extends EventEmitter {
 
             const userFlags = socket.getUserFlags();
 
-            this.logger.debug(userFlags);
-
             if (userFlags) {
                 if (userFlags.cant_chat) return;
             }
@@ -157,7 +155,7 @@ export class Channel extends EventEmitter {
                     this.emit("command", msg, socket);
                 }
             } catch (err) {
-                this.logger.debug(err);
+                this.logger.error(err);
             }
         });
     }
@@ -233,16 +231,14 @@ export class Channel extends EventEmitter {
      * @returns undefined
      */
     public join(socket: Socket) {
+        //! /!\ Players are forced to join the same channel on two different tabs!
+        //? TODO Should this be a bug or a feature?
+
         if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
 
-        // Unknown side-effects, but for type safety...
-        // if (!part) return;
-
         let hasChangedChannel = false;
         let oldChannelID = socket.currentChannelID;
-
-        // this.logger.debug("Has user?", this.hasUser(part._id));
 
         // Is user in this channel?
         if (this.hasUser(part._id)) {
@@ -256,25 +252,29 @@ export class Channel extends EventEmitter {
                 hasChangedChannel = true;
                 this.ppl.push(part);
             } else {
-                // Put us in full channel
+                // Put them in full channel
                 return socket.setChannel(config.fullChannel);
             }
         }
 
+        // Was the move complete?
         if (hasChangedChannel) {
+            // Were they in a channel before?
             if (socket.currentChannelID) {
+                // Find the channel they were in
                 const ch = ChannelList.getList().find(
                     ch => ch._id == socket.currentChannelID
                 );
-                if (ch) {
-                    ch?.leave(socket);
-                }
+
+                // Tell the channel they left
+                if (ch) ch.leave(socket);
             }
 
+            // Change the thing we checked to point to us now
             socket.currentChannelID = this.getID();
         }
 
-        // Send our data back
+        // Send our state data back
         socket.sendArray([
             {
                 m: "ch",
@@ -288,12 +288,13 @@ export class Channel extends EventEmitter {
             }
         ]);
 
+        // Get our friend's cursor position
         const cursorPos: {
             x: string | number | undefined;
             y: string | number | undefined;
         } = socket.getCursorPos();
 
-        // Broadcast participant update
+        // Broadcast a participant update for them
         this.sendArray([
             {
                 m: "p",
@@ -305,6 +306,9 @@ export class Channel extends EventEmitter {
                 y: cursorPos.y
             }
         ]);
+
+        // Broadcast a channel update so everyone subscribed to the channel list can see us
+        this.emit("update", this);
     }
 
     /**
@@ -342,7 +346,7 @@ export class Channel extends EventEmitter {
             }
         ]);
 
-        this.emit("update");
+        this.emit("update", this);
     }
 
     /**
@@ -514,7 +518,7 @@ export class Channel extends EventEmitter {
             this.crown.userId = part._id;
             this.crown.participantId = part.id;
             this.crown.time = Date.now();
-            this.emit("update");
+            this.emit("update", this);
         }
     }
 
@@ -551,7 +555,7 @@ export class Channel extends EventEmitter {
 
             delete this.crown.participantId;
 
-            this.emit("update");
+            this.emit("update", this);
         }
     }
 }

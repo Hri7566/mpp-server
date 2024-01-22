@@ -9,7 +9,7 @@ export const user_flag: ServerEventListener<"user_flag"> = {
         if (typeof msg.key !== "string") return;
         if (typeof msg.value == "undefined") return;
 
-        socket.getCurrentChannel()?.logger.debug(msg);
+        // socket.getCurrentChannel()?.logger.debug(msg);
 
         // Find the user data we're modifying
         const user = await readUser(msg._id);
@@ -29,6 +29,6 @@ export const user_flag: ServerEventListener<"user_flag"> = {
             sock.setUserFlag(msg.key, msg.value);
         });
 
-        socket.getCurrentChannel()?.logger.debug("socks:", socks);
+        // socket.getCurrentChannel()?.logger.debug("socks:", socks);
     }
 };

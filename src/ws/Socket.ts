@@ -115,7 +115,7 @@ export class Socket extends EventEmitter {
         this.desiredChannel.set = set;
 
         let channel;
-        for (const ch of ChannelList.getList()) {
+        for (const ch of ChannelList.getPublicList()) {
             if (ch.getID() == _id) {
                 channel = ch;
             }
@@ -396,11 +396,30 @@ export class Socket extends EventEmitter {
     }
 
     public subscribeToChannelList() {
-        // TODO Channel list subbing
+        ChannelList.subscribe(this.id);
+
+        const firstList = ChannelList.getPublicList().map(v => v.getInfo());
+        this.sendChannelList(firstList);
     }
 
     public unsubscribeFromChannelList() {
-        // TODO Channel list unsubbing
+        ChannelList.unsubscribe(this.id);
+    }
+
+    public sendChannelList(list: IChannelInfo[], complete: boolean = true) {
+        // logger.debug(
+        //     "Sending channel list:",
+        //     list,
+        //     complete ? "(complete)" : "(incomplete)"
+        // );
+
+        this.sendArray([
+            {
+                m: "ls",
+                c: complete,
+                u: list
+            }
+        ]);
     }
 }
 
