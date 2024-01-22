@@ -4,34 +4,11 @@ import fs from "fs";
 import path from "path";
 import { handleMessage } from "./message";
 import { decoder } from "../util/helpers";
-import { Socket } from "./Socket";
+import { Socket, socketsBySocketID } from "./Socket";
 import { serve, file } from "bun";
 import env from "../util/env";
 
 const logger = new Logger("WebSocket Server");
-
-export const socketsBySocketID = new Map<string, Socket>();
-
-export function findSocketByPartID(id: string) {
-    for (const socket of socketsBySocketID.values()) {
-        if (socket.getParticipantID() == id) return socket;
-    }
-}
-
-export function findSocketByUserID(_id: string) {
-    for (const socket of socketsBySocketID.values()) {
-        // logger.debug("User ID:", socket.getUserID());
-        if (socket.getUserID() == _id) return socket;
-    }
-}
-
-export function findSocketByIP(ip: string) {
-    for (const socket of socketsBySocketID.values()) {
-        if (socket.getIP() == ip) {
-            return socket;
-        }
-    }
-}
 
 export const app = Bun.serve({
     port: env.PORT,

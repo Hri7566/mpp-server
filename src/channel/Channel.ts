@@ -11,7 +11,7 @@ import {
 } from "../util/types";
 import { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
-import { findSocketByPartID, socketsBySocketID } from "../ws/server";
+import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
 
 interface ChannelConfig {
