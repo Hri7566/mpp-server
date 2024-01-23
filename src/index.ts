@@ -4,10 +4,11 @@
  * by Hri7566
  */
 
-// import { app } from "./ws/server";
 import "./ws/server";
 import { Logger } from "./util/Logger";
 
 const logger = new Logger("Main");
 
 import "./util/readline";
+
+logger.info("Ready");

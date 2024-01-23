@@ -55,7 +55,10 @@ export class Socket extends EventEmitter {
     public currentChannelID: string | undefined;
     private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
 
-    constructor(private ws: ServerWebSocket<unknown>, public socketID: string) {
+    constructor(
+        private ws: ServerWebSocket<unknown>,
+        public socketID: string
+    ) {
         super();
         this.ip = ws.remoteAddress; // Participant ID
 
@@ -81,7 +84,11 @@ export class Socket extends EventEmitter {
             this.id = createID();
         } else {
             // Use original session ID
-            this.id = foundSocket.id;
+            // this.id = foundSocket.id;
+
+            // Break us off
+            this.id = "broken";
+            this.destroy();
         }
 
         (async () => {

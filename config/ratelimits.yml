@@ -2,11 +2,11 @@ user:
     normal:
         a: 1500
         m: 50
+        ch: 1000
     chains:
         userset:
             interval: 1800000,
             num: 1000
-
 crown:
     normal:
         a: 600
@@ -15,7 +15,6 @@ crown:
         userset:
             interval: 1800000,
             num: 1000
-
 admin:
     normal:
         a: 120

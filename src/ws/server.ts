@@ -57,13 +57,15 @@ export const app = Bun.serve({
         close: (ws, code, message) => {
             // logger.debug("Close called");
             const socket = (ws as unknown as any).socket as Socket;
-            socket.destroy();
+            if (socket) {
+                socket.destroy();
 
-            for (const sockID of socketsBySocketID.keys()) {
-                const sock = socketsBySocketID.get(sockID);
+                for (const sockID of socketsBySocketID.keys()) {
+                    const sock = socketsBySocketID.get(sockID);
 
-                if (sock == socket) {
-                    socketsBySocketID.delete(sockID);
+                    if (sock == socket) {
+                        socketsBySocketID.delete(sockID);
+                    }
                 }
             }
         }

@@ -158,6 +158,10 @@ export class Channel extends EventEmitter {
                 this.logger.error(err);
             }
         });
+
+        this.on("command", (msg, socket) => {
+            console.log();
+        });
     }
 
     /**
@@ -316,7 +320,7 @@ export class Channel extends EventEmitter {
      * @param socket Socket that is leaving
      */
     public leave(socket: Socket) {
-        // this.logger.debug("Leave called");
+        this.logger.debug("Leave called");
         const part = socket.getParticipant() as Participant;
 
         let dupeCount = 0;
@@ -328,7 +332,7 @@ export class Channel extends EventEmitter {
             }
         }
 
-        // this.logger.debug("Dupes:", dupeCount);
+        this.logger.debug("Dupes:", dupeCount);
 
         if (dupeCount == 1) {
             const p = this.ppl.find(p => p.id == socket.getParticipantID());
@@ -336,17 +340,17 @@ export class Channel extends EventEmitter {
             if (p) {
                 this.ppl.splice(this.ppl.indexOf(p), 1);
             }
+
+            // Broadcast bye
+            this.sendArray([
+                {
+                    m: "bye",
+                    p: part.id
+                }
+            ]);
+
+            this.emit("update", this);
         }
-
-        // Broadcast bye
-        this.sendArray([
-            {
-                m: "bye",
-                p: part.id
-            }
-        ]);
-
-        this.emit("update", this);
     }
 
     /**

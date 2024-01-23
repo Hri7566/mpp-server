@@ -9,6 +9,7 @@ export interface RateLimitConfigList<
     normal: {
         m: RL;
         a: RL;
+        ch: RL;
     };
 
     chains: {
@@ -33,7 +34,8 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
     user: {
         normal: {
             a: 6000 / 4,
-            m: 1000 / 20
+            m: 1000 / 20,
+            ch: 1000 / 1
         },
         chains: {
             userset: {
