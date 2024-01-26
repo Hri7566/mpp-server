@@ -335,11 +335,15 @@ export class Socket extends EventEmitter {
         ]);
     }
 
-    public async userset(name?: string, color?: string) {
+    public async userset(
+        name?: string,
+        color?: string,
+        admin: boolean = false
+    ) {
         let isColor = false;
 
         // Color changing
-        if (color && config.enableColorChanging) {
+        if (color && (config.enableColorChanging || admin)) {
             isColor =
                 typeof color === "string" && !!color.match(/^#[0-9a-f]{6}$/i);
         }
