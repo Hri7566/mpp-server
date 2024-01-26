@@ -15,6 +15,7 @@
     "events": "^3.3.0",
     "fancy-text-converter": "^1.0.9",
     "keccak": "^2.1.0",
+    "nunjucks": "^3.2.4",
     "unique-names-generator": "^4.7.1",
     "yaml": "^2.3.2",
     "zod": "^3.22.2"
@@ -22,6 +23,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^20.5.9",
+    "@types/nunjucks": "^3.2.6",
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
     "eslint": "^8.56.0",

@@ -3,12 +3,24 @@ import { createSocketID, createUserID } from "../util/id";
 import fs from "fs";
 import path from "path";
 import { handleMessage } from "./message";
-import { decoder } from "../util/helpers";
 import { Socket, socketsBySocketID } from "./Socket";
-import { serve, file } from "bun";
 import env from "../util/env";
+import { getMOTD } from "../util/motd";
+import nunjucks from "nunjucks";
 
 const logger = new Logger("WebSocket Server");
+
+async function getIndex() {
+    const index = Bun.file("./public/index.html");
+
+    const rendered = nunjucks.renderString(await index.text(), {
+        motd: getMOTD()
+    });
+
+    const response = new Response(rendered);
+    response.headers.set("Content-Type", "text/html");
+    return response;
+}
 
 export const app = Bun.serve({
     port: env.PORT,
@@ -30,13 +42,13 @@ export const app = Bun.serve({
                     if (data) {
                         return new Response(data);
                     } else {
-                        return new Response(Bun.file("./public/index.html"));
+                        return getIndex();
                     }
                 } else {
-                    return new Response(Bun.file("./public/index.html"));
+                    return getIndex();
                 }
             } catch (err) {
-                return new Response(Bun.file("./public/index.html"));
+                return getIndex();
             }
         }
     },

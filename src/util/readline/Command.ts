@@ -1,17 +1,6 @@
-import readline from "readline";
-import { Logger } from "./Logger";
+import logger from "./logger";
 
-export const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-const logger = new Logger("CLI");
-
-rl.setPrompt("mpps> ");
-rl.prompt();
-
-class Command {
+export class Command {
     public static commands: Command[] = [];
     public static async handleCommand(line: string) {
         const args = line.split(" ");
@@ -57,25 +46,4 @@ class Command {
     ) {}
 }
 
-Command.addCommand(
-    new Command(["memory", "mem"], "mem", msg => {
-        const mem = process.memoryUsage();
-        return `Memory: ${(mem.heapUsed / 1000 / 1000).toFixed(2)} MB used / ${(
-            mem.heapTotal /
-            1000 /
-            1000
-        ).toFixed(2)} MB total`;
-    })
-);
-
-rl.on("line", async line => {
-    const out = await Command.handleCommand(line);
-    logger.info(out);
-    rl.prompt();
-});
-
-rl.on("SIGINT", () => {
-    process.exit();
-});
-
-(globalThis as unknown as any).rl = rl;
+export default Command;
