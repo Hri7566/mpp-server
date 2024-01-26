@@ -350,7 +350,7 @@ export class Socket extends EventEmitter {
 
         await updateUser(this._id, {
             name: typeof name == "string" ? name : undefined,
-            color: color ? (isColor ? color : undefined) : undefined
+            color: color && isColor ? color : undefined
         });
 
         await this.loadUser();

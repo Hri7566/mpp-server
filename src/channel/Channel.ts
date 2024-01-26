@@ -1,6 +1,5 @@
 import EventEmitter from "events";
 import { Logger } from "../util/Logger";
-import { loadConfig } from "../util/config";
 import {
     ChannelSettingValue,
     IChannelSettings,
@@ -14,37 +13,7 @@ import { validateChannelSettings } from "./settings";
 import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
-
-interface ChannelConfig {
-    forceLoad: string[];
-    lobbySettings: Partial<IChannelSettings>;
-    defaultSettings: Partial<IChannelSettings>;
-    lobbyRegexes: string[];
-    lobbyBackdoor: string;
-    fullChannel: string;
-}
-
-export const config = loadConfig<ChannelConfig>("config/channels.yml", {
-    forceLoad: ["lobby", "test/awkward"],
-    lobbySettings: {
-        lobby: true,
-        chat: true,
-        crownsolo: false,
-        visible: true,
-        color: "#73b3cc",
-        color2: "#273546"
-    },
-    defaultSettings: {
-        chat: true,
-        crownsolo: false,
-        color: "#3b5054",
-        color2: "#001014",
-        visible: true
-    },
-    lobbyRegexes: ["^lobby[0-9][0-9]$", "^lobby[1-9]$", "^test/.+$"],
-    lobbyBackdoor: "lolwutsecretlobbybackdoor",
-    fullChannel: "test/awkward"
-});
+import { config } from "./config";
 
 export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings> = config.defaultSettings;
@@ -96,7 +65,7 @@ export class Channel extends EventEmitter {
         this.bindEventListeners();
 
         ChannelList.add(this);
-        // TODO channel closing
+        // TODO implement owner_id
 
         this.logger.info("Created");
     }
@@ -160,7 +129,7 @@ export class Channel extends EventEmitter {
         });
 
         this.on("command", (msg, socket) => {
-            console.log();
+            // TODO commands
         });
     }
 
@@ -565,15 +534,3 @@ export class Channel extends EventEmitter {
 }
 
 export default Channel;
-
-// Channel forceloader (cringe)
-let hasFullChannel = false;
-
-for (const id of config.forceLoad) {
-    new Channel(id, undefined, undefined, undefined, true);
-    if (id == config.fullChannel) hasFullChannel = true;
-}
-
-if (!hasFullChannel) {
-    new Channel(config.fullChannel, undefined, undefined, undefined, true);
-}

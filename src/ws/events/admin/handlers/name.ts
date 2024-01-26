@@ -2,25 +2,24 @@ import { readUser, updateUser } from "../../../../data/user";
 import { ServerEventListener } from "../../../../util/types";
 import { findSocketsByUserID } from "../../../Socket";
 
-export const color: ServerEventListener<"color"> = {
-    id: "color",
+export const name: ServerEventListener<"name"> = {
+    id: "name",
     callback: async (msg, socket) => {
-        // TODO color
         const id = msg._id;
-        const color = msg.color;
+        const name = msg.name;
 
         if (typeof id !== "string") return;
-        if (typeof color !== "string") return;
+        if (typeof name !== "string") return;
 
         const user = await readUser(msg._id);
         if (!user) return;
 
-        user.color = color;
+        user.name = name;
         await updateUser(id, user);
 
         const toUpdate = findSocketsByUserID(id);
         toUpdate.forEach(s => {
-            s.userset(undefined, msg.color, true);
+            s.userset(msg.name, undefined, true);
         });
     }
 };
