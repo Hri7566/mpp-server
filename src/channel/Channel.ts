@@ -173,6 +173,37 @@ export class Channel extends EventEmitter {
             if (set.owner_id) set.owner_id = undefined;
         }
 
+        this.logger.debug(
+            "Dreaded color2 conditions:",
+            typeof set.color == "string",
+            "and",
+            typeof set.color2 == "undefined"
+        );
+
+        if (
+            typeof set.color == "string" &&
+            (typeof set.color2 == "undefined" ||
+                set.color2 === this.settings.color2)
+        ) {
+            this.logger.debug("Setting color 2 from first color:", set.color);
+            this.logger.debug("Red:", parseInt(set.color.substring(1, 2), 16));
+            const r = Math.max(
+                0,
+                parseInt(set.color.substring(1, 3), 16) - 0x40
+            );
+            const g = Math.max(
+                0,
+                parseInt(set.color.substring(3, 5), 16) - 0x40
+            );
+            const b = Math.max(
+                0,
+                parseInt(set.color.substring(5, 7), 16) - 0x40
+            );
+
+            set.color2 = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+            this.logger.debug("Color 2 is now:", set.color2);
+        }
+
         if (this.isLobby() && !admin) return;
 
         // Verify settings
@@ -187,6 +218,8 @@ export class Channel extends EventEmitter {
                 )[key];
             }
         }
+
+        this.emit("update", this);
     }
 
     /**
@@ -289,7 +322,7 @@ export class Channel extends EventEmitter {
      * @param socket Socket that is leaving
      */
     public leave(socket: Socket) {
-        this.logger.debug("Leave called");
+        // this.logger.debug("Leave called");
         const part = socket.getParticipant() as Participant;
 
         let dupeCount = 0;
@@ -301,7 +334,7 @@ export class Channel extends EventEmitter {
             }
         }
 
-        this.logger.debug("Dupes:", dupeCount);
+        // this.logger.debug("Dupes:", dupeCount);
 
         if (dupeCount == 1) {
             const p = this.ppl.find(p => p.id == socket.getParticipantID());
