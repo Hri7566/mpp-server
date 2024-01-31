@@ -6,8 +6,10 @@ import { color } from "./handlers/color";
 import { name } from "./handlers/name";
 import { user_flag } from "./handlers/user_flag";
 
-EVENT_GROUP_ADMIN.add(color);
-EVENT_GROUP_ADMIN.add(name);
-EVENT_GROUP_ADMIN.add(user_flag);
+// EVENT_GROUP_ADMIN.add(color);
+// EVENT_GROUP_ADMIN.add(name);
+// EVENT_GROUP_ADMIN.add(user_flag);
+
+EVENT_GROUP_ADMIN.addMany(color, name, user_flag);
 
 eventGroups.push(EVENT_GROUP_ADMIN);

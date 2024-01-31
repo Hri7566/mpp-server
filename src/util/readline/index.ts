@@ -21,4 +21,5 @@ rl.on("SIGINT", () => {
     process.exit();
 });
 
+// Fucking cringe but it works
 (globalThis as unknown as any).rl = rl;

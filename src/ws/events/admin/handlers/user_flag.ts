@@ -5,6 +5,7 @@ import { findSocketsByUserID } from "../../../Socket";
 export const user_flag: ServerEventListener<"user_flag"> = {
     id: "user_flag",
     callback: async (msg, socket) => {
+        // User flag modification (changing some real specific shit)
         if (typeof msg._id !== "string") return;
         if (typeof msg.key !== "string") return;
         if (typeof msg.value == "undefined") return;

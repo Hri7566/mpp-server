@@ -8,6 +8,10 @@ export const n: ServerEventListener<"n"> = {
         if (!Array.isArray(msg.n)) return;
         if (typeof msg.t !== "number") return;
 
+        // This should've been here months ago
+        const channel = socket.getCurrentChannel();
+        if (!channel) return;
+
         // Check note properties
         for (const n of msg.n) {
             if (typeof n.n != "string") return;
@@ -29,9 +33,15 @@ export const n: ServerEventListener<"n"> = {
 
         let amount = msg.n.length;
 
-        // TODO Check crownsolo
-        if (socket.noteQuota.spend(amount)) {
-            socket.playNotes(msg);
+        const crownsolo = channel.getSetting("crownsolo");
+
+        if ((crownsolo && socket.isOwner()) || !crownsolo) {
+            // Shiny hat exists and we have shiny hat
+            // or there is no shiny hat
+            if (socket.noteQuota.spend(amount)) {
+                // make noise
+                socket.playNotes(msg);
+            }
         }
     }
 };

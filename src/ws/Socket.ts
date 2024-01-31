@@ -15,7 +15,7 @@ import {
     UserFlags,
     Vector2
 } from "../util/types";
-import { User } from "@prisma/client";
+import type { User } from "@prisma/client";
 import { createUser, readUser, updateUser } from "../data/user";
 import { eventGroups } from "./events";
 import { Gateway } from "./Gateway";
@@ -55,10 +55,7 @@ export class Socket extends EventEmitter {
     public currentChannelID: string | undefined;
     private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
 
-    constructor(
-        private ws: ServerWebSocket<unknown>,
-        public socketID: string
-    ) {
+    constructor(private ws: ServerWebSocket<unknown>, public socketID: string) {
         super();
         this.ip = ws.remoteAddress; // Participant ID
 
@@ -431,6 +428,22 @@ export class Socket extends EventEmitter {
                 u: list
             }
         ]);
+    }
+
+    public isOwner() {
+        const channel = this.getCurrentChannel();
+        const part = this.getParticipant();
+
+        // this looks cool
+        if (!channel) return false;
+        if (!channel.crown) return false;
+        if (!channel.crown.userId) return false;
+        if (!channel.crown.participantId) return false;
+        if (!part) return;
+        if (!part.id) return;
+        if (channel.crown.participantId !== part.id) return false;
+
+        return true;
     }
 }
 

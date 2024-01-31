@@ -5,7 +5,7 @@ import { findSocketsByUserID } from "../../../Socket";
 export const color: ServerEventListener<"color"> = {
     id: "color",
     callback: async (msg, socket) => {
-        // TODO color
+        // I'm not allowed to use this feature on MPP.net for a really stupid reason
         const id = msg._id;
         const color = msg.color;
 

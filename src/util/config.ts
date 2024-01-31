@@ -3,6 +3,16 @@ import { parse, stringify } from "yaml";
 import { z } from "zod";
 
 /**
+ * This file uses the synchronous functions from the fs
+ * module because these functions should only be used
+ * to load configs at the beginning of runtime
+ *
+ * Hint: This means you shouldn't load configs in the
+ * middle of doing other shit, only when you start the
+ * program.
+ */
+
+/**
  * Load a YAML config file and set default values if config path is nonexistent
  *
  * Usage:
@@ -64,6 +74,7 @@ export function loadConfig<T>(configPath: string, defaultConfig: T): T {
  * @param config
  */
 export function writeConfig<T>(configPath: string, config: T) {
+    // Write config to disk unconditionally
     writeFileSync(
         configPath,
         stringify(config, {

@@ -8,6 +8,7 @@ export const t: ServerEventListener<"t"> = {
             if (typeof msg.e !== "number") return;
         }
 
+        // Pong!
         socket.sendArray([
             {
                 m: "t",

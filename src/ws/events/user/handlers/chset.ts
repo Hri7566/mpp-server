@@ -5,8 +5,11 @@ export const chset: ServerEventListener<"chset"> = {
     callback: (msg, socket) => {
         // Change channel settings
         if (typeof msg.set == "undefined") return;
+
         const ch = socket.getCurrentChannel();
         if (!ch) return;
+
+        // Edit room now
         ch.changeSettings(msg.set, false);
     }
 };

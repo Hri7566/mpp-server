@@ -16,3 +16,8 @@ model User {
   color String @default("#ffffff")
   flags String @default("{}") // JSON flags object
 }
+
+model ChatHistory {
+  id       String @id @unique @map("_id")
+  messages String @default("[]") // JSON messages
+}

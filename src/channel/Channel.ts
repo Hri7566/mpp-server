@@ -8,7 +8,7 @@ import {
     ServerEvents,
     IChannelInfo
 } from "../util/types";
-import { Socket } from "../ws/Socket";
+import type { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
 import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
@@ -185,8 +185,6 @@ export class Channel extends EventEmitter {
             (typeof set.color2 == "undefined" ||
                 set.color2 === this.settings.color2)
         ) {
-            this.logger.debug("Setting color 2 from first color:", set.color);
-            this.logger.debug("Red:", parseInt(set.color.substring(1, 2), 16));
             const r = Math.max(
                 0,
                 parseInt(set.color.substring(1, 3), 16) - 0x40
@@ -201,7 +199,6 @@ export class Channel extends EventEmitter {
             );
 
             set.color2 = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-            this.logger.debug("Color 2 is now:", set.color2);
         }
 
         if (this.isLobby() && !admin) return;

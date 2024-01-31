@@ -2,7 +2,9 @@ import { Logger } from "../util/Logger";
 import { Socket } from "./Socket";
 import { hasOwn } from "../util/helpers";
 
-const logger = new Logger("Message Handler");
+// const logger = new Logger("Message Handler");
+// this one sounds cooler
+const logger = new Logger("The Messenger");
 
 export function handleMessage(socket: Socket, text: string) {
     try {

@@ -1,6 +1,7 @@
 import { Participant, Vector2 } from "../util/types";
 import { Socket } from "../ws/Socket";
 
+// shiny hat
 export class Crown {
     public userId: string | undefined;
     public participantId: string | undefined;

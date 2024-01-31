@@ -1,5 +1,6 @@
 import { RateLimit } from "./RateLimit";
 
+// Thank you Brandon for this other thing
 export class RateLimitChain {
     public chain: RateLimit[] = [];
 

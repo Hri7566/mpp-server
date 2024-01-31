@@ -2,6 +2,7 @@ import { type Socket, findSocketByPartID } from "../ws/Socket";
 import type Channel from "./Channel";
 
 const onChannelUpdate = (channel: Channel) => {
+    // If this shit ever manages to handle over 10 people I'd be impressed
     const info = channel.getInfo();
     // const ppl = channel.getParticipantList();
     if (info.settings.visible !== true) return;

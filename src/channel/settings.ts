@@ -3,6 +3,8 @@ import { IChannelSettings } from "../util/types";
 
 type Validator = "boolean" | "string" | "number" | ((val: unknown) => boolean);
 
+// This record contains the exact data Brandon used to check channel settings, down to the regex.
+// It also contains things that might be useful to other people in the future (things that make me vomit)
 const validationRecord: Record<keyof IChannelSettings, Validator> = {
     // Brandon
     lobby: "boolean",

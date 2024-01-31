@@ -5,6 +5,7 @@ import { findSocketsByUserID } from "../../../Socket";
 export const name: ServerEventListener<"name"> = {
     id: "name",
     callback: async (msg, socket) => {
+        // Change someone else's name but it's an annoying admin feature
         const id = msg._id;
         const name = msg.name;
 

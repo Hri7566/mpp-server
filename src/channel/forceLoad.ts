@@ -1,6 +1,8 @@
 import { Channel } from "./Channel";
 import { config } from "./config";
 
+// This shit was moved here to try to fix the unit tests segfaulting but it didn't work
+
 // Channel forceloader (cringe)
 let hasFullChannel = false;
 

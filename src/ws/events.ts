@@ -8,6 +8,10 @@ export class EventGroup {
         this.eventList.push(listener);
     }
 
+    public addMany(...listeners: ServerEventListener<any>[]) {
+        listeners.forEach(l => this.add(l));
+    }
+
     public remove(listener: ServerEventListener<any>) {
         this.eventList.splice(this.eventList.indexOf(listener), 1);
     }

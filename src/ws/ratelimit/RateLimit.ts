@@ -1,3 +1,4 @@
+// Thank you Brandon for this thing
 export class RateLimit {
     public after: number = 0;
     constructor(private interval_ms: number = 0) {}

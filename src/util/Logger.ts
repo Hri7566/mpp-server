@@ -14,7 +14,7 @@ export class Logger {
             ...args
         );
 
-        // Fix the readline prompt (spooky code)
+        // Fix the readline prompt (spooky cringe code)
         if ((globalThis as unknown as any).rl)
             (globalThis as unknown as any).rl.prompt();
     }

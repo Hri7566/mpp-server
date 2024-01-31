@@ -5,7 +5,8 @@ import { RateLimitConstructorList, config } from "../config";
 export const crownLimits: RateLimitConstructorList = {
     normal: {
         a: () => new RateLimit(config.crown.normal.a),
-        m: () => new RateLimit(config.crown.normal.m)
+        m: () => new RateLimit(config.crown.normal.m),
+        ch: () => new RateLimit(config.crown.normal.ch)
     },
     chains: {
         userset: () =>

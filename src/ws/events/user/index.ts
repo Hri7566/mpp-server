@@ -14,16 +14,33 @@ import { minus_ls } from "./handlers/-ls";
 import { admin_message } from "./handlers/admin_message";
 import { chset } from "./handlers/chset";
 
-EVENTGROUP_USER.add(hi);
-EVENTGROUP_USER.add(devices);
-EVENTGROUP_USER.add(ch);
-EVENTGROUP_USER.add(m);
-EVENTGROUP_USER.add(a);
-EVENTGROUP_USER.add(userset);
-EVENTGROUP_USER.add(n);
-EVENTGROUP_USER.add(plus_ls);
-EVENTGROUP_USER.add(minus_ls);
-EVENTGROUP_USER.add(admin_message);
-EVENTGROUP_USER.add(chset);
+// Imagine not having an "addMany" function...
+
+// EVENTGROUP_USER.add(hi);
+// EVENTGROUP_USER.add(devices);
+// EVENTGROUP_USER.add(ch);
+// EVENTGROUP_USER.add(m);
+// EVENTGROUP_USER.add(a);
+// EVENTGROUP_USER.add(userset);
+// EVENTGROUP_USER.add(n);
+// EVENTGROUP_USER.add(plus_ls);
+// EVENTGROUP_USER.add(minus_ls);
+// EVENTGROUP_USER.add(admin_message);
+// EVENTGROUP_USER.add(chset);
+
+// Imagine it looks exactly the same and calls the same function underneath
+EVENTGROUP_USER.addMany(
+    hi,
+    devices,
+    ch,
+    m,
+    a,
+    userset,
+    n,
+    plus_ls,
+    minus_ls,
+    admin_message,
+    chset
+);
 
 eventGroups.push(EVENTGROUP_USER);

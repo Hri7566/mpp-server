@@ -40,3 +40,20 @@ export function darken(hex: string) {
             .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
     } catch (err) {}
 }
+
+// Brandon made this literally eons ago and it's fucking hilarious
+export function spoop_text(message: string) {
+    var old = message;
+    message = "";
+    for (var i = 0; i < old.length; i++) {
+        if (Math.random() < 0.9) {
+            message += String.fromCharCode(
+                old.charCodeAt(i) + Math.floor(Math.random() * 20 - 10)
+            );
+            //message[i] = String.fromCharCode(Math.floor(Math.random() * 255));
+        } else {
+            message += old[i];
+        }
+    }
+    return message;
+}

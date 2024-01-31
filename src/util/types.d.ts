@@ -1,4 +1,17 @@
+/**
+ * Typedefs
+ */
+
 import { Socket } from "../ws/Socket";
+
+/**
+ * Halfway through this file, the same types have appeared again
+ *
+ * I am not a decent enough person to go looking down there, so
+ * good luck when you get there. Somehow I forgot what is even
+ * in this file, so don't come and ask me why something isn't
+ * defined correctly here.
+ */
 
 declare type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 

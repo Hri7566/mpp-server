@@ -47,7 +47,8 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
     crown: {
         normal: {
             a: 6000 / 10,
-            m: 1000 / 20
+            m: 1000 / 20,
+            ch: 1000 / 1
         },
         chains: {
             userset: {
@@ -59,7 +60,8 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
     admin: {
         normal: {
             a: 6000 / 50,
-            m: 1000 / 60
+            m: 1000 / 60,
+            ch: 1000 / 10
         },
         chains: {
             userset: {
