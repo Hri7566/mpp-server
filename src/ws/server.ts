@@ -31,11 +31,20 @@ async function getIndex() {
     return response;
 }
 
-export const app = Bun.serve({
+export const app = Bun.serve<{ ip: string }>({
     port: env.PORT,
     hostname: "0.0.0.0",
     fetch: (req, server) => {
-        if (server.upgrade(req)) {
+        const reqip = server.requestIP(req);
+        if (!reqip) return;
+
+        if (
+            server.upgrade(req, {
+                data: {
+                    ip: req.headers.get("X-Forwarded-For") || reqip.address
+                }
+            })
+        ) {
             return;
         } else {
             const url = new URL(req.url).pathname;

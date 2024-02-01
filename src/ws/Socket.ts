@@ -56,11 +56,11 @@ export class Socket extends EventEmitter {
     private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
 
     constructor(
-        private ws: ServerWebSocket<unknown>,
+        private ws: ServerWebSocket<{ ip: string }>,
         public socketID: string
     ) {
         super();
-        this.ip = ws.remoteAddress; // Participant ID
+        this.ip = ws.data.ip;
 
         // User ID
         this._id = createUserID(this.getIP());
