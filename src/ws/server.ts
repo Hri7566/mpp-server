@@ -37,11 +37,14 @@ export const app = Bun.serve<{ ip: string }>({
     fetch: (req, server) => {
         const reqip = server.requestIP(req);
         if (!reqip) return;
+        logger.debug("x-forwarded-for:", req.headers.get("x-forwarded-for"));
+        logger.debug("requestIP:", reqip);
+        const ip = req.headers.get("x-forwarded-for") || reqip.address;
 
         if (
             server.upgrade(req, {
                 data: {
-                    ip: req.headers.get("x-forwarded-for") || reqip.address
+                    ip
                 }
             })
         ) {
