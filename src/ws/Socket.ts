@@ -409,7 +409,9 @@ export class Socket extends EventEmitter {
     public subscribeToChannelList() {
         ChannelList.subscribe(this.id);
 
-        const firstList = ChannelList.getPublicList().map(v => v.getInfo(this._id));
+        const firstList = ChannelList.getPublicList().map(v =>
+            v.getInfo(this._id)
+        );
         this.sendChannelList(firstList);
     }
 

@@ -14,6 +14,7 @@ import { minus_ls } from "./handlers/-ls";
 import { admin_message } from "./handlers/admin_message";
 import { chset } from "./handlers/chset";
 import { kickban } from "./handlers/kickban";
+import { bye } from "./handlers/bye";
 
 // Imagine not having an "addMany" function...
 
@@ -42,7 +43,8 @@ EVENTGROUP_USER.addMany(
     minus_ls,
     admin_message,
     chset,
-    kickban
+    kickban,
+    bye
 );
 
 eventGroups.push(EVENTGROUP_USER);
