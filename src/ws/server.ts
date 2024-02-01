@@ -41,7 +41,7 @@ export const app = Bun.serve<{ ip: string }>({
         if (
             server.upgrade(req, {
                 data: {
-                    ip: req.headers.get("X-Forwarded-For") || reqip.address
+                    ip: req.headers.get("x-forwarded-for") || reqip.address
                 }
             })
         ) {
