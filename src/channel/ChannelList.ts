@@ -18,6 +18,14 @@ const onChannelUpdate = (channel: Channel) => {
             return;
         }
 
+        const part = channel.getParticipantList().find(p => p.id == partId);
+
+        if (part) {
+            info.banned = channel.isBanned(part._id);
+        } else {
+            info.banned = false;
+        }
+
         socket.sendChannelList([info], false);
     }
 };

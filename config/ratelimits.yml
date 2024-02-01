@@ -11,6 +11,7 @@ crown:
     normal:
         a: 600
         m: 50
+        ch: 1000
     chains:
         userset:
             interval: 1800000,
@@ -19,6 +20,7 @@ admin:
     normal:
         a: 120
         m: 16.6666666667
+        ch: 100
     chains:
         userset:
             interval: 1800000,

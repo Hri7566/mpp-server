@@ -55,7 +55,10 @@ export class Socket extends EventEmitter {
     public currentChannelID: string | undefined;
     private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
 
-    constructor(private ws: ServerWebSocket<unknown>, public socketID: string) {
+    constructor(
+        private ws: ServerWebSocket<unknown>,
+        public socketID: string
+    ) {
         super();
         this.ip = ws.remoteAddress; // Participant ID
 
@@ -406,7 +409,7 @@ export class Socket extends EventEmitter {
     public subscribeToChannelList() {
         ChannelList.subscribe(this.id);
 
-        const firstList = ChannelList.getPublicList().map(v => v.getInfo());
+        const firstList = ChannelList.getPublicList().map(v => v.getInfo(this._id));
         this.sendChannelList(firstList);
     }
 
@@ -444,6 +447,16 @@ export class Socket extends EventEmitter {
         if (channel.crown.participantId !== part.id) return false;
 
         return true;
+    }
+
+    public kickban(_id: string, ms: number) {
+        const channel = this.getCurrentChannel();
+
+        if (!channel) return;
+
+        if (this.isOwner()) {
+            channel.kickban(_id, ms);
+        }
     }
 }
 

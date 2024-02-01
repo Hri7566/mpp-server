@@ -1,4 +1,4 @@
-import EventEmitter from "events";
+import EventEmitter, { on } from "events";
 import { Logger } from "../util/Logger";
 import {
     ChannelSettingValue,
@@ -15,12 +15,19 @@ import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 
+interface CachedKickban {
+    userId: string;
+    startTime: number;
+    endTime: number;
+}
+
 export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings> = config.defaultSettings;
     private ppl = new Array<Participant>();
 
     public logger: Logger;
     public chatHistory = new Array<ClientEvents["a"]>();
+    public bans = new Array<CachedKickban>();
 
     public crown?: Crown;
 
@@ -233,7 +240,7 @@ export class Channel extends EventEmitter {
      * @param socket Socket that is joining
      * @returns undefined
      */
-    public join(socket: Socket) {
+    public join(socket: Socket): void {
         //! /!\ Players are forced to join the same channel on two different tabs!
         //? TODO Should this be a bug or a feature?
 
@@ -242,6 +249,18 @@ export class Channel extends EventEmitter {
 
         let hasChangedChannel = false;
         let oldChannelID = socket.currentChannelID;
+
+        // Is user banned?
+        if (this.isBanned(part._id)) {
+            // Send user to ban channel instead
+            // TODO Send notification for ban
+            const chs = ChannelList.getList();
+            for (const ch of chs) {
+                if (ch.getID() == config.fullChannel) {
+                    return ch.join(socket);
+                }
+            }
+        }
 
         // Is user in this channel?
         if (this.hasUser(part._id)) {
@@ -370,10 +389,11 @@ export class Channel extends EventEmitter {
      * Get this channel's information
      * @returns Channel info object (includes ID, number of users, settings, and the crown)
      */
-    public getInfo() {
+    public getInfo(_id?: string) {
         return {
             _id: this.getID(),
             id: this.getID(),
+            banned: _id ? this.isBanned(_id) : false,
             count: this.ppl.length,
             settings: this.settings,
             crown: this.crown
@@ -560,6 +580,57 @@ export class Channel extends EventEmitter {
 
             this.emit("update", this);
         }
+    }
+
+    /**
+     * Kickban a poor soul for t milliseconds.
+     * @param _id User ID to ban
+     * @param t Time in millseconds to ban for
+     **/
+    public kickban(_id: string, t: number = 1000 * 60 * 30) {
+        const now = Date.now();
+
+        if (!this.hasUser(_id)) return;
+
+        const part = this.ppl.find(p => p._id == _id);
+        if (!part) return;
+
+        this.bans.push({
+            userId: _id,
+            startTime: now,
+            endTime: now + t
+        });
+
+        const socket = findSocketByPartID(part.id);
+        if (!socket) return;
+
+        const banChannel = ChannelList.getList().find(
+            ch => ch.getID() == config.fullChannel
+        );
+
+        if (!banChannel) return;
+        banChannel.join(socket);
+
+        this.emit("update", this);
+    }
+
+    public isBanned(_id: string) {
+        const now = Date.now();
+
+        for (const ban of this.bans) {
+            if (ban.endTime <= now) {
+                // Remove old ban and skip
+                this.bans.splice(this.bans.indexOf(ban), 1);
+                continue;
+            }
+
+            // Check if they are banned
+            if (ban.userId == _id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

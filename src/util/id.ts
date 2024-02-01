@@ -39,8 +39,7 @@ export function createColor(ip: string) {
         createHash("sha256")
             .update(ip)
             .update(env.SALT)
-            .update("color")
             .digest("hex")
-            .substring(0, 24 + 6)
+            .substring(24, 24 + 6)
     );
 }
