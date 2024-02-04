@@ -14,6 +14,7 @@ import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
+import { prisma } from "../data/prisma";
 
 interface CachedKickban {
     userId: string;
@@ -125,7 +126,6 @@ export class Channel extends EventEmitter {
 
             this.sendArray([outgoing]);
             this.chatHistory.push(outgoing);
-
             try {
                 if (msg.message.startsWith("/")) {
                     this.emit("command", msg, socket);
