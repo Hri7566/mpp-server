@@ -60,17 +60,20 @@ Command.addCommand(
                         .join("\n- ")
                 ); 
             } else if (msg.args[1] == "users") {
-                var users = getUsers();
+                var user = getUsers();
+                var users = "";
+                ((await user).users).forEach(u => {
+                    users += `\n- [${u.id}]: ${u.name}`
+                })
+
                 return (
-                    "Users: "+await (await users).count+"\n- " +
-                    (await users).users.forEach(async user => {
-                        `\n- ${user.id}: ${user.name}`
-                    })
-                ); 
+                    "Users: "+await (await user).count + users
+                )
+            } else {
+                return "list <channels, users>";
             }
         } else {
             return "list <channels, users>";
         }
-
     })
 );
