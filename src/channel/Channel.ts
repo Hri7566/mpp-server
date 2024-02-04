@@ -126,6 +126,19 @@ export class Channel extends EventEmitter {
 
             this.sendArray([outgoing]);
             this.chatHistory.push(outgoing);
+
+            prisma.chatHistory.upsert({
+                where:{
+                    id: this._id
+                },
+                update:{
+                    messages: JSON.stringify(this.chatHistory)
+                },
+                create: {
+                    id:this._id,
+                    messages: JSON.stringify(this.chatHistory)
+                }
+            })
             try {
                 if (msg.message.startsWith("/")) {
                     this.emit("command", msg, socket);
