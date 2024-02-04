@@ -1,4 +1,4 @@
-import EventEmitter, { on } from "events";
+import EventEmitter from "events";
 import { Logger } from "../util/Logger";
 import {
     ChannelSettingValue,
@@ -15,7 +15,6 @@ import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { saveChatHistory, getChatHistory } from "../data/history";
-import { prisma } from "../data/prisma";
 
 interface CachedKickban {
     userId: string;
@@ -27,10 +26,9 @@ export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings> = config.defaultSettings;
     private ppl = new Array<Participant>();
     public chatHistory = new Array<ClientEvents["a"]>();
-    private async loadChatHistory() { 
-        this.chatHistory = await getChatHistory(this.getID()); 
+    private async loadChatHistory() {
+        this.chatHistory = await getChatHistory(this.getID());
     }
-
 
     public logger: Logger;
     public bans = new Array<CachedKickban>();
@@ -46,7 +44,6 @@ export class Channel extends EventEmitter {
     ) {
         super();
 
-        
         this.logger = new Logger("Channel - " + _id);
 
         // Validate settings in set
@@ -89,7 +86,7 @@ export class Channel extends EventEmitter {
     private bindEventListeners() {
         if (this.alreadyBound) return;
         this.alreadyBound = true;
-        this.loadChatHistory()
+        this.loadChatHistory();
         this.logger.info("Loaded Chat History.");
 
         this.on("update", () => {
@@ -134,7 +131,7 @@ export class Channel extends EventEmitter {
 
             this.sendArray([outgoing]);
             this.chatHistory.push(outgoing);
-            await saveChatHistory(this.getID(), this.chatHistory)
+            await saveChatHistory(this.getID(), this.chatHistory);
 
             try {
                 if (msg.message.startsWith("/")) {
