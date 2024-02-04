@@ -1,5 +1,5 @@
 import { ChannelList } from "../../channel/ChannelList";
-import { deleteUser } from "../../data/user";
+import { deleteUser, getUsers } from "../../data/user";
 import Command from "./Command";
 
 Command.addCommand(
@@ -50,12 +50,30 @@ Command.addCommand(
 );
 
 Command.addCommand(
-    new Command(["list", "ls"], "list", async msg => {
-        return (
-            "Channels:\n- " +
-            ChannelList.getList()
-                .map(ch => ch.getID())
-                .join("\n- ")
-        );
+    new Command(["list", "ls"], "list <channels, users>", async msg => {
+        if(msg.args.length > 1) {
+            if(msg.args[1] == "channels") {
+                return (
+                    "Channels:\n- " +
+                    ChannelList.getList()
+                        .map(ch => ch.getID())
+                        .join("\n- ")
+                ); 
+            } else if (msg.args[1] == "users") {
+                var user = getUsers();
+                var users = "";
+                ((await user).users).forEach(u => {
+                    users += `\n- [${u.id}]: ${u.name}`
+                })
+
+                return (
+                    "Users: "+await (await user).count + users
+                )
+            } else {
+                return "list <channels, users>";
+            }
+        } else {
+            return "list <channels, users>";
+        }
     })
 );

@@ -1,4 +1,4 @@
-import EventEmitter, { on } from "events";
+import EventEmitter from "events";
 import { Logger } from "../util/Logger";
 import {
     ChannelSettingValue,
@@ -14,6 +14,7 @@ import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
+import { saveChatHistory, getChatHistory } from "../data/history";
 
 interface CachedKickban {
     userId: string;
@@ -24,9 +25,12 @@ interface CachedKickban {
 export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings> = config.defaultSettings;
     private ppl = new Array<Participant>();
+    public chatHistory = new Array<ClientEvents["a"]>();
+    private async loadChatHistory() {
+        this.chatHistory = await getChatHistory(this.getID());
+    }
 
     public logger: Logger;
-    public chatHistory = new Array<ClientEvents["a"]>();
     public bans = new Array<CachedKickban>();
 
     public crown?: Crown;
@@ -82,6 +86,8 @@ export class Channel extends EventEmitter {
     private bindEventListeners() {
         if (this.alreadyBound) return;
         this.alreadyBound = true;
+        this.loadChatHistory();
+        this.logger.info("Loaded Chat History.");
 
         this.on("update", () => {
             // Send updated info
@@ -101,7 +107,7 @@ export class Channel extends EventEmitter {
             }
         });
 
-        this.on("message", (msg: ServerEvents["a"], socket: Socket) => {
+        this.on("message", async (msg: ServerEvents["a"], socket: Socket) => {
             if (!msg.message) return;
 
             const userFlags = socket.getUserFlags();
@@ -125,6 +131,7 @@ export class Channel extends EventEmitter {
 
             this.sendArray([outgoing]);
             this.chatHistory.push(outgoing);
+            await saveChatHistory(this.getID(), this.chatHistory);
 
             try {
                 if (msg.message.startsWith("/")) {

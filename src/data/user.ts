@@ -13,6 +13,13 @@ export async function createUser(
     });
 }
 
+export async function getUsers() {
+    return await {
+        users: await prisma.user.findMany(),
+        count: await prisma.user.count()
+    }
+}
+
 export async function deleteUser(_id: string) {
     return await prisma.user.delete({
         where: { id: _id }
