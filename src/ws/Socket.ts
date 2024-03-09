@@ -242,7 +242,7 @@ export class Socket extends EventEmitter {
                 _id: facadeID,
                 name: this.user.name,
                 color: this.user.color,
-                id: this.id
+                id: this.getParticipantID()
             };
         } else {
             return null;

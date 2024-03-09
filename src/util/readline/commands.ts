@@ -29,11 +29,11 @@ Command.addCommand(
 Command.addCommand(
     new Command(["memory", "mem"], "memory", msg => {
         const mem = process.memoryUsage();
-        return `Memory: ${(mem.heapUsed / 1000 / 1000).toFixed(2)} MB used / ${(
+        return `Memory: ${(mem.heapUsed / 1000 / 1000).toFixed(2)} MB / ${(
             mem.heapTotal /
             1000 /
             1000
-        ).toFixed(2)} MB total`;
+        ).toFixed(2)} MB / ${(mem.rss / 1000 / 1000).toFixed(2)} MB`;
     })
 );
 
@@ -51,24 +51,22 @@ Command.addCommand(
 
 Command.addCommand(
     new Command(["list", "ls"], "list <channels, users>", async msg => {
-        if(msg.args.length > 1) {
-            if(msg.args[1] == "channels") {
+        if (msg.args.length > 1) {
+            if (msg.args[1] == "channels") {
                 return (
                     "Channels:\n- " +
                     ChannelList.getList()
                         .map(ch => ch.getID())
                         .join("\n- ")
-                ); 
+                );
             } else if (msg.args[1] == "users") {
                 var user = getUsers();
                 var users = "";
-                ((await user).users).forEach(u => {
-                    users += `\n- [${u.id}]: ${u.name}`
-                })
+                (await user).users.forEach(u => {
+                    users += `\n- [${u.id}]: ${u.name}`;
+                });
 
-                return (
-                    "Users: "+await (await user).count + users
-                )
+                return "Users: " + (await (await user).count) + users;
             } else {
                 return "list <channels, users>";
             }

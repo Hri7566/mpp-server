@@ -15,6 +15,7 @@ import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { saveChatHistory, getChatHistory } from "../data/history";
+import { mixin } from "../util/helpers";
 
 interface CachedKickban {
     userId: string;
@@ -23,9 +24,10 @@ interface CachedKickban {
 }
 
 export class Channel extends EventEmitter {
-    private settings: Partial<IChannelSettings> = config.defaultSettings;
+    private settings: Partial<IChannelSettings>;
     private ppl = new Array<Participant>();
     public chatHistory = new Array<ClientEvents["a"]>();
+
     private async loadChatHistory() {
         this.chatHistory = await getChatHistory(this.getID());
     }
@@ -44,6 +46,8 @@ export class Channel extends EventEmitter {
     ) {
         super();
 
+        this.settings = {};
+        mixin(this.settings, config.defaultSettings);
         this.logger = new Logger("Channel - " + _id);
 
         // Validate settings in set
@@ -51,7 +55,9 @@ export class Channel extends EventEmitter {
 
         if (!this.isLobby()) {
             if (set) {
+                this.logger.debug("Passed settings:", set);
                 const validatedSet = validateChannelSettings(set);
+                this.logger.debug("Validated settings:", validatedSet);
 
                 for (const key of Object.keys(set)) {
                     if ((validatedSet as any)[key] === false) continue;
@@ -67,9 +73,7 @@ export class Channel extends EventEmitter {
                 if (part) this.giveCrown(part);
                 // }
             }
-        }
-
-        if (this.isLobby()) {
+        } else {
             this.settings = config.lobbySettings;
         }
 
@@ -212,7 +216,9 @@ export class Channel extends EventEmitter {
                 parseInt(set.color.substring(5, 7), 16) - 0x40
             );
 
-            set.color2 = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+            set.color2 = `#${r.toString(16).padStart(2, "0")}${g
+                .toString(16)
+                .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
         }
 
         if (this.isLobby() && !admin) return;
@@ -305,12 +311,12 @@ export class Channel extends EventEmitter {
 
         // Send our state data back
         socket.sendArray([
-            {
-                m: "ch",
-                ch: this.getInfo(),
-                p: part.id,
-                ppl: this.getParticipantList()
-            },
+            // {
+            //     m: "ch",
+            //     ch: this.getInfo(),
+            //     p: part.id,
+            //     ppl: this.getParticipantList()
+            // },
             {
                 m: "c",
                 c: this.chatHistory.slice(-50)
@@ -324,20 +330,25 @@ export class Channel extends EventEmitter {
         } = socket.getCursorPos();
 
         // Broadcast a participant update for them
-        this.sendArray([
-            {
-                m: "p",
-                _id: part._id,
-                name: part.name,
-                color: part.color,
-                id: part.id,
-                x: cursorPos.x,
-                y: cursorPos.y
-            }
-        ]);
+        this.sendArray(
+            [
+                {
+                    m: "p",
+                    _id: part._id,
+                    name: part.name,
+                    color: part.color,
+                    id: part.id,
+                    x: cursorPos.x,
+                    y: cursorPos.y
+                }
+            ],
+            part.id
+        );
 
         // Broadcast a channel update so everyone subscribed to the channel list can see us
         this.emit("update", this);
+
+        this.logger.debug("Settings:", this.settings);
     }
 
     /**
@@ -442,11 +453,16 @@ export class Channel extends EventEmitter {
      * @param arr List of events to send to clients
      */
     public sendArray<EventID extends keyof ClientEvents>(
-        arr: ClientEvents[EventID][]
+        arr: ClientEvents[EventID][],
+        blockPartID?: string
     ) {
         let sentSocketIDs = new Array<string>();
 
         for (const p of this.ppl) {
+            if (blockPartID) {
+                if (p.id == blockPartID) continue;
+            }
+
             socketLoop: for (const socket of socketsBySocketID.values()) {
                 if (socket.isDestroyed()) continue socketLoop;
                 if (socket.getParticipantID() != p.id) continue socketLoop;

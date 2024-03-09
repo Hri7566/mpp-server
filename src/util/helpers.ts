@@ -57,3 +57,9 @@ export function spoop_text(message: string) {
     }
     return message;
 }
+
+export function mixin(obj1: any, obj2: any) {
+    for (const key of Object.keys(obj2)) {
+        obj1[key] = obj2[key];
+    }
+}
