@@ -233,7 +233,13 @@ declare interface ServerEvents {
 
     clear_chat: {
         m: "clear_chat"
-    }
+    };
+
+    notification: {
+        m: "notification"
+        targetChannel?: string;
+        targetUser?: string;
+    } & Notification;
 }
 
 declare interface ClientEvents {

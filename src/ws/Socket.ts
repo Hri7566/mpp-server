@@ -13,7 +13,8 @@ import {
     Participant,
     ServerEvents,
     UserFlags,
-    Vector2
+    Vector2,
+    Notification
 } from "../util/types";
 import type { User } from "@prisma/client";
 import { createUser, readUser, updateUser } from "../data/user";
@@ -476,6 +477,19 @@ export class Socket extends EventEmitter {
 
     public getUUID() {
         return this.uuid;
+    }
+
+    public sendNotification(notif: Notification) {
+        this.sendArray([{
+            m: "notification",
+            id: notif.id,
+            target: notif.target,
+            duration: notif.duration,
+            class: notif.class,
+            title: notif.title,
+            text: notif.text,
+            html: notif.html
+        }]);
     }
 }
 

@@ -6,7 +6,8 @@ import {
     ClientEvents,
     Participant,
     ServerEvents,
-    IChannelInfo
+    IChannelInfo,
+    Notification
 } from "../util/types";
 import type { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
@@ -473,6 +474,10 @@ export class Channel extends EventEmitter {
         }));
     }
 
+    public getParticipantListUnsanitized() {
+        return this.ppl;
+    }
+
     /**
      * Determine whether a user is in this channel (by user ID)
      * @param _id User ID
@@ -733,6 +738,23 @@ export class Channel extends EventEmitter {
         this.sendArray([{
             m: "c",
             c: this.chatHistory
+        }]);
+    }
+
+    /**
+    * Send a notification to this channel
+    * @param notif Notification to send
+    **/
+    public sendNotification(notif: Notification) {
+        this.sendArray([{
+            m: "notification",
+            id: notif.id,
+            target: notif.target,
+            duration: notif.duration,
+            class: notif.class,
+            title: notif.title,
+            text: notif.text,
+            html: notif.html
         }]);
     }
 }
