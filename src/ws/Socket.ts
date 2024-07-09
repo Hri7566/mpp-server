@@ -356,6 +356,9 @@ export class Socket extends EventEmitter {
                 typeof color === "string" && !!color.match(/^#[0-9a-f]{6}$/i);
         }
 
+        if (typeof name !== "string") return;
+        if (name.length > 40) return;
+
         await updateUser(this._id, {
             name: typeof name == "string" ? name : undefined,
             color: color && isColor ? color : undefined
