@@ -2,3 +2,8 @@
 	path = public
 	url = git@github.com:Hri7566/mpp-frontend-dev
 	branch = dev2
+
+[submodule "public/sounds"]
+	path = public/sounds
+	url = git@github.com:Hri7566/piano-sounds
+	branch = master
