@@ -125,24 +125,24 @@ export class Socket extends EventEmitter {
 
     public setChannel(_id: string, set?: Partial<IChannelSettings>) {
         if (this.isDestroyed()) return;
-
-        const ch = this.getCurrentChannel();
-        if (ch && ch.getID() == _id) return;
+        if (this.currentChannelID === _id) {
+            logger.debug("Guy in channel was already in");
+            return;
+        }
 
         this.desiredChannel._id = _id;
         this.desiredChannel.set = set;
 
         let channel;
-        for (const ch of ChannelList.getPublicList()) {
+        for (const ch of ChannelList.getList()) {
             if (ch.getID() == _id) {
                 channel = ch;
             }
         }
 
-        // logger.debug("Found channel:", channel);
-
         // Does channel exist?
         if (channel) {
+            logger.debug("Found channel:", channel.getID());
             // Exists, join normally
             (async () => {
                 await this.loadUser();
