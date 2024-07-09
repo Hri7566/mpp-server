@@ -3,25 +3,28 @@ user:
         a: 1500
         m: 50
         ch: 1000
+        kickban: 250
     chains:
         userset:
-            interval: 1800000,
+            interval: 1800000
             num: 1000
 crown:
     normal:
         a: 600
         m: 50
         ch: 1000
+        kickban: 250
     chains:
         userset:
-            interval: 1800000,
+            interval: 1800000
             num: 1000
 admin:
     normal:
         a: 120
-        m: 16.6666666667
+        m: 16.666666666666668
         ch: 100
+        kickban: 31.25
     chains:
         userset:
-            interval: 1800000,
+            interval: 1800000
             num: 1000

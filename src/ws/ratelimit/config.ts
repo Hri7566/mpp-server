@@ -10,6 +10,7 @@ export interface RateLimitConfigList<
         m: RL;
         a: RL;
         ch: RL;
+        kickban: RL;
     };
 
     chains: {
@@ -35,7 +36,8 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
         normal: {
             a: 6000 / 4,
             m: 1000 / 20,
-            ch: 1000 / 1
+            ch: 1000 / 1,
+            kickban: 1000 / 4
         },
         chains: {
             userset: {
@@ -48,7 +50,8 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
         normal: {
             a: 6000 / 10,
             m: 1000 / 20,
-            ch: 1000 / 1
+            ch: 1000 / 1,
+            kickban: 1000 / 4
         },
         chains: {
             userset: {
@@ -61,7 +64,8 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
         normal: {
             a: 6000 / 50,
             m: 1000 / 60,
-            ch: 1000 / 10
+            ch: 1000 / 10,
+            kickban: 1000 / 32
         },
         chains: {
             userset: {

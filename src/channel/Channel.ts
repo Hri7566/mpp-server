@@ -17,6 +17,7 @@ import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { saveChatHistory, getChatHistory } from "../data/history";
 import { mixin } from "../util/helpers";
+import { NoteQuota } from "../ws/ratelimit/NoteQuota";
 
 interface CachedKickban {
     userId: string;
@@ -106,6 +107,9 @@ export class Channel extends EventEmitter {
                             this.getInfo(),
                             this.getParticipantList()
                         );
+
+                        // Set their rate limits to match channel status
+                        socket.resetRateLimits();
                     }
                 }
             }

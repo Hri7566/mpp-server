@@ -6,7 +6,8 @@ export const adminLimits: RateLimitConstructorList = {
     normal: {
         a: () => new RateLimit(config.admin.normal.a),
         m: () => new RateLimit(config.admin.normal.m),
-        ch: () => new RateLimit(config.admin.normal.ch)
+        ch: () => new RateLimit(config.admin.normal.ch),
+        kickban: () => new RateLimit(config.admin.normal.kickban)
     },
     chains: {
         userset: () =>

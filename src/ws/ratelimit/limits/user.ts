@@ -2,14 +2,13 @@ import { RateLimit } from "../RateLimit";
 import { RateLimitChain } from "../RateLimitChain";
 import { RateLimitConstructorList, config } from "../config";
 
-// I have no idea why these things exist but I made it apparently
-// All it does it construct the rate limits from the config instead
-// of using random numbers I found on the internet
+// All this does is instantiate rate limits from the config
 export const userLimits: RateLimitConstructorList = {
     normal: {
         a: () => new RateLimit(config.user.normal.a),
         m: () => new RateLimit(config.user.normal.m),
-        ch: () => new RateLimit(config.user.normal.ch)
+        ch: () => new RateLimit(config.user.normal.ch),
+        kickban: () => new RateLimit(config.user.normal.kickban)
     },
     chains: {
         userset: () =>

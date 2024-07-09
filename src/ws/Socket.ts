@@ -29,6 +29,7 @@ import { adminLimits } from "./ratelimit/limits/admin";
 import { userLimits } from "./ratelimit/limits/user";
 import { NoteQuota } from "./ratelimit/NoteQuota";
 import { config } from "./usersConfig";
+import { crownLimits } from "./ratelimit/limits/crown";
 
 const logger = new Logger("Sockets");
 
@@ -103,10 +104,8 @@ export class Socket extends EventEmitter {
         (async () => {
             await this.loadUser();
 
-            // TODO Permissions
-            let isAdmin = false;
-
-            this.setRateLimits(isAdmin ? adminLimits : userLimits);
+            this.resetRateLimits();
+            this.setNoteQuota(NoteQuota.PARAMS_RIDICULOUS);
 
             this.bindEventListeners();
         })();
@@ -400,10 +399,32 @@ export class Socket extends EventEmitter {
         for (const key of Object.keys(list.chains)) {
             (this.rateLimits.chains as any)[key] = (list.chains as any)[key]();
         }
+    }
 
-        this.noteQuota.setParams(NoteQuota.PARAMS_NORMAL as any);
+    public resetRateLimits() {
+        // TODO Permissions
+        let isAdmin = false;
+        let ch = this.getCurrentChannel();
 
-        // Send note quota
+        if (isAdmin) {
+            this.setRateLimits(adminLimits);
+            this.setNoteQuota(NoteQuota.PARAMS_OFFLINE);
+        } else if (this.isOwner()) {
+            this.setRateLimits(crownLimits);
+            this.setNoteQuota(NoteQuota.PARAMS_RIDICULOUS);
+        } else if (ch && ch.isLobby()) {
+            this.setRateLimits(userLimits)
+            this.setNoteQuota(NoteQuota.PARAMS_LOBBY);
+        } else {
+            this.setRateLimits(userLimits);
+            this.setNoteQuota(NoteQuota.PARAMS_NORMAL);
+        }
+    }
+
+    public setNoteQuota(params = NoteQuota.PARAMS_NORMAL) {
+        this.noteQuota.setParams(params as any); // TODO why any
+
+        // Send note quota to client
         this.sendArray([
             {
                 m: "nq",
