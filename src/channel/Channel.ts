@@ -410,6 +410,13 @@ export class Channel extends EventEmitter {
 
             if (p) {
                 this.ppl.splice(this.ppl.indexOf(p), 1);
+
+                if (this.crown) {
+                    if (this.crown.participantId == p.id) {
+                        // Channel owner left, reset crown timeout
+                        this.chown();
+                    }
+                }
             }
 
             // Broadcast bye

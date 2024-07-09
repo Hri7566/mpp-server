@@ -142,7 +142,6 @@ export class Socket extends EventEmitter {
 
         // Does channel exist?
         if (channel) {
-            logger.debug("Found channel:", channel.getID());
             // Exists, join normally
             (async () => {
                 await this.loadUser();
