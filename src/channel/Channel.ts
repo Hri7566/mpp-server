@@ -123,6 +123,8 @@ export class Channel extends EventEmitter {
                 if (userFlags.cant_chat) return;
             }
 
+            if (msg.message.length > 512) return;
+
             // Sanitize
             msg.message = msg.message
                 .replace(/\p{C}+/gu, "")
