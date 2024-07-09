@@ -2,13 +2,56 @@
 
 # mpp-server-dev2
 
-This is a new MPP server currently in development for [MPP.dev](https://www.multiplayerpiano.dev). The original server is old and it needs a new one.
+This is an MPP server currently in development for [MPP.dev](https://www.multiplayerpiano.dev). The original server is old and the site desperately needs a new one.
 
-This server uses Bun.
+This server uses Bun - not just the runtime, but the libraries as well. This is because Bun provides easy access to uWebSockets.js, a speedy implementation of WebSockets that heavily outperforms the old `ws` module that is used so frequently.
 
-The commit history includes BopItFreak's server because this server is (debatably) a heavy reimplementation of my fork of it.
+I have tried to comply well with Brandon Lockaby's original MPP server so that this server stays widely accessible for any frontend implementation, including the ones used by MultiplayerPiano.net, LapisHusky's frontend, and the frontends used by nagalun's server, as well as the smnmpp and mpp.hri7566.info frontends.
+
+Of course, most of the ones I have listed probably won't work yet because I haven't implemented a way to switch between token authentication and legacy connections yet.
+
+Regardless, this server is meant for speed, stability, and compatability.
+
+This server uses Prisma as an ORM for saving user data, and is currently setup to interface with SQLite. I may be switching this to PostgreSQL in the very near future, so don't get too comfortable with SQLite.
+
+Brandon's server originally used MongoDB for storing user data, but there are too many reasons to list why it isn't fit for this project here, so I will link [this video by Theo](https://www.youtube.com/watch?v=cC6HFd1zcbo) instead.
+
+## List of features
+
+- Chat
+    - Original chat filter by chacha and Brandon Lockaby
+- Piano Notes
+    - Uses the same `NoteQuota` implementation from the client
+- Usernames/colors
+    - Allowing color changing can be toggled in the config
+- Channels
+    - Channel list
+    - Channel settings
+- Rate limits
+    - Borrowed from Brandon's GitHub Gist account
+- Brandon-style admin messages
+    - Remote name changing
+    - Color changing
+    - User flag settings
+        - Ability to change the volume of users' notes (affects note velocity)
+        - Chat muting
+        - Rate limit bypasses
+    - Channel/User notifications
+
+## TODO
+
+- Fix chown
+- Add configuration options
+    - Notifications
+- Ratelimit everything
+- Test code for channel settings
+- Implement both UUID-based and JWT-based token auth for fun
+- Test tags
+- Test every frontend
 
 ## How to run
+
+Don't expect these instructions to stay the same. They might not even be up to date already! This is due to frequent changes in this repository, as this project is still in active development.
 
 0. Install bun
 
