@@ -55,9 +55,9 @@ export class Channel extends EventEmitter {
 
         if (!this.isLobby()) {
             if (set) {
-                this.logger.debug("Passed settings:", set);
+                //this.logger.debug("Passed settings:", set);
                 const validatedSet = validateChannelSettings(set);
-                this.logger.debug("Validated settings:", validatedSet);
+                //this.logger.debug("Validated settings:", validatedSet);
 
                 for (const key of Object.keys(set)) {
                     if ((validatedSet as any)[key] === false) continue;
@@ -94,13 +94,13 @@ export class Channel extends EventEmitter {
         this.logger.info("Loaded Chat History.");
 
         this.on("update", () => {
-            this.logger.debug("-------- UPDATE START --------");
+            //this.logger.debug("-------- UPDATE START --------");
             // Send updated info
             for (const socket of socketsBySocketID.values()) {
                 for (const p of this.ppl) {
                     //if (socket.getParticipantID() == p.id) {
                     if (p.uuids.includes(socket.getUUID())) {
-                        this.logger.debug("sending to", socket.getUUID())
+                        //this.logger.debug("sending to", socket.getUUID())
                         socket.sendChannelUpdate(
                             this.getInfo(),
                             this.getParticipantList()
@@ -198,12 +198,14 @@ export class Channel extends EventEmitter {
             if (set.owner_id) set.owner_id = undefined;
         }
 
+        /*
         this.logger.debug(
             "Dreaded color2 conditions:",
             typeof set.color == "string",
             "and",
             typeof set.color2 == "undefined"
         );
+        */
 
         if (
             typeof set.color == "string" &&
@@ -263,7 +265,7 @@ export class Channel extends EventEmitter {
     public join(socket: Socket): void {
         //! /!\ Players are forced to join the same channel on two different tabs!
         //? TODO Should this be a bug or a feature?
-        this.logger.debug("join triggered");
+        //this.logger.debug("join triggered");
 
         if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
