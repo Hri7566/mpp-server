@@ -725,6 +725,16 @@ export class Channel extends EventEmitter {
 
         return false;
     }
+
+    public async clearChat() {
+        this.chatHistory = [];
+        await saveChatHistory(this.getID(), this.chatHistory);
+
+        this.sendArray([{
+            m: "c",
+            c: this.chatHistory
+        }]);
+    }
 }
 
 export default Channel;
