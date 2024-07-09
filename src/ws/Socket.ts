@@ -126,6 +126,9 @@ export class Socket extends EventEmitter {
     public setChannel(_id: string, set?: Partial<IChannelSettings>) {
         if (this.isDestroyed()) return;
 
+        const ch = this.getCurrentChannel();
+        if (ch && ch.getID() == _id) return;
+
         this.desiredChannel._id = _id;
         this.desiredChannel.set = set;
 

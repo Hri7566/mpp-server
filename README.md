@@ -40,11 +40,9 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 
 ## TODO
 
-- Fix chown
 - Add configuration options
     - Notifications
 - Ratelimit everything
-- Test code for channel settings
 - Implement both UUID-based and JWT-based token auth for fun
 - Test tags
 - Test every frontend
