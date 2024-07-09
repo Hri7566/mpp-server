@@ -400,6 +400,8 @@ export class Socket extends EventEmitter {
             (this.rateLimits.chains as any)[key] = (list.chains as any)[key]();
         }
 
+        this.noteQuota.setParams(NoteQuota.PARAMS_NORMAL as any);
+
         // Send note quota
         this.sendArray([
             {
