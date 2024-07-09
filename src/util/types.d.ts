@@ -16,6 +16,7 @@ import { Socket } from "../ws/Socket";
 declare type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 declare type UserFlags = Partial<{
+    // Brandon flags
     freeze_name: number;
     "no chat rate limit": number;
     chat_curse_1: number;
@@ -24,6 +25,11 @@ declare type UserFlags = Partial<{
     volume: number;
     cant_chat: number;
     cansetcrowns: number;
+
+    // new
+    "no note rate limit": number;
+    "no cursor rate limit": number;
+    "no userset rate limit": number;
 }>;
 
 declare interface Tag {

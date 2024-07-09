@@ -38,7 +38,24 @@ export const n: ServerEventListener<"n"> = {
         if ((crownsolo && socket.isOwner()) || !crownsolo) {
             // Shiny hat exists and we have shiny hat
             // or there is no shiny hat
-            if (socket.noteQuota.spend(amount)) {
+            const flags = socket.getUserFlags();
+            let canPlay = false;
+            let shouldRateLimit = true;
+
+            // why is this so big
+
+            if (flags !== null && flags["no note rate limit"]) {
+                canPlay = true;
+                shouldRateLimit = false;
+            }
+
+            if (shouldRateLimit) {
+                if (socket.noteQuota.spend(amount)) {
+                    canPlay = true;
+                }
+            }
+
+            if (canPlay) {
                 // make noise
                 socket.playNotes(msg);
             }
