@@ -234,7 +234,8 @@ declare interface ServerEvents {
         m: "user_flag";
         _id: string;
         key: keyof UserFlags;
-        value: UserFlags[keyof UserFlags];
+        value?: UserFlags[keyof UserFlags];
+        remove?: true;
     };
 
     clear_chat: {

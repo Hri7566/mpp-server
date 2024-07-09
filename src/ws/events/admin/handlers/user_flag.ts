@@ -1,6 +1,9 @@
 import { readUser, updateUser } from "../../../../data/user";
+import { Logger } from "../../../../util/Logger";
 import { ServerEventListener } from "../../../../util/types";
 import { findSocketsByUserID } from "../../../Socket";
+
+const logger = new Logger("User flag handler");
 
 export const user_flag: ServerEventListener<"user_flag"> = {
     id: "user_flag",
@@ -8,7 +11,9 @@ export const user_flag: ServerEventListener<"user_flag"> = {
         // User flag modification (changing some real specific shit)
         if (typeof msg._id !== "string") return;
         if (typeof msg.key !== "string") return;
-        if (typeof msg.value == "undefined") return;
+        if (typeof msg.remove !== "boolean" && typeof msg.value == "undefined") {
+            return
+        }
 
         // socket.getCurrentChannel()?.logger.debug(msg);
 
@@ -18,7 +23,11 @@ export const user_flag: ServerEventListener<"user_flag"> = {
 
         // Set the flag
         const flags = JSON.parse(user.flags);
-        flags[msg.key] = msg.value;
+        if (msg.remove === true) {
+            delete flags[msg.key];
+        } else {
+            flags[msg.key] = msg.value;
+        }
         user.flags = JSON.stringify(flags);
 
         // Save the user data
