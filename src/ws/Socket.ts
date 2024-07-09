@@ -471,7 +471,7 @@ export class Socket extends EventEmitter {
         if (!channel) return;
 
         if (this.isOwner()) {
-            channel.kickban(_id, ms);
+            channel.kickban(_id, ms, this.getUserID());
         }
     }
 

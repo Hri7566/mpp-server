@@ -660,8 +660,9 @@ export class Channel extends EventEmitter {
      * @param _id User ID to ban
      * @param t Time in millseconds to ban for
      **/
-    public kickban(_id: string, t: number = 1000 * 60 * 30) {
+    public kickban(_id: string, t: number = 1000 * 60 * 30, banner?: string) {
         const now = Date.now();
+        if (t < 0 || t > 300 * 60 * 1000) return;
 
         let shouldUpdate = false;
 
@@ -704,12 +705,39 @@ export class Channel extends EventEmitter {
 
         for (const socket of socketsBySocketID.values()) {
             if (uuidsToKick.includes(socket.getUUID())) {
+                socket.sendNotification({
+                    title: "Notice",
+                    text: `Banned from "${this.getID()}" for ${Math.floor(t / 1000 / 60)} minutes.`,
+                    duration: 7000,
+                    target: "#room",
+                    class: "short"
+                });
                 socket.setChannel(banChannel.getID());
             }
         }
 
-        if (shouldUpdate)
+        if (shouldUpdate) {
             this.emit("update", this);
+
+            if (typeof banner !== "undefined") {
+                this.sendNotification({
+                    title: "Notice",
+                    text: `${this.getParticipantListUnsanitized().find(p => p._id == banner)?.name} banned ${this.getParticipantListUnsanitized().find(p => p._id == _id)?.name} from the channel for ${Math.floor(t / 1000 / 60)} minutes.`,
+                    duration: 7000,
+                    target: "#room",
+                    class: "short"
+                });
+
+                if (banner == _id) {
+                    this.sendNotification({
+                        title: "Certificate of Award",
+                        text: `Let it be known that ${this.getParticipantListUnsanitized().find(p => p._id == banner)?.name} kickbanned him/her self.`,
+                        duration: 7000,
+                        target: "#room"
+                    });
+                }
+            }
+        }
     }
 
     public isBanned(_id: string) {
