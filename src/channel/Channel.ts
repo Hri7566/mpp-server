@@ -147,10 +147,6 @@ export class Channel extends EventEmitter {
                 if (msg.message.startsWith("/")) {
                     this.emit("command", msg, socket);
                 }
-
-                if (msg.message == "debug") {
-                    this.logger.info(socket.getUUID(), socket.currentChannelID);
-                }
             } catch (err) {
                 this.logger.error(err);
             }
@@ -660,7 +656,7 @@ export class Channel extends EventEmitter {
      * @param _id User ID to ban
      * @param t Time in millseconds to ban for
      **/
-    public kickban(_id: string, t: number = 1000 * 60 * 30, banner?: string) {
+    public async kickban(_id: string, t: number = 1000 * 60 * 30, banner?: string) {
         const now = Date.now();
         if (t < 0 || t > 300 * 60 * 1000) return;
 
@@ -672,6 +668,20 @@ export class Channel extends EventEmitter {
 
         if (!banChannel) return;
 
+        // Check if they are on the server at all
+        let bannedPart: Participant | undefined;
+        const bannedUUIDs: string[] = [];
+        for (const sock of socketsBySocketID.values()) {
+            if (sock.getUserID() == _id) {
+                bannedUUIDs.push(sock.getUUID());
+                const part = sock.getParticipant();
+
+                if (part) bannedPart = part;
+            }
+        }
+
+        if (!bannedPart) return;
+
         let isBanned = this.bans.map(b => b.userId).includes(_id);
         let overwrite = false;
 
@@ -681,30 +691,33 @@ export class Channel extends EventEmitter {
 
         let uuidsToKick: string[] = [];
 
-        for (const part of this.ppl) {
-            if (part._id !== _id) continue;
+        if (!overwrite) {
+            this.bans.push({
+                userId: _id,
+                startTime: now,
+                endTime: now + t
+            });
 
-            if (!overwrite) {
-                this.bans.push({
-                    userId: _id,
-                    startTime: now,
-                    endTime: now + t
-                });
-            } else {
-                for (const ban of this.bans) {
-                    if (ban.userId !== _id) continue;
-                    ban.startTime = now;
-                    ban.endTime = now + t;
-                }
+            shouldUpdate = true;
+        } else {
+
+            for (const ban of this.bans) {
+                if (ban.userId !== _id) continue;
+                ban.startTime = now;
+                ban.endTime = now + t;
             }
 
-            uuidsToKick = [...uuidsToKick, ...part.uuids];
 
             shouldUpdate = true;
         }
 
+        uuidsToKick = [...uuidsToKick, ...bannedUUIDs];
+
+        this.logger.debug("Banned UUIDs:", uuidsToKick);
+
         for (const socket of socketsBySocketID.values()) {
-            if (uuidsToKick.includes(socket.getUUID())) {
+            this.logger.debug("Checking UUID:", socket.getUUID(), "| Result:", uuidsToKick.indexOf(socket.getUUID()) !== -1);
+            if (uuidsToKick.indexOf(socket.getUUID()) !== -1) {
                 socket.sendNotification({
                     title: "Notice",
                     text: `Banned from "${this.getID()}" for ${Math.floor(t / 1000 / 60)} minutes.`,
@@ -712,7 +725,14 @@ export class Channel extends EventEmitter {
                     target: "#room",
                     class: "short"
                 });
-                socket.setChannel(banChannel.getID());
+
+                // If they are here, move them to the ban channel
+                const ch = socket.getCurrentChannel();
+                if (ch) {
+                    this.logger.debug("Current channel:", ch.getID(), "| We are:", this.getID());
+                    if (ch.getID() == this.getID())
+                        socket.setChannel(banChannel.getID());
+                }
             }
         }
 
@@ -720,21 +740,30 @@ export class Channel extends EventEmitter {
             this.emit("update", this);
 
             if (typeof banner !== "undefined") {
-                this.sendNotification({
-                    title: "Notice",
-                    text: `${this.getParticipantListUnsanitized().find(p => p._id == banner)?.name} banned ${this.getParticipantListUnsanitized().find(p => p._id == _id)?.name} from the channel for ${Math.floor(t / 1000 / 60)} minutes.`,
-                    duration: 7000,
-                    target: "#room",
-                    class: "short"
-                });
+                const p = this.getParticipantListUnsanitized().find(p => p._id == banner);
+                const minutes = Math.floor(t / 1000 / 60);
 
-                if (banner == _id) {
+                if (p && bannedPart) {
+                    await this.sendChat({
+                        m: "a",
+                        message: `Banned ${bannedPart.name} from the channel for ${minutes} minutes.`
+                    }, p);
                     this.sendNotification({
-                        title: "Certificate of Award",
-                        text: `Let it be known that ${this.getParticipantListUnsanitized().find(p => p._id == banner)?.name} kickbanned him/her self.`,
+                        title: "Notice",
+                        text: `${p.name} banned ${bannedPart.name} from the channel for ${minutes} minutes.`,
                         duration: 7000,
-                        target: "#room"
+                        target: "#room",
+                        class: "short"
                     });
+
+                    if (banner == _id) {
+                        this.sendNotification({
+                            title: "Certificate of Award",
+                            text: `Let it be known that ${p.name} kickbanned him/her self.`,
+                            duration: 7000,
+                            target: "#room"
+                        });
+                    }
                 }
             }
         }
@@ -784,6 +813,29 @@ export class Channel extends EventEmitter {
             text: notif.text,
             html: notif.html
         }]);
+    }
+
+    public async sendChat(msg: ServerEvents["a"], p: Participant) {
+        if (!msg.message) return;
+
+        if (msg.message.length > 512) return;
+
+        // Sanitize
+        msg.message = msg.message
+            .replace(/\p{C}+/gu, "")
+            .replace(/(\p{Mc}{5})\p{Mc}+/gu, "$1")
+            .trim();
+
+        let outgoing: ClientEvents["a"] = {
+            m: "a",
+            a: msg.message,
+            t: Date.now(),
+            p: p
+        };
+
+        this.sendArray([outgoing]);
+        this.chatHistory.push(outgoing);
+        await saveChatHistory(this.getID(), this.chatHistory);
     }
 }
 
