@@ -240,6 +240,10 @@ declare interface ServerEvents {
         targetChannel?: string;
         targetUser?: string;
     } & Notification;
+
+    restart: {
+        m: "restart"
+    }
 }
 
 declare interface ClientEvents {

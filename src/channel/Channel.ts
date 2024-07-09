@@ -92,7 +92,7 @@ export class Channel extends EventEmitter {
         if (this.alreadyBound) return;
         this.alreadyBound = true;
         this.loadChatHistory();
-        this.logger.info("Loaded Chat History.");
+        this.logger.info("Loaded chat history");
 
         this.on("update", () => {
             //this.logger.debug("-------- UPDATE START --------");
