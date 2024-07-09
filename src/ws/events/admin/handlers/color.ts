@@ -6,6 +6,7 @@ export const color: ServerEventListener<"color"> = {
     id: "color",
     callback: async (msg, socket) => {
         // I'm not allowed to use this feature on MPP.net for a really stupid reason
+        // Nevermind, fishing bot has color again
         const id = msg._id;
         const color = msg.color;
 

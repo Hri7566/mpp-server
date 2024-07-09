@@ -27,20 +27,24 @@ export async function deleteUser(_id: string) {
 }
 
 export async function readUser(_id: string) {
-    const data = await prisma.user.findUnique({
-        where: { id: _id }
-    });
+    try {
+        const data = await prisma.user.findUnique({
+            where: { id: _id }
+        });
 
-    if (!data) return null;
+        if (!data) return null;
 
-    // return {
-    //     _id: data.id,
-    //     name: data.name,
-    //     color: data.color,
-    //     flags: data.flags
-    // };
+        // return {
+        //     _id: data.id,
+        //     name: data.name,
+        //     color: data.color,
+        //     flags: data.flags
+        // };
 
-    return data;
+        return data;
+    } catch (err) {
+        return createUser(_id);
+    }
 }
 
 export async function updateUser(

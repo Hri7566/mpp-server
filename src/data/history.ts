@@ -16,10 +16,14 @@ export async function saveChatHistory(_id: string, chatHistory: object) {
 }
 
 export async function getChatHistory(_id: string) {
-    const history = await prisma.chatHistory.findFirst({ where: { id: _id } });
-    if (!history) {
+    try {
+        const history = await prisma.chatHistory.findFirst({ where: { id: _id } });
+        if (!history) {
+            return [];
+        } else {
+            return JSON.parse(history.messages);
+        }
+    } catch (err) {
         return [];
-    } else {
-        return JSON.parse(history.messages);
     }
 }

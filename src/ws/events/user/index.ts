@@ -15,6 +15,7 @@ import { admin_message } from "./handlers/admin_message";
 import { chset } from "./handlers/chset";
 import { kickban } from "./handlers/kickban";
 import { bye } from "./handlers/bye";
+import { chown } from "./handlers/chown";
 
 // Imagine not having an "addMany" function...
 
@@ -44,7 +45,8 @@ EVENTGROUP_USER.addMany(
     admin_message,
     chset,
     kickban,
-    bye
+    bye,
+    chown
 );
 
 eventGroups.push(EVENTGROUP_USER);

@@ -37,6 +37,7 @@ export class Socket extends EventEmitter {
     private id: string;
     private _id: string;
     private ip: string;
+    private uuid: string;
     private user: User | null = null;
 
     public gateway = new Gateway();
@@ -48,9 +49,9 @@ export class Socket extends EventEmitter {
         _id: string | undefined;
         set: Partial<IChannelSettings> | undefined;
     } = {
-        _id: undefined,
-        set: {}
-    };
+            _id: undefined,
+            set: {}
+        };
 
     public currentChannelID: string | undefined;
     private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
@@ -64,17 +65,24 @@ export class Socket extends EventEmitter {
 
         // User ID
         this._id = createUserID(this.getIP());
+        this.uuid = crypto.randomUUID();
 
         // Check if we're already connected
         // We need to skip ourselves, so we loop here instead of using a helper
         let foundSocket;
+        let count = 0;
 
         for (const socket of socketsBySocketID.values()) {
-            if (socket.socketID == this.socketID) continue;
+            if (socket.socketID == this.socketID || socket.ws.readyState !== 1) continue;
 
             if (socket.getUserID() == this.getUserID()) {
                 foundSocket = socket;
+                count++;
             }
+        }
+
+        if (count >= 4) {
+            this.destroy();
         }
 
         // logger.debug("Found socket?", foundSocket);
@@ -84,11 +92,11 @@ export class Socket extends EventEmitter {
             this.id = createID();
         } else {
             // Use original session ID
-            // this.id = foundSocket.id;
+            this.id = foundSocket.id;
 
             // Break us off
-            this.id = "broken";
-            this.destroy();
+            //this.id = "broken";
+            //this.destroy();
         }
 
         (async () => {
@@ -459,6 +467,10 @@ export class Socket extends EventEmitter {
         if (this.isOwner()) {
             channel.kickban(_id, ms);
         }
+    }
+
+    public getUUID() {
+        return this.uuid;
     }
 }
 

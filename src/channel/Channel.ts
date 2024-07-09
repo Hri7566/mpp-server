@@ -25,7 +25,7 @@ interface CachedKickban {
 
 export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings>;
-    private ppl = new Array<Participant>();
+    private ppl = new Array<Participant & { uuids: string[] }>();
     public chatHistory = new Array<ClientEvents["a"]>();
 
     private async loadChatHistory() {
@@ -94,10 +94,13 @@ export class Channel extends EventEmitter {
         this.logger.info("Loaded Chat History.");
 
         this.on("update", () => {
+            this.logger.debug("-------- UPDATE START --------");
             // Send updated info
             for (const socket of socketsBySocketID.values()) {
                 for (const p of this.ppl) {
-                    if (socket.getParticipantID() == p.id) {
+                    //if (socket.getParticipantID() == p.id) {
+                    if (p.uuids.includes(socket.getUUID())) {
+                        this.logger.debug("sending to", socket.getUUID())
                         socket.sendChannelUpdate(
                             this.getInfo(),
                             this.getParticipantList()
@@ -140,6 +143,10 @@ export class Channel extends EventEmitter {
             try {
                 if (msg.message.startsWith("/")) {
                     this.emit("command", msg, socket);
+                }
+
+                if (msg.message == "debug") {
+                    this.logger.info(socket.getUUID(), socket.currentChannelID);
                 }
             } catch (err) {
                 this.logger.error(err);
@@ -256,6 +263,7 @@ export class Channel extends EventEmitter {
     public join(socket: Socket): void {
         //! /!\ Players are forced to join the same channel on two different tabs!
         //? TODO Should this be a bug or a feature?
+        this.logger.debug("join triggered");
 
         if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
@@ -269,26 +277,48 @@ export class Channel extends EventEmitter {
             // TODO Send notification for ban
             const chs = ChannelList.getList();
             for (const ch of chs) {
-                if (ch.getID() == config.fullChannel) {
-                    return ch.join(socket);
+                const chid = ch.getID();
+                if (chid == config.fullChannel) {
+                    return socket.setChannel(chid)
                 }
             }
         }
 
         // Is user in this channel?
         if (this.hasUser(part._id)) {
-            // Alreay in channel, don't add to list, but tell them they're here
+            // Already in channel, don't add to list, but tell them they're here
             hasChangedChannel = true;
-            this.ppl.push(part);
+
+            for (const p of this.ppl) {
+                if (p.id !== part.id) continue;
+                p.uuids.push(socket.getUUID())
+            }
+
+            socket.sendChannelUpdate(this.getInfo(), this.getParticipantList());
         } else {
             // Are we full?
             if (!this.isFull()) {
                 // Add to channel
                 hasChangedChannel = true;
-                this.ppl.push(part);
+                this.ppl.push({
+                    _id: part._id,
+                    name: part.name,
+                    color: part.color,
+                    id: part.id,
+                    tag: part.tag,
+                    uuids: [socket.getUUID()]
+                });
             } else {
-                // Put them in full channel
-                return socket.setChannel(config.fullChannel);
+                if (socket.currentChannelID !== config.fullChannel) {
+                    // Put them in full channel
+                    const chs = ChannelList.getList();
+                    for (const ch of chs) {
+                        const chid = ch.getID();
+                        if (chid == config.fullChannel) {
+                            return socket.setChannel(chid)
+                        }
+                    }
+                }
             }
         }
 
@@ -348,7 +378,7 @@ export class Channel extends EventEmitter {
         // Broadcast a channel update so everyone subscribed to the channel list can see us
         this.emit("update", this);
 
-        this.logger.debug("Settings:", this.settings);
+        //this.logger.debug("Settings:", this.settings);
     }
 
     /**
@@ -386,6 +416,11 @@ export class Channel extends EventEmitter {
             ]);
 
             this.emit("update", this);
+        } else {
+            for (const p of this.ppl) {
+                if (!p.uuids.includes(socket.getUUID())) continue;
+                p.uuids.splice(p.uuids.indexOf(socket.getUUID()), 1);
+            }
         }
     }
 
@@ -425,7 +460,13 @@ export class Channel extends EventEmitter {
      * @returns List of people
      */
     public getParticipantList() {
-        return this.ppl;
+        return this.ppl.map(p => ({
+            id: p.id,
+            _id: p._id,
+            name: p.name,
+            color: p.color,
+            tag: p.tag
+        }));
     }
 
     /**
@@ -606,35 +647,60 @@ export class Channel extends EventEmitter {
     }
 
     /**
-     * Kickban a poor soul for t milliseconds.
+     * Kickban a participant for t milliseconds.
      * @param _id User ID to ban
      * @param t Time in millseconds to ban for
      **/
     public kickban(_id: string, t: number = 1000 * 60 * 30) {
         const now = Date.now();
 
-        if (!this.hasUser(_id)) return;
-
-        const part = this.ppl.find(p => p._id == _id);
-        if (!part) return;
-
-        this.bans.push({
-            userId: _id,
-            startTime: now,
-            endTime: now + t
-        });
-
-        const socket = findSocketByPartID(part.id);
-        if (!socket) return;
+        let shouldUpdate = false;
 
         const banChannel = ChannelList.getList().find(
             ch => ch.getID() == config.fullChannel
         );
 
         if (!banChannel) return;
-        banChannel.join(socket);
 
-        this.emit("update", this);
+        let isBanned = this.bans.map(b => b.userId).includes(_id);
+        let overwrite = false;
+
+        if (isBanned) {
+            overwrite = true;
+        }
+
+        let uuidsToKick: string[] = [];
+
+        for (const part of this.ppl) {
+            if (part._id !== _id) continue;
+
+            if (!overwrite) {
+                this.bans.push({
+                    userId: _id,
+                    startTime: now,
+                    endTime: now + t
+                });
+            } else {
+                for (const ban of this.bans) {
+                    if (ban.userId !== _id) continue;
+                    ban.startTime = now;
+                    ban.endTime = now + t;
+                }
+            }
+
+            uuidsToKick = [...uuidsToKick, ...part.uuids];
+
+            shouldUpdate = true;
+        }
+
+        for (const socket of socketsBySocketID.values()) {
+            if (uuidsToKick.includes(socket.getUUID())) {
+                socket.setChannel(banChannel.getID());
+            }
+        }
+
+        if (shouldUpdate)
+            this.emit("update", this);
     }
 
     public isBanned(_id: string) {
