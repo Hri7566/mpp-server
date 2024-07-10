@@ -16,5 +16,7 @@ export const ch_flag: ServerEventListener<"ch_flag"> = {
 
         const ch = ChannelList.getList().find(c => c.getID() == chid);
         if (!ch) return;
+
+        ch.setFlag(msg.key, msg.value);
     }
 };
