@@ -123,7 +123,7 @@ export class Socket extends EventEmitter {
         return this.id;
     }
 
-    public setChannel(_id: string, set?: Partial<IChannelSettings>) {
+    public setChannel(_id: string, set?: Partial<IChannelSettings>, force: boolean = false) {
         if (this.isDestroyed()) return;
         if (this.currentChannelID === _id) {
             logger.debug("Guy in channel was already in");
@@ -155,7 +155,7 @@ export class Socket extends EventEmitter {
                 this
             );
 
-            channel.join(this);
+            channel.join(this, force);
         }
     }
 
@@ -443,17 +443,25 @@ export class Socket extends EventEmitter {
         ch.playNotes(msg, this);
     }
 
+    private isSubscribedToChannelList = false;
+
     public subscribeToChannelList() {
+        if (this.isSubscribedToChannelList) return;
+
         ChannelList.subscribe(this.id);
 
         const firstList = ChannelList.getPublicList().map(v =>
             v.getInfo(this._id)
         );
         this.sendChannelList(firstList);
+
+        this.isSubscribedToChannelList = true;
     }
 
     public unsubscribeFromChannelList() {
+        if (!this.isSubscribedToChannelList) return;
         ChannelList.unsubscribe(this.id);
+        this.isSubscribedToChannelList = false;
     }
 
     public sendChannelList(list: IChannelInfo[], complete: boolean = true) {
@@ -476,7 +484,6 @@ export class Socket extends EventEmitter {
         const channel = this.getCurrentChannel();
         const part = this.getParticipant();
 
-        // this looks cool
         if (!channel) return false;
         if (!channel.crown) return false;
         if (!channel.crown.userId) return false;
@@ -513,6 +520,13 @@ export class Socket extends EventEmitter {
             text: notif.text,
             html: notif.html
         }]);
+    }
+
+    public setTag(text: string, color: string) {
+        const user = this.getUser();
+        if (!user) return;
+        user.tag = JSON.stringify({ text, color });
+        updateUser(this.getUserID(), user);
     }
 }
 

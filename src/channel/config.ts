@@ -8,6 +8,8 @@ interface ChannelConfig {
     lobbyRegexes: string[];
     lobbyBackdoor: string;
     fullChannel: string;
+    sendLimit: boolean;
+    sendTags: boolean;
 }
 
 export const config = loadConfig<ChannelConfig>("config/channels.yml", {
@@ -27,8 +29,10 @@ export const config = loadConfig<ChannelConfig>("config/channels.yml", {
         color2: "#001014",
         visible: true
     },
-    // Here's a terrifying fact: Brandon used parseInt to check lobby names in the OG server code
-    lobbyRegexes: ["^lobby[0-9][0-9]$", "^lobby[1-9]$", "^test/.+$"],
+    // Here's a terrifying fact: Brandon used parseInt to check lobby names
+    lobbyRegexes: ["^lobby[0-9][0-9]$", "^lobby[0-9]$", "^lobby$", "^test/.+$"],
     lobbyBackdoor: "lolwutsecretlobbybackdoor",
-    fullChannel: "test/awkward"
+    fullChannel: "test/awkward",
+    sendLimit: false,
+    sendTags: false,
 });

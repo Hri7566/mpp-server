@@ -4,11 +4,15 @@ export const t: ServerEventListener<"t"> = {
     id: "t",
     callback: (msg, socket) => {
         // Ping
+
+        if (socket.rateLimits)
+            if (!socket.rateLimits.normal.t.attempt()) return
+
         if (msg.e) {
             if (typeof msg.e !== "number") return;
         }
 
-        // Pong!
+        // Pong
         socket.sendArray([
             {
                 m: "t",

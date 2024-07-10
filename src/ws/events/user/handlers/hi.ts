@@ -5,9 +5,10 @@ export const hi: ServerEventListener<"hi"> = {
     callback: (msg, socket) => {
         // Handshake message
         // TODO Hi message tokens
-        // I'm not actually sure if I'm up for doing tokens,
-        // but if someone wants to submit a pull request, I
-        // look forward to watching you do all the work
+
+        if (socket.rateLimits)
+            if (!socket.rateLimits.normal.hi.attempt()) return;
+
         if (socket.gateway.hasProcessedHi) return;
         let part = socket.getParticipant();
 

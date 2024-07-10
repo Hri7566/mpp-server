@@ -6,10 +6,12 @@
 
 // If you don't load the server first, bun will literally segfault
 import "./ws/server";
-import "./channel/forceLoad";
+import { loadDefaultForcedChannels } from "./channel/forceLoad";
 import { Logger } from "./util/Logger";
 
 const logger = new Logger("Main");
+logger.info("Loading default channels...");
+loadDefaultForcedChannels();
 
 import "./util/readline";
 

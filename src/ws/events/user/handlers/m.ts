@@ -4,8 +4,10 @@ export const m: ServerEventListener<"m"> = {
     id: "m",
     callback: (msg, socket) => {
         // Cursor movement
-        if (!socket.rateLimits) return;
-        if (!socket.rateLimits.normal.m.attempt()) return;
+        if (socket.rateLimits) {
+            if (!socket.rateLimits.normal.m.attempt()) return;
+        }
+
         if (!msg.x || !msg.y) return;
 
         let x = msg.x;

@@ -7,6 +7,9 @@ export const chown: ServerEventListener<"chown"> = {
     id: "chown",
     callback: (msg, socket) => {
         // Change channel ownership
+        if (socket.rateLimits)
+            if (!socket.rateLimits.normal["chown"].attempt()) return;
+
         const ch = socket.getCurrentChannel();
         if (!ch) return;
 

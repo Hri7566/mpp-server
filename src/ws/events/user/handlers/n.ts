@@ -5,6 +5,9 @@ export const n: ServerEventListener<"n"> = {
     id: "n",
     callback: (msg, socket) => {
         // Piano note
+        if (socket.rateLimits)
+            if (!socket.rateLimits.chains.n.attempt()) return;
+
         if (!Array.isArray(msg.n)) return;
         if (typeof msg.t !== "number") return;
 

@@ -1,20 +1,27 @@
 import { User } from "@prisma/client";
 import { prisma } from "./prisma";
-import { UserFlags } from "../util/types";
+import { Tag, UserFlags } from "../util/types";
 
 export async function createUser(
     _id: string,
     name?: string,
     color?: string,
-    flags?: UserFlags
+    flags?: UserFlags,
+    tag?: Tag
 ) {
     return await prisma.user.create({
-        data: { id: _id, name, color, flags: JSON.stringify(flags) }
+        data: {
+            id: _id,
+            name,
+            color,
+            flags: JSON.stringify(flags) || "",
+            tag: JSON.stringify(tag) || ""
+        }
     });
 }
 
 export async function getUsers() {
-    return await {
+    return {
         users: await prisma.user.findMany(),
         count: await prisma.user.count()
     }

@@ -16,6 +16,7 @@ model User {
   name  String @default("Anonymous")
   color String @default("#ffffff")
   flags String @default("{}") // JSON flags object
+  tag   String // JSON tag
 }
 
 model ChatHistory {

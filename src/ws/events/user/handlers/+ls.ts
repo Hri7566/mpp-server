@@ -12,6 +12,10 @@ export const plus_ls: ServerEventListener<"+ls"> = {
         // and when I see their cursor disappear I'll know
         // precisely where they went to follow them and to
         // annoy them in chat when I see them again.
+        if (socket.rateLimits) {
+            if (!socket.rateLimits.normal["+ls"].attempt()) return;
+        }
+
         socket.subscribeToChannelList();
     }
 };

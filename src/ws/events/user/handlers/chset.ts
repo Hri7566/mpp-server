@@ -4,6 +4,9 @@ export const chset: ServerEventListener<"chset"> = {
     id: "chset",
     callback: (msg, socket) => {
         // Change channel settings
+        if (socket.rateLimits)
+            if (!socket.rateLimits.chains.chset.attempt()) return;
+
         if (typeof msg.set == "undefined") return;
 
         const ch = socket.getCurrentChannel();

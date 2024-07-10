@@ -3,28 +3,73 @@ user:
         a: 1500
         m: 50
         ch: 1000
-        kickban: 250
+        kickban: 125
+        t: 7.8125
+        +ls: 16.666666666666668
+        -ls: 16.666666666666668
+        chown: 2000
+        hi: 50
+        bye: 50
+        devices: 50
+        admin_message: 50
+        admin message: 50
     chains:
         userset:
             interval: 1800000
             num: 1000
+        chset:
+            interval: 1800000
+            num: 1024
+        n:
+            interval: 1000
+            num: 512
 crown:
     normal:
         a: 600
         m: 50
         ch: 1000
-        kickban: 250
+        kickban: 125
+        t: 7.8125
+        +ls: 16.666666666666668
+        -ls: 16.666666666666668
+        chown: 2000
+        hi: 50
+        bye: 50
+        devices: 50
+        admin_message: 50
+        admin message: 50
     chains:
         userset:
             interval: 1800000
             num: 1000
+        chset:
+            interval: 1800000
+            num: 1024
+        n:
+            interval: 1000
+            num: 512
 admin:
     normal:
         a: 120
         m: 16.666666666666668
         ch: 100
-        kickban: 31.25
+        kickban: 16.666666666666668
+        t: 3.90625
+        +ls: 16.666666666666668
+        -ls: 16.666666666666668
+        chown: 500
+        hi: 50
+        bye: 50
+        devices: 50
+        admin_message: 16.666666666666668
+        admin message: 16.666666666666668
     chains:
         userset:
-            interval: 1800000
+            interval: 500
             num: 1000
+        chset:
+            interval: 1800000
+            num: 1024
+        n:
+            interval: 50
+            num: 512

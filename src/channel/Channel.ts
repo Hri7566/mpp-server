@@ -7,7 +7,8 @@ import {
     Participant,
     ServerEvents,
     IChannelInfo,
-    Notification
+    Notification,
+    UserFlags
 } from "../util/types";
 import type { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
@@ -17,7 +18,7 @@ import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { saveChatHistory, getChatHistory } from "../data/history";
 import { mixin } from "../util/helpers";
-import { NoteQuota } from "../ws/ratelimit/NoteQuota";
+import { readUser } from "../data/user";
 
 interface CachedKickban {
     userId: string;
@@ -25,9 +26,17 @@ interface CachedKickban {
     endTime: number;
 }
 
+interface ExtraPartData {
+    uuids: string[];
+    flags: Partial<UserFlags>;
+}
+
+type ExtraPart = Participant & ExtraPartData;
+
 export class Channel extends EventEmitter {
     private settings: Partial<IChannelSettings>;
-    private ppl = new Array<Participant & { uuids: string[] }>();
+    private ppl = new Array<ExtraPart>();
+
     public chatHistory = new Array<ClientEvents["a"]>();
 
     private async loadChatHistory() {
@@ -38,6 +47,8 @@ export class Channel extends EventEmitter {
     public bans = new Array<CachedKickban>();
 
     public crown?: Crown;
+
+    private flags: Record<string, any> = {};
 
     constructor(
         private _id: string,
@@ -54,6 +65,8 @@ export class Channel extends EventEmitter {
 
         // Validate settings in set
         // Set the verified settings
+
+        this.logger.debug("lobby me?", this.isLobby());
 
         if (!this.isLobby()) {
             if (set) {
@@ -186,6 +199,15 @@ export class Channel extends EventEmitter {
     }
 
     /**
+     * Determine whether this channel is a lobby with the name "lobby" in it
+     */
+    public isTrueLobby() {
+        if (this.getID().match("^lobby[0-9][0-9]$") && this.getID().match("^lobby[1-9]$")) return true;
+
+        return false;
+    }
+
+    /**
      * Change this channel's settings
      * @param set Channel settings
      * @param admin Whether a user is changing the settings (set to true to force the changes)
@@ -265,7 +287,7 @@ export class Channel extends EventEmitter {
      * @param socket Socket that is joining
      * @returns undefined
      */
-    public join(socket: Socket): void {
+    public join(socket: Socket, force: boolean = false): void {
         //! /!\ Players are forced to join the same channel on two different tabs!
         //? TODO Should this be a bug or a feature?
         //this.logger.debug("join triggered");
@@ -274,17 +296,28 @@ export class Channel extends EventEmitter {
         const part = socket.getParticipant() as Participant;
 
         let hasChangedChannel = false;
-        let oldChannelID = socket.currentChannelID;
 
-        // Is user banned?
-        if (this.isBanned(part._id)) {
-            // Send user to ban channel instead
-            // TODO Send notification for ban
-            const chs = ChannelList.getList();
-            for (const ch of chs) {
-                const chid = ch.getID();
-                if (chid == config.fullChannel) {
-                    return socket.setChannel(chid)
+        if (!force) {
+            // Is user banned?
+            if (this.isBanned(part._id)) {
+                // Send user to ban channel instead
+                // TODO Send notification for ban
+                const chs = ChannelList.getList();
+                for (const ch of chs) {
+                    const chid = ch.getID();
+                    if (chid == config.fullChannel) {
+                        return socket.setChannel(chid)
+                    }
+                }
+            }
+
+            // Is the channel full?
+            if (this.isFull()) {
+                // Is this a genuine lobby (not a test/ room)?
+                if (this.isTrueLobby()) {
+                    const nextID = this.getNextIncrementationFromID();
+                    this.logger.debug("New ID:", nextID);
+                    return socket.setChannel(nextID, undefined, true)
                 }
             }
         }
@@ -311,7 +344,8 @@ export class Channel extends EventEmitter {
                     color: part.color,
                     id: part.id,
                     tag: part.tag,
-                    uuids: [socket.getUUID()]
+                    uuids: [socket.getUUID()],
+                    flags: socket.getUserFlags() || {}
                 });
             } else {
                 if (socket.currentChannelID !== config.fullChannel) {
@@ -331,7 +365,7 @@ export class Channel extends EventEmitter {
         if (hasChangedChannel) {
             // Were they in a channel before?
             if (socket.currentChannelID) {
-                // Find the channel they were in
+                // Find the other channel they were in
                 const ch = ChannelList.getList().find(
                     ch => ch._id == socket.currentChannelID
                 );
@@ -340,7 +374,7 @@ export class Channel extends EventEmitter {
                 if (ch) ch.leave(socket);
             }
 
-            // Change the thing we checked to point to us now
+            // You belong here now
             socket.currentChannelID = this.getID();
         }
 
@@ -443,9 +477,9 @@ export class Channel extends EventEmitter {
     public isFull() {
         // TODO Use limit setting
 
-        // if (this.isLobby() && this.ppl.length >= 20) {
-        //     return true;
-        // }
+        if (this.isTrueLobby() && this.ppl.length >= 20) {
+            return true;
+        }
 
         return false;
     }
@@ -472,13 +506,20 @@ export class Channel extends EventEmitter {
      * @returns List of people
      */
     public getParticipantList() {
-        return this.ppl.map(p => ({
-            id: p.id,
-            _id: p._id,
-            name: p.name,
-            color: p.color,
-            tag: p.tag
-        }));
+        const ppl = [];
+
+        for (const p of this.ppl) {
+            if (p.flags.vanish) continue;
+            ppl.push({
+                _id: p._id,
+                name: p.name,
+                color: p.color,
+                id: p.id,
+                tag: config.sendTags ? p.tag : undefined
+            });
+        }
+
+        return ppl;
     }
 
     public getParticipantListUnsanitized() {
@@ -626,7 +667,7 @@ export class Channel extends EventEmitter {
     }
 
     /**
-     * Drop the crown (remove from user)
+     * Drop the crown (reset timer, and, if applicable, remove from user's head)
      */
     public dropCrown() {
         if (this.crown) {
@@ -780,6 +821,11 @@ export class Channel extends EventEmitter {
         }
     }
 
+    /**
+     * Check if a user is banned here right now
+     * @param _id User ID
+     * @returns True if the user is banned, otherwise false
+     **/
     public isBanned(_id: string) {
         const now = Date.now();
 
@@ -799,6 +845,9 @@ export class Channel extends EventEmitter {
         return false;
     }
 
+    /**
+     * Clear the chat and chat history
+     **/
     public async clearChat() {
         this.chatHistory = [];
         await saveChatHistory(this.getID(), this.chatHistory);
@@ -826,6 +875,11 @@ export class Channel extends EventEmitter {
         }]);
     }
 
+    /**
+    * Send a message in chat
+    * @param msg Chat message event to send
+    * @param p Participant who is "sending the message"
+    **/
     public async sendChat(msg: ServerEvents["a"], p: Participant) {
         if (!msg.message) return;
 
@@ -847,6 +901,38 @@ export class Channel extends EventEmitter {
         this.sendArray([outgoing]);
         this.chatHistory.push(outgoing);
         await saveChatHistory(this.getID(), this.chatHistory);
+    }
+
+    /**
+     * Set a flag on this channel
+     * @param key Flag ID
+     * @param val Value of which the flag will be set to
+     **/
+    public setFlag(key: string, val: any) {
+        this.flags[key] = val;
+    }
+
+    /**
+     * Get a flag on this channel
+     * @param key Flag ID
+     * @returns Value of flag
+     */
+    public getFlag(key: string) {
+        return this.flags[key];
+    }
+
+
+    /**
+     * Get the name of this channel where the number at the end is one higher than this one, given it ends with a number
+     **/
+    public getNextIncrementationFromID() {
+        try {
+            const id = this.getID();
+            const num = parseInt((id.match(/\d+$/) as string[])[0]);
+            return `${id.substring(0, id.length - num.toString().length)}${num + 1}`;
+        } catch (err) {
+            return config.fullChannel;
+        }
     }
 }
 

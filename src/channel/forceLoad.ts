@@ -1,16 +1,41 @@
 import { Channel } from "./Channel";
 import { config } from "./config";
-
-// This shit was moved here to try to fix the unit tests segfaulting but it didn't work
+import { Logger } from "../util/Logger";
+import { ChannelList } from "./ChannelList";
 
 // Channel forceloader (cringe)
-let hasFullChannel = false;
 
-for (const id of config.forceLoad) {
-    new Channel(id, undefined, undefined, undefined, true);
-    if (id == config.fullChannel) hasFullChannel = true;
+const logger = new Logger("Channel Forceloader");
+
+export function forceloadChannel(id: string) {
+    try {
+        logger.info("Forceloading", id);
+        new Channel(id, undefined, undefined, undefined, true);
+        return true;
+    } catch (err) {
+        return false;
+    }
 }
 
-if (!hasFullChannel) {
-    new Channel(config.fullChannel, undefined, undefined, undefined, true);
+export function unforceloadChannel(id: string) {
+    const ch = ChannelList.getList().find(ch => ch.getID() == id);
+    if (!ch) return false;
+
+    logger.info("Unloading", id);
+    ch.destroy();
+
+    return true;
+}
+
+export function loadDefaultForcedChannels() {
+    let hasFullChannel = false;
+
+    for (const id of config.forceLoad) {
+        forceloadChannel(id);
+        if (id == config.fullChannel) hasFullChannel = true;
+    }
+
+    if (!hasFullChannel) {
+        new Channel(config.fullChannel, undefined, undefined, undefined, true);
+    }
 }
