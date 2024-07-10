@@ -318,14 +318,13 @@ export class Socket extends EventEmitter {
         const part = this.getParticipant();
         if (!part) return;
 
-        ch.sendArray([
-            {
-                m: "m",
-                id: part.id,
-                x: this.cursorPos.x,
-                y: this.cursorPos.y
-            }
-        ]);
+        let pos = {
+            x: this.cursorPos.x,
+            y: this.cursorPos.y,
+            id: this.getParticipantID()
+        };
+
+        ch.emit("cursor", pos);
     }
 
     public getCurrentChannel() {

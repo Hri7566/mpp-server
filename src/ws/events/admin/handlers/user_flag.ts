@@ -1,3 +1,4 @@
+import { ChannelList } from "../../../../channel/ChannelList";
 import { readUser, updateUser } from "../../../../data/user";
 import { Logger } from "../../../../util/Logger";
 import { ServerEventListener } from "../../../../util/types";
@@ -38,6 +39,10 @@ export const user_flag: ServerEventListener<"user_flag"> = {
         socks.forEach(sock => {
             sock.setUserFlag(msg.key, msg.value);
         });
+
+        for (const ch of ChannelList.getList()) {
+            ch.emit("user data update", user);
+        }
 
         // socket.getCurrentChannel()?.logger.debug("socks:", socks);
     }

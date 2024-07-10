@@ -30,7 +30,7 @@ export const config = loadConfig<ChannelConfig>("config/channels.yml", {
         visible: true
     },
     // Here's a terrifying fact: Brandon used parseInt to check lobby names
-    lobbyRegexes: ["^lobby[0-9][0-9]$", "^lobby[0-9]$", "^lobby$", "^test/.+$"],
+    lobbyRegexes: ["^lobby[0-9][0-9]$", "^lobby[0-9]$", "^lobby$", "^lobbyNaN$", "^test/.+$"],
     lobbyBackdoor: "lolwutsecretlobbybackdoor",
     fullChannel: "test/awkward",
     sendLimit: false,

@@ -1,3 +1,4 @@
+import { ChannelList } from "../../../../channel/ChannelList";
 import { readUser, updateUser } from "../../../../data/user";
 import { ServerEventListener } from "../../../../util/types";
 import { findSocketsByUserID } from "../../../Socket";
@@ -18,9 +19,8 @@ export const name: ServerEventListener<"name"> = {
         user.name = name;
         await updateUser(id, user);
 
-        const toUpdate = findSocketsByUserID(id);
-        toUpdate.forEach(s => {
-            s.userset(msg.name, undefined, true);
-        });
+        for (const ch of ChannelList.getList()) {
+            ch.emit("user data update", user);
+        }
     }
 };

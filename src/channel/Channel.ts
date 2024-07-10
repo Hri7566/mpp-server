@@ -8,7 +8,7 @@ import {
     ServerEvents,
     IChannelInfo,
     Notification,
-    UserFlags
+    UserFlags,
 } from "../util/types";
 import type { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
@@ -18,7 +18,7 @@ import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { saveChatHistory, getChatHistory } from "../data/history";
 import { mixin } from "../util/helpers";
-import { readUser } from "../data/user";
+import { User } from "@prisma/client";
 
 interface CachedKickban {
     userId: string;
@@ -45,6 +45,7 @@ export class Channel extends EventEmitter {
 
     public logger: Logger;
     public bans = new Array<CachedKickban>();
+    public cursorCache = new Array<{ x: string | number; y: string | number; id: string }>();
 
     public crown?: Crown;
 
@@ -65,8 +66,6 @@ export class Channel extends EventEmitter {
 
         // Validate settings in set
         // Set the verified settings
-
-        this.logger.debug("lobby me?", this.isLobby());
 
         if (!this.isLobby()) {
             if (set) {
@@ -172,6 +171,101 @@ export class Channel extends EventEmitter {
         this.on("command", (msg, socket) => {
             // TODO commands
         });
+
+        this.on("user data update", (user: User) => {
+            try {
+                if (typeof user.name !== "string") return;
+                if (typeof user.color !== "string") return;
+                if (typeof user.id !== "string") return;
+                if (typeof user.tag !== "undefined" && typeof user.tag !== "string") return;
+                if (typeof user.flags !== "undefined" && typeof user.flags !== "string") return;
+
+                let tag;
+                let flags;
+
+                try {
+                    tag = JSON.parse(user.tag);
+                } catch (err) { }
+
+                try {
+                    flags = JSON.parse(user.flags);
+                } catch (err) { }
+
+                for (const p of this.ppl) {
+                    if (p._id !== user.id) continue;
+
+                    p._id = user.id;
+                    p.name = user.name;
+                    p.color = user.color;
+                    p.tag = tag;
+                    p.flags = flags;
+
+                    let found;
+
+                    for (const cursor of this.cursorCache) {
+                        if (cursor.id == p.id) {
+                            found = cursor
+                        }
+                    }
+
+                    let x: string | number = "0.00";
+                    let y: string | number = "-10.00";
+
+                    if (found) {
+                        x = found.x;
+                        y = found.y;
+                    }
+
+                    this.sendArray(
+                        [
+                            {
+                                m: "p",
+                                _id: p._id,
+                                name: p.name,
+                                color: p.color,
+                                id: p.id,
+                                x: x,
+                                y: y
+                            }
+                        ]
+                    );
+                }
+
+                this.emit("update", this);
+            } catch (err) {
+                this.logger.error(err);
+                this.logger.warn("Unable to update user");
+            }
+        });
+
+        this.on("cursor", (pos: { x: string | number; y: string | number; id: string }) => {
+            let found;
+
+            for (const cursor of this.cursorCache) {
+                if (cursor.id == pos.id) {
+                    found = cursor;
+                }
+            }
+
+            if (!found) {
+                // Cache the cursor pos
+                this.cursorCache.push(pos);
+            } else {
+                // Edit the cache
+                found.x = pos.x;
+                found.y = pos.y;
+            }
+
+            this.sendArray([
+                {
+                    m: "m",
+                    id: pos.id,
+                    // not type safe
+                    x: pos.x as string,
+                    y: pos.y as string
+                }
+            ]);
+        });
     }
 
     /**
@@ -202,7 +296,7 @@ export class Channel extends EventEmitter {
      * Determine whether this channel is a lobby with the name "lobby" in it
      */
     public isTrueLobby() {
-        if (this.getID().match("^lobby[0-9][0-9]$") && this.getID().match("^lobby[1-9]$")) return true;
+        if (this.getID().match("^lobby[0-9][0-9]$") && this.getID().match("^lobby[0-9]$") && this.getID().match("^lobby$"), "^lobbyNaN$") return true;
 
         return false;
     }
