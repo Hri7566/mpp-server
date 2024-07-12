@@ -327,6 +327,7 @@ export class Channel extends EventEmitter {
         );
         */
 
+        // TODO Cleanup
         if (
             typeof set.color == "string" &&
             (typeof set.color2 == "undefined" ||
@@ -352,6 +353,17 @@ export class Channel extends EventEmitter {
 
         if (this.isLobby() && !admin) return;
 
+        // Validate settings in set
+        const validatedSet = validateChannelSettings(set);
+
+        // Set the verified settings
+        for (const key of Object.keys(validatedSet)) {
+            this.logger.debug(`${key}: ${(validatedSet as any)[key]}`);
+            if ((validatedSet as any)[key] === false) continue;
+            (this.settings as any)[key] = (set as any)[key];
+        }
+
+        /*
         // Verify settings
         const validSettings = validateChannelSettings(set);
 
@@ -364,6 +376,7 @@ export class Channel extends EventEmitter {
                 )[key];
             }
         }
+        */
 
         this.emit("update", this);
     }
