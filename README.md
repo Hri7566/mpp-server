@@ -36,16 +36,33 @@ Brandon's server originally used MongoDB for storing user data, but there are to
         - Ability to change the volume of users' notes (affects note velocity)
         - Chat muting
         - Rate limit bypasses
-    - Channel/User notifications
+    - Channel/User-targeted notifications
+- New admin messages
+    - Restart message
+        - Triggers notification on every connected socket, then shuts down after 20 seconds
+        - Server must be setup as a pm2/docker/systemd process
+    - Ability to change tags
 
 ## TODO
 
 - Add configuration options
     - Notifications
-- Ratelimit everything
 - Implement both UUID-based and JWT-based token auth for fun
-- Test tags
+- Fully implement and test tags
 - Test every frontend
+- Test fishing bot
+
+## Backlog/Notes
+
+- Use template engine instead of raw HTML?
+    - Change frontend files at runtime?
+    - Split script.js into multiple files
+    - Implement tags as a server option, toggles code on frontend
+        - Same with color changing
+- Bun memory usage can skyrocket
+- Reload config files on save
+- API?
+    - `import { Server } from "./mpp-server-dev2";`
 
 ## How to run
 
