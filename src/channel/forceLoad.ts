@@ -36,6 +36,7 @@ export function loadDefaultForcedChannels() {
     }
 
     if (!hasFullChannel) {
-        new Channel(config.fullChannel, undefined, undefined, undefined, true);
+        //new Channel(config.fullChannel, undefined, undefined, undefined, true);
+        forceloadChannel(config.fullChannel);
     }
 }

@@ -60,20 +60,20 @@ export class Channel extends EventEmitter {
     ) {
         super();
 
-        this.settings = {};
-        mixin(this.settings, config.defaultSettings);
         this.logger = new Logger("Channel - " + _id);
+        this.settings = {};
 
-        // Validate settings in set
-        // Set the verified settings
+        // Copy default settings
+        mixin(this.settings, config.defaultSettings);
 
         if (!this.isLobby()) {
             if (set) {
-                //this.logger.debug("Passed settings:", set);
+                // Validate settings in set
                 const validatedSet = validateChannelSettings(set);
-                //this.logger.debug("Validated settings:", validatedSet);
 
-                for (const key of Object.keys(set)) {
+                // Set the verified settings
+                for (const key of Object.keys(validatedSet)) {
+                    this.logger.debug(`${key}: ${(validatedSet as any)[key]}`);
                     if ((validatedSet as any)[key] === false) continue;
                     (this.settings as any)[key] = (set as any)[key];
                 }
@@ -95,6 +95,7 @@ export class Channel extends EventEmitter {
 
         ChannelList.add(this);
         // TODO implement owner_id
+        this.settings.owner_id = owner_id;
 
         this.logger.info("Created");
     }
@@ -382,10 +383,6 @@ export class Channel extends EventEmitter {
      * @returns undefined
      */
     public join(socket: Socket, force: boolean = false): void {
-        //! /!\ Players are forced to join the same channel on two different tabs!
-        //? TODO Should this be a bug or a feature?
-        //this.logger.debug("join triggered");
-
         if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
 
@@ -400,6 +397,18 @@ export class Channel extends EventEmitter {
                 for (const ch of chs) {
                     const chid = ch.getID();
                     if (chid == config.fullChannel) {
+                        const banTime = this.getBanTime(socket.getUserID());
+                        this.logger.debug("Ban time:", banTime);
+                        if (banTime) {
+                            const minutes = Math.floor((banTime.endTime - banTime.startTime) / 1000 / 60);
+
+                            socket.sendNotification({
+                                class: "short",
+                                duration: 7000,
+                                target: "#room",
+                                text: `Currently banned from "${this.getID()}" for ${minutes} minutes.`
+                            });
+                        }
                         return socket.setChannel(chid)
                     }
                 }
@@ -859,10 +868,7 @@ export class Channel extends EventEmitter {
 
         uuidsToKick = [...uuidsToKick, ...bannedUUIDs];
 
-        this.logger.debug("Banned UUIDs:", uuidsToKick);
-
         for (const socket of socketsBySocketID.values()) {
-            this.logger.debug("Checking UUID:", socket.getUUID(), "| Result:", uuidsToKick.indexOf(socket.getUUID()) !== -1);
             if (uuidsToKick.indexOf(socket.getUUID()) !== -1) {
                 socket.sendNotification({
                     title: "Notice",
@@ -875,7 +881,6 @@ export class Channel extends EventEmitter {
                 // If they are here, move them to the ban channel
                 const ch = socket.getCurrentChannel();
                 if (ch) {
-                    this.logger.debug("Current channel:", ch.getID(), "| We are:", this.getID());
                     if (ch.getID() == this.getID())
                         socket.setChannel(banChannel.getID());
                 }
@@ -1026,6 +1031,19 @@ export class Channel extends EventEmitter {
             return `${id.substring(0, id.length - num.toString().length)}${num + 1}`;
         } catch (err) {
             return config.fullChannel;
+        }
+    }
+
+    /**
+     * Get the amount of time someone is banned in this channel for.
+     * @param userId User ID
+     * @returns Object containing endTime and startTime of the ban
+     **/
+    public getBanTime(userId: string) {
+        for (const ban of this.bans) {
+            if (userId == ban.userId) {
+                return { endTime: ban.endTime, startTime: ban.startTime };
+            }
         }
     }
 }
