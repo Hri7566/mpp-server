@@ -124,11 +124,10 @@ export class Socket extends EventEmitter {
     }
 
     public setChannel(_id: string, set?: Partial<IChannelSettings>, force: boolean = false) {
+        // Do we exist?
         if (this.isDestroyed()) return;
-        if (this.currentChannelID === _id) {
-            logger.debug("Guy in channel was already in");
-            return;
-        }
+        // Are we trying to join the same channel like an idiot?
+        if (this.currentChannelID === _id) return;
 
         this.desiredChannel._id = _id;
         this.desiredChannel.set = set;
