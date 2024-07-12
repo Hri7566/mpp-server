@@ -1,0 +1,4 @@
+allowXSS: true
+maxDuration: 60000
+defaultDuration: 7000
+allTarget: all
