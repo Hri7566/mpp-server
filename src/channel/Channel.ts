@@ -16,6 +16,7 @@ import { findSocketByPartID, socketsBySocketID } from "../ws/Socket";
 import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
+import { config as usersConfig } from "../ws/usersConfig";
 import { saveChatHistory, getChatHistory } from "../data/history";
 import { mixin, darken } from "../util/helpers";
 import { User } from "@prisma/client";
@@ -183,7 +184,11 @@ export class Channel extends EventEmitter {
         });
 
         this.on("command", (msg, socket) => {
-            // TODO commands
+            const args = msg.message.split(" ");
+            const cmd = args[0].substring(1);
+
+            if (cmd == "help") {
+            }
         });
 
         this.on("user data update", (user: User) => {
@@ -340,16 +345,6 @@ export class Channel extends EventEmitter {
             if (set.owner_id) set.owner_id = undefined;
         }
 
-        /*
-        this.logger.debug(
-            "Dreaded color2 conditions:",
-            typeof set.color == "string",
-            "and",
-            typeof set.color2 == "undefined"
-        );
-        */
-
-        // TODO do these cases need to be here? can this be determined another way?
         if (
             typeof set.color == "string" &&
             (typeof set.color2 == "undefined" ||
@@ -402,23 +397,28 @@ export class Channel extends EventEmitter {
      * @param socket Socket that is joining
      * @returns undefined
      */
-    public join(socket: Socket, force: boolean = false): void {
+    public join(socket: Socket, force = false): void {
         if (this.isDestroyed()) return;
         const part = socket.getParticipant() as Participant;
 
         let hasChangedChannel = false;
 
+        this.logger.debug("Join force:", force);
+
         if (!force) {
             // Is user banned?
             if (this.isBanned(part._id)) {
                 // Send user to ban channel instead
-                // TODO Send notification for ban
                 const chs = ChannelList.getList();
+
                 for (const ch of chs) {
                     const chid = ch.getID();
+
                     if (chid == config.fullChannel) {
                         const banTime = this.getBanTime(socket.getUserID());
+
                         this.logger.debug("Ban time:", banTime);
+
                         if (banTime) {
                             const minutes = Math.floor((banTime.endTime - banTime.startTime) / 1000 / 60);
 
@@ -429,25 +429,29 @@ export class Channel extends EventEmitter {
                                 text: `Currently banned from "${this.getID()}" for ${minutes} minutes.`
                             });
                         }
+
                         return socket.setChannel(chid)
                     }
                 }
             }
 
-            // Is the channel full?
+            // Is this channel full?
+            // TODO Implement limit setting here
             if (this.isFull()) {
-                // Is this a genuine lobby (not a test/ room)?
+                // Is this a genuine lobby (not a test/ room or something)?
                 if (this.isTrueLobby()) {
-                    const nextID = this.getNextIncrementationFromID();
+                    // Get the next lobby number
+                    const nextID = this.getNextLobbyID();
                     this.logger.debug("New ID:", nextID);
-                    return socket.setChannel(nextID, undefined, true)
+                    // Move them to the next lobby
+                    return socket.setChannel(nextID);
                 }
             }
         }
 
-        // Is user in this channel?
+        // Is the user in this channel?
         if (this.hasUser(part._id)) {
-            // Already in channel, don't add to list, but tell them they're here
+            // They are already here, don't add them to the part list again, instead just tell them they're here
             hasChangedChannel = true;
 
             for (const p of this.ppl) {
@@ -457,31 +461,17 @@ export class Channel extends EventEmitter {
 
             socket.sendChannelUpdate(this.getInfo(), this.getParticipantList());
         } else {
-            // Are we full?
-            if (!this.isFull()) {
-                // Add to channel
-                hasChangedChannel = true;
-                this.ppl.push({
-                    _id: part._id,
-                    name: part.name,
-                    color: part.color,
-                    id: part.id,
-                    tag: part.tag,
-                    uuids: [socket.getUUID()],
-                    flags: socket.getUserFlags() || {}
-                });
-            } else {
-                if (socket.currentChannelID !== config.fullChannel) {
-                    // Put them in full channel
-                    const chs = ChannelList.getList();
-                    for (const ch of chs) {
-                        const chid = ch.getID();
-                        if (chid == config.fullChannel) {
-                            return socket.setChannel(chid)
-                        }
-                    }
-                }
-            }
+            // Add them to the channel
+            hasChangedChannel = true;
+            this.ppl.push({
+                _id: part._id,
+                name: part.name,
+                color: part.color,
+                id: part.id,
+                tag: part.tag,
+                uuids: [socket.getUUID()],
+                flags: socket.getUserFlags() || {}
+            });
         }
 
         // Was the move complete?
@@ -710,6 +700,7 @@ export class Channel extends EventEmitter {
 
             socketLoop: for (const socket of socketsBySocketID.values()) {
                 if (socket.isDestroyed()) continue socketLoop;
+                if (!socket.socketID) continue socketLoop;
                 if (socket.getParticipantID() != p.id) continue socketLoop;
                 if (sentSocketIDs.includes(socket.socketID))
                     continue socketLoop;
@@ -742,6 +733,7 @@ export class Channel extends EventEmitter {
         for (const p of this.ppl) {
             socketLoop: for (const socket of socketsBySocketID.values()) {
                 if (socket.isDestroyed()) continue socketLoop;
+                if (!socket.socketID) continue socketLoop;
                 if (socket.getParticipantID() != p.id) continue socketLoop;
                 if (socket.getParticipantID() == part.id) continue socketLoop;
                 if (sentSocketIDs.includes(socket.socketID))
@@ -778,7 +770,7 @@ export class Channel extends EventEmitter {
      * @returns Boolean
      */
     public isDestroyed() {
-        return this.destroyed == true;
+        return this.destroyed === true;
     }
 
     /**
@@ -1063,6 +1055,17 @@ export class Channel extends EventEmitter {
     }
 
     /**
+     * Send a chat message as an admin
+     * @param message Message to send in chat
+     **/
+    public async sendChatAdmin(message: string) {
+        this.sendChat({
+            m: "a",
+            message
+        }, usersConfig.adminParticipant);
+    }
+
+    /**
      * Set a flag on this channel
      * @param key Flag ID
      * @param val Value of which the flag will be set to
@@ -1075,20 +1078,21 @@ export class Channel extends EventEmitter {
      * Get a flag on this channel
      * @param key Flag ID
      * @returns Value of flag
-     */
+     **/
     public getFlag(key: string) {
         return this.flags[key];
     }
 
-
     /**
-     * Get the name of this channel where the number at the end is one higher than this one, given it ends with a number
+     * Get the ID of the next lobby, useful if this channel is full and is also a lobby
+     * @returns ID of the next lobby in numeric succession
      **/
-    public getNextIncrementationFromID() {
+    public getNextLobbyID() {
         try {
             const id = this.getID();
-            const num = parseInt((id.match(/\d+$/) as string[])[0]);
-            return `${id.substring(0, id.length - num.toString().length)}${num + 1}`;
+            if (id == "lobby") return "lobby2";
+            const num = parseInt(id.substring(5));
+            return `lobby${num + 1}`;
         } catch (err) {
             return config.fullChannel;
         }

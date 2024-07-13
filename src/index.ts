@@ -6,14 +6,13 @@
 
 // If you don't load the server first, bun will literally segfault
 import "./ws/server";
-import { loadDefaultForcedChannels } from "./channel/forceLoad";
+import { loadForcedStartupChannels } from "./channel/forceLoad";
 import { Logger } from "./util/Logger";
 
 const logger = new Logger("Main");
-logger.info("Loading default channels...");
-loadDefaultForcedChannels();
+logger.info("Forceloading startup channels...");
+loadForcedStartupChannels();
 
 import "./util/readline";
 
-// Does this really even need to be here?
 logger.info("Ready");

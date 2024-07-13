@@ -1,22 +1,29 @@
 import { loadConfig } from "../util/config";
-import { UserFlags } from "../util/types";
+import { Participant, UserFlags } from "../util/types";
 
 export interface UsersConfig {
     defaultName: string;
     defaultFlags: UserFlags;
     enableColorChanging: boolean;
     enableCustomNoteData: boolean;
+    adminParticipant: Participant;
 }
 
 export const usersConfigPath = "config/users.yml";
 
-export const defaultUsersConfig = {
+export const defaultUsersConfig: UsersConfig = {
     defaultName: "Anonymous",
     defaultFlags: {
         volume: 100
     },
     enableColorChanging: false,
-    enableCustomNoteData: true
+    enableCustomNoteData: true,
+    adminParticipant: {
+        _id: "0",
+        name: "mpp",
+        color: "#fff",
+        id: "0"
+    }
 };
 
 // Importing this elsewhere causes bun to segfault

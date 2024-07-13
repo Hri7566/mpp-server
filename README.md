@@ -45,7 +45,8 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 
 ## TODO
 
-- Implement unban message
+- Implement lobby backdoor
+- Document `src/ws/Socket.ts`
 - Add configuration options
     - Admin message eval toggle
 - Implement both UUID-based and JWT-based token auth
@@ -62,8 +63,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
         - Same with color changing
 - Bun memory usage can skyrocket
 - Reload config files on save
-- API?
-    - `import { Server } from "./mpp-server-dev2";`
+- Expose API?
 
 ## How to run
 

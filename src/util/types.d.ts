@@ -268,7 +268,7 @@ declare interface ServerEvents {
     };
 
     move: {
-        m: "move",
+        m: "move";
         ch: string;
         _id?: string;
         set?: Partial<IChannelSettings>;
@@ -277,6 +277,12 @@ declare interface ServerEvents {
     rename_channel: {
         m: "rename_channel";
         _id: string;
+    }
+
+    admin_chat: {
+        m: "admin_chat";
+        _id?: string;
+        message: string;
     }
 }
 

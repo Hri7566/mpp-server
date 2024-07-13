@@ -1,6 +1,7 @@
 import { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import { Tag, UserFlags } from "../util/types";
+import { config } from "../ws/usersConfig";
 
 export async function createUser(
     _id: string,
@@ -9,15 +10,25 @@ export async function createUser(
     flags?: UserFlags,
     tag?: Tag
 ) {
-    return await prisma.user.create({
-        data: {
+    try {
+        return await prisma.user.create({
+            data: {
+                id: _id,
+                name,
+                color,
+                flags: JSON.stringify(flags) || "",
+                tag: JSON.stringify(tag) || ""
+            }
+        });
+    } catch (err) {
+        return {
             id: _id,
             name,
             color,
-            flags: JSON.stringify(flags) || "",
-            tag: JSON.stringify(tag) || ""
-        }
-    });
+            flags: config.defaultFlags,
+            tag: {}
+        } as User;
+    }
 }
 
 export async function getUsers() {

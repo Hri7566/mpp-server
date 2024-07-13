@@ -27,7 +27,7 @@ export function unforceloadChannel(id: string) {
     return true;
 }
 
-export function loadDefaultForcedChannels() {
+export function loadForcedStartupChannels() {
     let hasFullChannel = false;
 
     for (const id of config.forceLoad) {

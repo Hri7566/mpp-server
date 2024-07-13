@@ -3,3 +3,8 @@ defaultFlags:
     volume: 100
 enableColorChanging: false
 enableCustomNoteData: true
+adminParticipant:
+    _id: "0"
+    name: "mpp"
+    color: "#fff"
+    id: "0"

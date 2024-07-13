@@ -1,4 +1,5 @@
 import { EventGroup, eventGroups } from "../../events";
+import { admin_chat } from "./handlers/admin_chat";
 import { clear_chat } from "./handlers/clear_chat";
 
 export const EVENT_GROUP_ADMIN = new EventGroup("admin");
@@ -15,6 +16,16 @@ import { user_flag } from "./handlers/user_flag";
 // EVENT_GROUP_ADMIN.add(name);
 // EVENT_GROUP_ADMIN.add(user_flag);
 
-EVENT_GROUP_ADMIN.addMany(color, name, user_flag, clear_chat, notification, restart, move, rename_channel);
+EVENT_GROUP_ADMIN.addMany(
+	color,
+	name,
+	user_flag,
+	clear_chat,
+	notification,
+	restart,
+	move,
+	rename_channel,
+	admin_chat
+);
 
 eventGroups.push(EVENT_GROUP_ADMIN);

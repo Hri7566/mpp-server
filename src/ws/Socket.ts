@@ -29,6 +29,7 @@ import { adminLimits } from "./ratelimit/limits/admin";
 import { userLimits } from "./ratelimit/limits/user";
 import { NoteQuota } from "./ratelimit/NoteQuota";
 import { config } from "./usersConfig";
+import { config as channelConfig } from "../channel/config";
 import { crownLimits } from "./ratelimit/limits/crown";
 
 const logger = new Logger("Sockets");
@@ -59,11 +60,18 @@ export class Socket extends EventEmitter {
     private cursorPos: Vector2<CursorValue> = { x: 200, y: 100 };
 
     constructor(
-        private ws: ServerWebSocket<{ ip: string }>,
-        public socketID: string
+        private ws?: ServerWebSocket<{ ip: string }>,
+        public socketID?: string
     ) {
         super();
-        this.ip = ws.data.ip;
+
+        if (ws) {
+            // Real user
+            this.ip = ws.data.ip;
+        } else {
+            // Fake user
+            this.ip = `::ffff:${Math.random() * 255}.${Math.random() * 255}.${Math.random() * 255}.${Math.random() * 255}`;
+        }
 
         // User ID
         this._id = createUserID(this.getIP());
@@ -75,7 +83,11 @@ export class Socket extends EventEmitter {
         let count = 0;
 
         for (const socket of socketsBySocketID.values()) {
-            if (socket.socketID == this.socketID || socket.ws.readyState !== 1) continue;
+            if (socket.socketID == this.socketID) continue;
+
+            if (socket.ws) {
+                if (socket.ws.readyState !== 1) continue;
+            }
 
             if (socket.getUserID() == this.getUserID()) {
                 foundSocket = socket;
@@ -123,7 +135,7 @@ export class Socket extends EventEmitter {
         return this.id;
     }
 
-    public setChannel(_id: string, set?: Partial<IChannelSettings>, force: boolean = false) {
+    public setChannel(_id: string, set?: Partial<IChannelSettings>, force = false) {
         // Do we exist?
         if (this.isDestroyed()) return;
         // Are we trying to join the same channel like an idiot?
@@ -132,7 +144,24 @@ export class Socket extends EventEmitter {
         this.desiredChannel._id = _id;
         this.desiredChannel.set = set;
 
-        let channel;
+        let channel: Channel | undefined;
+
+        logger.debug(channelConfig.lobbyBackdoor);
+        logger.debug("Desired:", this.desiredChannel._id, "| Matching:", channelConfig.lobbyBackdoor, ",", this.desiredChannel._id == channelConfig.lobbyBackdoor);
+
+        // Are we joining the lobby backdoor?
+        if (this.desiredChannel._id == channelConfig.lobbyBackdoor) {
+            // This is very likely not the original way the backdoor worked,
+            // but considering the backdoor was changed sometime this decade
+            // and the person who owns the original server is literally a
+            // Chinese scammer, we don't really have much choice but to guess
+            // at this point, unless a screenshot descends from the heavens above
+            // and magically gives us all the info we need and we can fix it here.
+            _id = "lobby";
+            force = true;
+        }
+
+        // Find the first channel that matches the desired ID
         for (const ch of ChannelList.getList()) {
             if (ch.getID() == _id) {
                 channel = ch;
@@ -141,10 +170,10 @@ export class Socket extends EventEmitter {
 
         // Does channel exist?
         if (channel) {
-            // Exists, join normally
+            // Exists, call join
             (async () => {
                 await this.loadUser();
-                channel.join(this);
+                channel.join(this, force);
             })();
         } else {
             // Doesn't exist, create
@@ -154,6 +183,7 @@ export class Socket extends EventEmitter {
                 this
             );
 
+            // Make them join the new channel
             channel.join(this, force);
         }
     }
@@ -178,14 +208,15 @@ export class Socket extends EventEmitter {
     public sendArray<EventID extends keyof ClientEvents>(
         arr: ClientEvents[EventID][]
     ) {
-        if (this.isDestroyed()) return;
+        if (this.isDestroyed() || !this.ws) return;
         this.ws.send(JSON.stringify(arr));
     }
 
     private async loadUser() {
         let user = await readUser(this._id);
 
-        if (!user) {
+        if (!user || user == null) {
+            logger.debug("my fancy new ID:", this._id);
             await createUser(
                 this._id,
                 config.defaultName,
@@ -276,7 +307,7 @@ export class Socket extends EventEmitter {
 
         // Simulate closure
         try {
-            this.ws.close();
+            if (this.ws) this.ws.close();
         } catch (err) {
             logger.warn("Problem closing socket:", err);
         }
