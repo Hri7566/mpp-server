@@ -123,18 +123,36 @@ export class Socket extends EventEmitter {
         })();
     }
 
+    /**
+     * Get the IP of this socket
+     * @returns IP address
+     **/
     public getIP() {
         return this.ip;
     }
 
+    /**
+     * Get the user ID of this socket
+     * @returns User ID
+     **/
     public getUserID() {
         return this._id;
     }
 
+    /**
+     * Get the participant ID of this socket
+     * @returns Participant ID
+     **/
     public getParticipantID() {
         return this.id;
     }
 
+    /**
+     * Move this participant to a channel
+     * @param _id Target channel ID
+     * @param set Channel settings, if the channel is instantiated
+     * @param force Whether to make this socket join regardless of channel properties
+     **/
     public setChannel(_id: string, set?: Partial<IChannelSettings>, force = false) {
         // Do we exist?
         if (this.isDestroyed()) return;
@@ -190,6 +208,9 @@ export class Socket extends EventEmitter {
 
     public admin = new EventEmitter();
 
+    /**
+     * Bind the message handlers to this socket (internal)
+     **/
     private bindEventListeners() {
         for (const group of eventGroups) {
             if (group.id == "admin") {
@@ -205,6 +226,10 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Send this socket an array of messages
+     * @param arr Array of messages to send
+     **/
     public sendArray<EventID extends keyof ClientEvents>(
         arr: ClientEvents[EventID][]
     ) {
@@ -212,6 +237,9 @@ export class Socket extends EventEmitter {
         this.ws.send(JSON.stringify(arr));
     }
 
+    /**
+     * Load this socket's user data
+     **/
     private async loadUser() {
         let user = await readUser(this._id);
 
@@ -230,6 +258,10 @@ export class Socket extends EventEmitter {
         this.user = user;
     }
 
+    /**
+     * Get this socket's user data
+     * @returns User data
+     **/
     public getUser() {
         if (this.user) {
             return this.user;
@@ -238,6 +270,10 @@ export class Socket extends EventEmitter {
         return null;
     }
 
+    /**
+     * Get this socket's user flags
+     * @returns User flag object
+     **/
     public getUserFlags() {
         if (this.user) {
             try {
@@ -250,6 +286,11 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Set a user flag on this socket
+     * @param key ID of user flag to change
+     * @param value Value to change the user flag to
+     **/
     public async setUserFlag(key: keyof UserFlags, value: unknown) {
         if (this.user) {
             try {
@@ -267,6 +308,10 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Get this socket's participant data
+     * @returns Participant object
+     **/
     public getParticipant() {
         if (this.user) {
             const flags = this.getUserFlags();
@@ -291,6 +336,9 @@ export class Socket extends EventEmitter {
 
     private destroyed = false;
 
+    /**
+     * Forcefully close this socket's connection and remove them from the server
+     **/
     public destroy() {
         // Socket was closed or should be closed, clear data
         // logger.debug("Destroying UID:", this._id);
@@ -315,10 +363,18 @@ export class Socket extends EventEmitter {
         this.destroyed = true;
     }
 
+    /**
+     * Test if this socket is destroyed
+     * @returns Whether this socket is destroyed
+     **/
     public isDestroyed() {
         return this.destroyed == true;
     }
 
+    /**
+     * Get this socket's current cursor position
+     * @returns Cursor position object
+     **/
     public getCursorPos() {
         if (!this.cursorPos)
             this.cursorPos = {
@@ -328,6 +384,11 @@ export class Socket extends EventEmitter {
         return this.cursorPos;
     }
 
+    /**
+     * Set this socket's current cursor position
+     * @param x X coordinate
+     * @param y Y coordinate
+     **/
     public setCursorPos(x: CursorValue, y: CursorValue) {
         if (typeof x == "number") {
             x = x.toFixed(2);
@@ -357,12 +418,18 @@ export class Socket extends EventEmitter {
         ch.emit("cursor", pos);
     }
 
+    /**
+     * Get the channel this socket is in
+     **/
     public getCurrentChannel() {
         return ChannelList.getList().find(
             ch => ch.getID() == this.currentChannelID
         );
     }
 
+    /**
+     * Send this socket a channel update message
+     **/
     public sendChannelUpdate(ch: IChannelInfo, ppl: Participant[]) {
         this.sendArray([
             {
@@ -374,6 +441,12 @@ export class Socket extends EventEmitter {
         ]);
     }
 
+    /**
+     * Change this socket's name/color
+     * @param name Desired name
+     * @param color Desired color
+     * @param admin Whether to force this change
+     **/
     public async userset(
         name?: string,
         color?: string,
@@ -417,6 +490,10 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Set a list of rate limits on this socket
+     * @param list List of constructed rate limit objects
+     **/
     public setRateLimits(list: RateLimitConstructorList) {
         this.rateLimits = {
             normal: {},
@@ -432,6 +509,9 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Reset this socket's rate limits to the defaults
+     **/
     public resetRateLimits() {
         // TODO Permissions
         let isAdmin = false;
@@ -452,6 +532,10 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Set this socket's note quota
+     * @param params Note quota params object
+     **/
     public setNoteQuota(params = NoteQuota.PARAMS_NORMAL) {
         this.noteQuota.setParams(params as any); // TODO why any
 
@@ -466,6 +550,10 @@ export class Socket extends EventEmitter {
         ]);
     }
 
+    /**
+     * Make this socket play a note in the channel they are in
+     * @param msg Note message from client
+     **/
     public playNotes(msg: ServerEvents["n"]) {
         const ch = this.getCurrentChannel();
         if (!ch) return;
@@ -474,6 +562,9 @@ export class Socket extends EventEmitter {
 
     private isSubscribedToChannelList = false;
 
+    /**
+     * Start sending this socket the list of channels periodically
+     **/
     public subscribeToChannelList() {
         if (this.isSubscribedToChannelList) return;
 
@@ -487,13 +578,21 @@ export class Socket extends EventEmitter {
         this.isSubscribedToChannelList = true;
     }
 
+    /**
+     * Stop sending this socket the list of channels periodically
+     **/
     public unsubscribeFromChannelList() {
         if (!this.isSubscribedToChannelList) return;
         ChannelList.unsubscribe(this.id);
         this.isSubscribedToChannelList = false;
     }
 
-    public sendChannelList(list: IChannelInfo[], complete: boolean = true) {
+    /**
+     * Send a channel list to this socket
+     * @param list List of channels to send
+     * @param complete Whether this list is the complete list of channels or just a partial list
+     **/
+    public sendChannelList(list: IChannelInfo[], complete = true) {
         // logger.debug(
         //     "Sending channel list:",
         //     list,
@@ -509,6 +608,10 @@ export class Socket extends EventEmitter {
         ]);
     }
 
+    /**
+     * Determine if this socket has the crown in the channel they are in
+     * @returns Whether or not they have ownership in the channel
+     **/
     public isOwner() {
         const channel = this.getCurrentChannel();
         const part = this.getParticipant();
@@ -524,6 +627,12 @@ export class Socket extends EventEmitter {
         return true;
     }
 
+    /**
+     * Make this socket kick a user in their channel
+     * @param _id User ID to kick
+     * @param ms Amount of time in milliseconds to ban the user for
+     * @param admin Whether or not to force this change (skips checking channel ownership)
+     **/
     public kickban(_id: string, ms: number, admin = false) {
         const channel = this.getCurrentChannel();
 
@@ -534,6 +643,11 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Make this socket unban a user in their channel
+     * @param _id User ID to unban
+     * @param admin Whether or not to force this change (skips checking channel ownership)
+     **/
     public unban(_id: string, admin = false) {
         const channel = this.getCurrentChannel();
 
@@ -544,10 +658,28 @@ export class Socket extends EventEmitter {
         }
     }
 
+    /**
+     * Get this socket's UUID
+     **/
     public getUUID() {
         return this.uuid;
     }
 
+    /**
+     * Send this socket a notification message
+     * @param notif Notification data to send
+     *
+     * Example:
+     * ```ts
+     * socket.sendNotification({
+     *     title: "Notice",
+     *     text: `Banned from "${this.getID()}" for ${Math.floor(t / 1000 / 60)} minutes.`,
+     *     duration: 7000,
+     *     target: "#room",
+     *     class: "short"
+     * });
+     * ```
+     **/
     public sendNotification(notif: Notification) {
         this.sendArray([{
             m: "notification",
@@ -561,6 +693,11 @@ export class Socket extends EventEmitter {
         }]);
     }
 
+    /**
+     * Set this socket's user's tag
+     * @param text Text of the tag
+     * @param color Color of the tag
+     **/
     public setTag(text: string, color: string) {
         const user = this.getUser();
         if (!user) return;
