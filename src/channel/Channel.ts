@@ -403,7 +403,7 @@ export class Channel extends EventEmitter {
 
         let hasChangedChannel = false;
 
-        this.logger.debug("Join force:", force);
+        //this.logger.debug("Join force:", force);
 
         if (!force) {
             // Is user banned?

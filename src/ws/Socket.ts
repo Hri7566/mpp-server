@@ -146,8 +146,8 @@ export class Socket extends EventEmitter {
 
         let channel: Channel | undefined;
 
-        logger.debug(channelConfig.lobbyBackdoor);
-        logger.debug("Desired:", this.desiredChannel._id, "| Matching:", channelConfig.lobbyBackdoor, ",", this.desiredChannel._id == channelConfig.lobbyBackdoor);
+        //logger.debug(channelConfig.lobbyBackdoor);
+        //logger.debug("Desired:", this.desiredChannel._id, "| Matching:", channelConfig.lobbyBackdoor, ",", this.desiredChannel._id == channelConfig.lobbyBackdoor);
 
         // Are we joining the lobby backdoor?
         if (this.desiredChannel._id == channelConfig.lobbyBackdoor) {
@@ -216,7 +216,7 @@ export class Socket extends EventEmitter {
         let user = await readUser(this._id);
 
         if (!user || user == null) {
-            logger.debug("my fancy new ID:", this._id);
+            //logger.debug("my fancy new ID:", this._id);
             await createUser(
                 this._id,
                 config.defaultName,
