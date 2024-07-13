@@ -493,13 +493,23 @@ export class Socket extends EventEmitter {
         return true;
     }
 
-    public kickban(_id: string, ms: number) {
+    public kickban(_id: string, ms: number, admin = false) {
         const channel = this.getCurrentChannel();
 
         if (!channel) return;
 
-        if (this.isOwner()) {
+        if (this.isOwner() || admin) {
             channel.kickban(_id, ms, this.getUserID());
+        }
+    }
+
+    public unban(_id: string, admin = false) {
+        const channel = this.getCurrentChannel();
+
+        if (!channel) return;
+
+        if (this.isOwner() || admin) {
+            channel.unban(_id);
         }
     }
 
