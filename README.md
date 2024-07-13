@@ -75,9 +75,11 @@ Don't expect these instructions to stay the same. They might not even be up to d
     $ curl -fsSL https://bun.sh/install | bash
     ```
 
-1. Setup Git submodules
+1. Clone the repo and setup Git submodules
 
     ```
+    $ git clone https://git.hri7566.info/Hri7566/mpp-server-dev2
+    $ cd mpp-server-dev2
     $ git submodule update --init --recursive
     ```
 
