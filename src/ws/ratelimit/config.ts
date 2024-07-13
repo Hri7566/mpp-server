@@ -11,6 +11,7 @@ export interface RateLimitConfigList<
         m: RL;
         ch: RL;
         kickban: RL;
+        unban: RL;
         t: RL;
         "+ls": RL;
         "-ls": RL;
@@ -50,6 +51,7 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
             m: 1000 / 20,
             ch: 1000 / 1,
             kickban: 1000 / 8,
+            unban: 1000 / 8,
             t: 1000 / 128,
             "+ls": 1000 / 60,
             "-ls": 1000 / 60,
@@ -81,6 +83,7 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
             m: 1000 / 20,
             ch: 1000 / 1,
             kickban: 1000 / 8,
+            unban: 1000 / 8,
             t: 1000 / 128,
             "+ls": 1000 / 60,
             "-ls": 1000 / 60,
@@ -112,6 +115,7 @@ export const config = loadConfig<RateLimitsConfig>("config/ratelimits.yml", {
             m: 1000 / 60,
             ch: 1000 / 10,
             kickban: 1000 / 60,
+            unban: 1000 / 8,
             t: 1000 / 256,
             "+ls": 1000 / 60,
             "-ls": 1000 / 60,

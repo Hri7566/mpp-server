@@ -8,6 +8,7 @@ export const crownLimits: RateLimitConstructorList = {
         m: () => new RateLimit(config.crown.normal.m),
         ch: () => new RateLimit(config.crown.normal.ch),
         kickban: () => new RateLimit(config.crown.normal.kickban),
+        unban: () => new RateLimit(config.crown.normal.unban),
         t: () => new RateLimit(config.crown.normal.t),
         "+ls": () => new RateLimit(config.crown.normal["+ls"]),
         "-ls": () => new RateLimit(config.crown.normal["-ls"]),

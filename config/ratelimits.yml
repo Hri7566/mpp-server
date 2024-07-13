@@ -4,6 +4,7 @@ user:
         m: 50
         ch: 1000
         kickban: 125
+        unban: 125
         t: 7.8125
         +ls: 16.666666666666668
         -ls: 16.666666666666668
@@ -11,7 +12,6 @@ user:
         hi: 50
         bye: 50
         devices: 50
-        admin_message: 50
         admin message: 50
     chains:
         userset:
@@ -29,6 +29,7 @@ crown:
         m: 50
         ch: 1000
         kickban: 125
+        unban: 125
         t: 7.8125
         +ls: 16.666666666666668
         -ls: 16.666666666666668
@@ -36,7 +37,6 @@ crown:
         hi: 50
         bye: 50
         devices: 50
-        admin_message: 50
         admin message: 50
     chains:
         userset:
@@ -54,6 +54,7 @@ admin:
         m: 16.666666666666668
         ch: 100
         kickban: 16.666666666666668
+        unban: 125
         t: 3.90625
         +ls: 16.666666666666668
         -ls: 16.666666666666668
@@ -61,7 +62,6 @@ admin:
         hi: 50
         bye: 50
         devices: 50
-        admin_message: 16.666666666666668
         admin message: 16.666666666666668
     chains:
         userset:

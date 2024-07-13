@@ -8,6 +8,7 @@ export const userLimits: RateLimitConstructorList = {
         m: () => new RateLimit(config.user.normal.m),
         ch: () => new RateLimit(config.user.normal.ch),
         kickban: () => new RateLimit(config.user.normal.kickban),
+        unban: () => new RateLimit(config.user.normal.unban),
         t: () => new RateLimit(config.user.normal.t),
         "+ls": () => new RateLimit(config.user.normal["+ls"]),
         "-ls": () => new RateLimit(config.user.normal["-ls"]),
