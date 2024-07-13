@@ -45,7 +45,6 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 
 ## TODO
 
-- Admin message eval
 - Add configuration options
     - Admin message eval toggle
 - Implement both UUID-based and JWT-based token auth
