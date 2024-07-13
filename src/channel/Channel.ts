@@ -291,6 +291,15 @@ export class Channel extends EventEmitter {
     }
 
     /**
+     * Set this channel's ID (channel name)
+     **/
+    public setID(_id: string) {
+        // probably causes jank
+        this._id = _id;
+        this.emit("update", this);
+    }
+
+    /**
      * Determine whether this channel is a lobby (uses regex from config)
      * @returns Boolean
      */

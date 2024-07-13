@@ -266,6 +266,18 @@ declare interface ServerEvents {
         key: string;
         value: any;
     };
+
+    move: {
+        m: "move",
+        ch: string;
+        _id?: string;
+        set?: Partial<IChannelSettings>;
+    }
+
+    rename_channel: {
+        m: "rename_channel";
+        _id: string;
+    }
 }
 
 declare interface ClientEvents {
