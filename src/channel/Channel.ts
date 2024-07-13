@@ -958,12 +958,21 @@ export class Channel extends EventEmitter {
                     });
 
                     if (banner == _id) {
-                        this.sendNotification({
+                        const certificate = {
                             title: "Certificate of Award",
                             text: `Let it be known that ${p.name} kickbanned him/her self.`,
                             duration: 7000,
                             target: "#room"
-                        });
+                        };
+
+                        this.sendNotification(certificate);
+
+                        for (const s of socketsBySocketID.values()) {
+                            const userID = s.getUserID();
+                            if (!userID) continue;
+                            if (userID !== banner) continue;
+                            s.sendNotification(certificate);
+                        }
                     }
                 }
             }
