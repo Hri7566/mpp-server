@@ -17,7 +17,7 @@ import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { saveChatHistory, getChatHistory } from "../data/history";
-import { mixin } from "../util/helpers";
+import { mixin, darken } from "../util/helpers";
 import { User } from "@prisma/client";
 
 interface CachedKickban {
@@ -68,6 +68,17 @@ export class Channel extends EventEmitter {
 
         if (!this.isLobby()) {
             if (set) {
+                // Copied from changeSettings below
+                // TODO do these cases need to be here? can this be determined another way?
+                if (
+                    typeof set.color == "string" &&
+                    (typeof set.color2 == "undefined" ||
+                        set.color2 === this.settings.color2)
+                ) {
+                    this.logger.debug("color 2 darken triggered");
+                    set.color2 = darken(set.color);
+                }
+
                 // Validate settings in set
                 const validatedSet = validateChannelSettings(set);
 
@@ -79,8 +90,10 @@ export class Channel extends EventEmitter {
                 }
             }
 
+            // We are not a lobby, so we must have a crown
             this.crown = new Crown();
 
+            // ...and, possibly, an owner, too
             if (creator) {
                 // if (this.crown.canBeSetBy(creator)) {
                 const part = creator.getParticipant();
@@ -327,28 +340,13 @@ export class Channel extends EventEmitter {
         );
         */
 
-        // TODO Cleanup
+        // TODO do these cases need to be here? can this be determined another way?
         if (
             typeof set.color == "string" &&
             (typeof set.color2 == "undefined" ||
                 set.color2 === this.settings.color2)
         ) {
-            const r = Math.max(
-                0,
-                parseInt(set.color.substring(1, 3), 16) - 0x40
-            );
-            const g = Math.max(
-                0,
-                parseInt(set.color.substring(3, 5), 16) - 0x40
-            );
-            const b = Math.max(
-                0,
-                parseInt(set.color.substring(5, 7), 16) - 0x40
-            );
-
-            set.color2 = `#${r.toString(16).padStart(2, "0")}${g
-                .toString(16)
-                .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+            set.color2 = darken(set.color);
         }
 
         if (this.isLobby() && !admin) return;
@@ -492,9 +490,33 @@ export class Channel extends EventEmitter {
 
             // You belong here now
             socket.currentChannelID = this.getID();
+
+            // Did they have the crown before?
+            // If so, give it back
+            //? Apparently, this feature is slightly broken on
+            //? the original MPP right now. When the user rejoins,
+            //? they will have the crown, but any other users
+            //? won't see that the crown has been given to the
+            //? original owner. This is strange, because I
+            //? specifically remember it working circa 2019-2020.
+            if (this.crown && config.chownOnRejoin) {
+                // TODO Should we check participant ID as well?
+                if (typeof this.crown.userId !== "undefined") {
+                    if (socket.getUserID() == this.crown.userId) {
+                        // Check if they exist
+                        const p = socket.getParticipant();
+
+                        if (p) {
+                            // Give the crown back
+                            this.giveCrown(p, true);
+                        }
+                    }
+                }
+            }
         }
 
         // Send our state data back
+        // TODO Does this go above?
         socket.sendArray([
             // {
             //     m: "ch",
@@ -769,7 +791,7 @@ export class Channel extends EventEmitter {
      * @param part Participant to give crown to
      * @param force Whether or not to force-create a crown (useful for lobbies)
      */
-    public giveCrown(part: Participant, force?: boolean) {
+    public giveCrown(part: Participant, force = false) {
         if (force) {
             if (!this.crown) this.crown = new Crown();
         }
@@ -955,6 +977,22 @@ export class Channel extends EventEmitter {
         }
 
         return false;
+    }
+
+    /**
+     * Unban a user who was kickbanned from this channel
+     * @param _id User ID of banned user
+     **/
+    public unban(_id: string) {
+        const isBanned = this.isBanned(_id);
+
+        if (!isBanned) return;
+
+        for (const ban of this.bans) {
+            if (ban.userId == _id) {
+                this.bans.splice(this.bans.indexOf(ban), 1);
+            }
+        }
     }
 
     /**

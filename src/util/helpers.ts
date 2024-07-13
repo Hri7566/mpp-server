@@ -25,6 +25,7 @@ export function hasOwn(obj: any, property: string | number | Symbol) {
 }
 
 // Channel color2
+/*
 export function darken(hex: string) {
     try {
         let r = parseInt(hex.substring(1, 3), 16);
@@ -40,7 +41,28 @@ export function darken(hex: string) {
             .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
     } catch (err) {}
 }
+*/
+/**
+ * Darken a hex color
+ * @param color Hex color string (example: "#8d3f50")
+ * @returns Darkened hex color
+ */
+export function darken(color: string, amount = 0x40) {
+    const r = Math.max(
+        0,
+        parseInt(color.substring(1, 3), 16) - amount
+    );
+    const g = Math.max(
+        0,
+        parseInt(color.substring(3, 5), 16) - amount
+    );
+    const b = Math.max(
+        0,
+        parseInt(color.substring(5, 7), 16) - amount
+    );
 
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
 // Brandon made this literally eons ago and it's fucking hilarious
 export function spoop_text(message: string) {
     var old = message;
