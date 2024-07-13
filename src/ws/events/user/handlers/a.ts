@@ -16,6 +16,6 @@ export const a: ServerEventListener<"a"> = {
         // msg.m
         // Permission denied: msg.m
         // sudo msg.m
-        ch.emit("message", msg, socket);
+        ch.emit("a", msg, socket);
     }
 };

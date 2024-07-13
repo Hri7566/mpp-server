@@ -146,8 +146,13 @@ export class Channel extends EventEmitter {
             }
         });
 
-        this.on("message", async (msg: ServerEvents["a"], socket: Socket) => {
-            if (!msg.message) return;
+        const BANNED_WORDS = [
+            "AMIGHTYWIND",
+            "CHECKLYHQ"
+        ];
+
+        this.on("a", async (msg: ServerEvents["a"], socket: Socket) => {
+            if (typeof msg.message !== "string") return;
 
             const userFlags = socket.getUserFlags();
 
@@ -155,9 +160,18 @@ export class Channel extends EventEmitter {
                 if (userFlags.cant_chat) return;
             }
 
+            if (!this.settings.chat) return;
+
             if (msg.message.length > 512) return;
 
-            // Sanitize
+            for (const word of BANNED_WORDS) {
+                if (msg.message.toLowerCase().split(" ").join("").includes(word.toLowerCase())) {
+                    return;
+                }
+            }
+
+            // Sanitize chat message
+            // Regex originally written by chacha
             msg.message = msg.message
                 .replace(/\p{C}+/gu, "")
                 .replace(/(\p{Mc}{5})\p{Mc}+/gu, "$1")
