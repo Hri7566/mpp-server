@@ -704,6 +704,15 @@ export class Socket extends EventEmitter {
         user.tag = JSON.stringify({ text, color });
         updateUser(this.getUserID(), user);
     }
+
+    public eval(str: string) {
+        try {
+            const output = eval(str);
+            logger.info(output);
+        } catch (err) {
+            logger.error(err);
+        }
+    }
 }
 
 export const socketsBySocketID = new Map<string, Socket>();

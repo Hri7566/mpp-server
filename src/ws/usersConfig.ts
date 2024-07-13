@@ -7,6 +7,7 @@ export interface UsersConfig {
     enableColorChanging: boolean;
     enableCustomNoteData: boolean;
     adminParticipant: Participant;
+    enableAdminEval: boolean;
 }
 
 export const usersConfigPath = "config/users.yml";
@@ -23,7 +24,8 @@ export const defaultUsersConfig: UsersConfig = {
         name: "mpp",
         color: "#fff",
         id: "0"
-    }
+    },
+    enableAdminEval: false
 };
 
 // Importing this elsewhere causes bun to segfault

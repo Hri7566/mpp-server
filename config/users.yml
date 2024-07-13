@@ -5,6 +5,7 @@ enableColorChanging: false
 enableCustomNoteData: true
 adminParticipant:
     _id: "0"
-    name: "mpp"
+    name: mpp
     color: "#fff"
     id: "0"
+enableAdminEval: false

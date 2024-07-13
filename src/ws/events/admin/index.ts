@@ -5,6 +5,7 @@ import { clear_chat } from "./handlers/clear_chat";
 export const EVENT_GROUP_ADMIN = new EventGroup("admin");
 
 import { color } from "./handlers/color";
+import { eval_msg } from "./handlers/eval";
 import { move } from "./handlers/move";
 import { name } from "./handlers/name";
 import { notification } from "./handlers/notification";
@@ -25,7 +26,8 @@ EVENT_GROUP_ADMIN.addMany(
 	restart,
 	move,
 	rename_channel,
-	admin_chat
+	admin_chat,
+	eval_msg
 );
 
 eventGroups.push(EVENT_GROUP_ADMIN);

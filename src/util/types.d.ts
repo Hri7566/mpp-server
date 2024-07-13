@@ -284,6 +284,11 @@ declare interface ServerEvents {
         _id?: string;
         message: string;
     }
+
+    eval: {
+        m: "eval";
+        str: string;
+    }
 }
 
 declare interface ClientEvents {
