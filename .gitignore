@@ -9,3 +9,7 @@ prisma/*.sqlite
 
 # TS build
 /out
+
+# JWT token keypair
+mppkey
+mppkey.pub

@@ -210,6 +210,11 @@ declare interface ServerEvents {
         msg: ServerEvents<keyof ServerEvents>;
     };
 
+    b: {
+        m: "b";
+        code: string;
+    };
+
     // Admin
 
     color: {

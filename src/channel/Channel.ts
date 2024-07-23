@@ -152,56 +152,61 @@ export class Channel extends EventEmitter {
         ];
 
         this.on("a", async (msg: ServerEvents["a"], socket: Socket) => {
-            if (typeof msg.message !== "string") return;
-
-            const userFlags = socket.getUserFlags();
-
-            if (userFlags) {
-                if (userFlags.cant_chat) return;
-            }
-
-            if (!this.settings.chat) return;
-
-            if (msg.message.length > 512) return;
-
-            for (const word of BANNED_WORDS) {
-                if (msg.message.toLowerCase().split(" ").join("").includes(word.toLowerCase())) {
-                    return;
-                }
-            }
-
-            // Sanitize chat message
-            // Regex originally written by chacha
-            msg.message = msg.message
-                .replace(/\p{C}+/gu, "")
-                .replace(/(\p{Mc}{5})\p{Mc}+/gu, "$1")
-                .trim();
-
-            let outgoing: ClientEvents["a"] = {
-                m: "a",
-                a: msg.message,
-                t: Date.now(),
-                p: socket.getParticipant() as Participant
-            };
-
-            this.sendArray([outgoing]);
-            this.chatHistory.push(outgoing);
-            await saveChatHistory(this.getID(), this.chatHistory);
-
             try {
+                if (typeof msg.message !== "string") return;
+
+                const userFlags = socket.getUserFlags();
+
+                if (userFlags) {
+                    if (userFlags.cant_chat) return;
+                }
+
+                if (!this.settings.chat) return;
+
+                if (msg.message.length > 512) return;
+
+                for (const word of BANNED_WORDS) {
+                    if (msg.message.toLowerCase().split(" ").join("").includes(word.toLowerCase())) {
+                        return;
+                    }
+                }
+
+                // Sanitize chat message
+                // Regex originally written by chacha for Brandon's server
+                // Used with permission
+                msg.message = msg.message
+                    .replace(/\p{C}+/gu, "")
+                    .replace(/(\p{Mc}{5})\p{Mc}+/gu, "$1")
+                    .trim();
+
+                let outgoing: ClientEvents["a"] = {
+                    m: "a",
+                    a: msg.message,
+                    t: Date.now(),
+                    p: socket.getParticipant() as Participant
+                };
+
+                this.sendArray([outgoing]);
+                this.chatHistory.push(outgoing);
+                await saveChatHistory(this.getID(), this.chatHistory);
+
                 if (msg.message.startsWith("/")) {
                     this.emit("command", msg, socket);
                 }
             } catch (err) {
                 this.logger.error(err);
+                this.logger.warn("Error whilst processing a chat message from user " + socket.getUserID());
             }
         });
 
         this.on("command", (msg, socket) => {
             const args = msg.message.split(" ");
             const cmd = args[0].substring(1);
+            const ownsChannel = this.hasUser(socket.getUserID());
 
             if (cmd == "help") {
+            } else if (cmd == "") {
+
             }
         });
 
@@ -313,7 +318,8 @@ export class Channel extends EventEmitter {
      * Set this channel's ID (channel name)
      **/
     public setID(_id: string) {
-        // probably causes jank
+        // probably causes jank, but people can just reload their page or whatever
+        // not sure what to do about the URL situation
         this._id = _id;
         this.emit("update", this);
     }

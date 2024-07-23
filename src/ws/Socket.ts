@@ -516,6 +516,19 @@ export class Socket extends EventEmitter {
         // TODO Permissions
         let isAdmin = false;
         let ch = this.getCurrentChannel();
+        let hasNoteRateLimitBypass = false;
+
+        try {
+            const flags = this.getUserFlags();
+
+            if (flags) {
+                if (flags["no note rate limit"]) {
+                    hasNoteRateLimitBypass = true;
+                }
+            }
+        } catch (err) {
+            logger.warn("Unable to get user flags while processing rate limits");
+        }
 
         if (isAdmin) {
             this.setRateLimits(adminLimits);
@@ -705,6 +718,10 @@ export class Socket extends EventEmitter {
         updateUser(this.getUserID(), user);
     }
 
+    /**
+     * Execute code in this socket's context (danger warning)
+     * @param str JavaScript expression to execute
+     **/
     public eval(str: string) {
         try {
             const output = eval(str);

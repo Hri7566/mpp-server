@@ -18,6 +18,8 @@ export class Crown {
     };
 
     public canBeSetBy(socket: Socket) {
+        // This code is based on Brandon's crown code
+
         // can claim, drop, or give if...
         const flags = socket.getUserFlags();
 

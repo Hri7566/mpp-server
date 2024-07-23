@@ -8,6 +8,7 @@ export interface UsersConfig {
     enableCustomNoteData: boolean;
     adminParticipant: Participant;
     enableAdminEval: boolean;
+    tokenAuth: "jwt" | "uuid" | "none";
 }
 
 export const usersConfigPath = "config/users.yml";
@@ -25,7 +26,8 @@ export const defaultUsersConfig: UsersConfig = {
         color: "#fff",
         id: "0"
     },
-    enableAdminEval: false
+    enableAdminEval: false,
+    tokenAuth: "none"
 };
 
 // Importing this elsewhere causes bun to segfault

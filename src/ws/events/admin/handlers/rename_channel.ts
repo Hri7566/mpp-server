@@ -33,8 +33,10 @@ export const rename_channel: ServerEventListener<"rename_channel"> = {
             // Not found, so it's safe to take up that ID
             ch.setID(msg._id);
         } else {
-            // Found, avoid jank by magically disappearing
-            ch.destroy();
+            if (ch.getID() !== msg._id) {
+                // Found and different, avoid jank by magically disappearing
+                ch.destroy();
+            }
         }
 
         for (const sock of socketsBySocketID.values()) {

@@ -73,6 +73,16 @@ Don't expect these instructions to stay the same. They might not even be up to d
 
 1. Clone the repo and setup Git submodules
 
+This step is subject to change, due to the necessity of testing different frontends, where the frontend may or may not be a git submodule.
+This will probably be updated in the near future. Expect a step asking to download the frontend manually.
+If you are forking this repository, you can just setup a new submodule for the frontend.
+The frontend files go in the `public` folder.
+
+I am also considering using handlebars or something similar for templating, where the frontend will require completely different code.
+The reason behind this decision is that I would like different things to change on the frontend based on the server's config files,
+such as enabling the color changing option in the userset modal menu, or sending separate code to server admins/mods/webmasters.
+
+
     ```
     $ git clone https://git.hri7566.info/Hri7566/mpp-server-dev2
     $ cd mpp-server-dev2
