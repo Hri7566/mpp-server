@@ -1,11 +1,30 @@
+# The default username for new users.
 defaultName: Anonymous
+
+# The default user flags for new users.
 defaultFlags:
     volume: 100
+
+# Whether or not to allow users to change their color.
+# Brandon's server has this set to false, but multiple users have reported it to be on before 2016.
 enableColorChanging: false
+
+# Allows custom data inside note messages.
+# This was in the original server, but not in MPP.net's server.
+# This only exists for backwards compatibility with scripts like nagalun's drarwing script.
 enableCustomNoteData: true
+
+# This is the user data that the server will use to send admin chat messages with.
 adminParticipant:
     _id: "0"
     name: mpp
     color: "#fff"
     id: "0"
+
+# Allows admins to evaluate code through the "eval" message.
+# This is a security risk, so only enable this if you trust your admins.
 enableAdminEval: false
+
+# The token validation scheme. Valid values are "none", "jwt" and "local".
+# This server will still validate existing tokens generated with other schemes if not set to "none".
+tokenAuth: none

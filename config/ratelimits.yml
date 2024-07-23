@@ -1,28 +1,42 @@
+# Difference between rate limits and rate limit chains:
+# Rate limits will not allow anything to be sent until the rate limit interval has passed.
+# Rate limit chains, on the other hand, will allow messages to be sent until the rate limit chain's limit has been reached.
+# This is useful for rate limiting messages that are sent in rapid succession, like note messages.
+# This is also the basis for note quota, however that is handled in a separate way due to the way it is implemented.
+
+# Rate limits for normal users.
 user:
+    # Rate limits
     normal:
-        a: 1500
-        m: 50
-        ch: 1000
-        kickban: 125
-        unban: 125
-        t: 7.8125
-        +ls: 16.666666666666668
-        -ls: 16.666666666666668
-        chown: 2000
-        hi: 50
-        bye: 50
-        devices: 50
-        admin message: 50
+        a: 1500 # Chat messages
+        m: 50 # Cursor messages
+        ch: 1000 # Channel join messages
+        kickban: 125 # Kickban messages
+        unban: 125 # Unban messages
+        t: 7.8125 # Ping messages
+        +ls: 16.666666666666668 # Channel list subscription messages
+        -ls: 16.666666666666668 # Channel list unsubscription messages
+        chown: 2000 # Channel ownership messages
+        hi: 50 # Handshake messages
+        bye: 50 # Disconnection messages
+        devices: 50 # MIDI device messages
+        admin message: 50 # Admin passthrough messages
+
+    # Rate limit chains
     chains:
-        userset:
+        userset: # Username/color update messages
             interval: 1800000
             num: 1000
-        chset:
+        chset: # Channel settings messages
             interval: 1800000
             num: 1024
-        n:
+        n: # Note messages
+            # TODO is this correct?
             interval: 1000
             num: 512
+
+# The other rate limits are like the above messages, but for other types of users.
+# Rate limits for users with a crown.
 crown:
     normal:
         a: 600
@@ -48,6 +62,8 @@ crown:
         n:
             interval: 1000
             num: 512
+
+# Rate limits for admins.
 admin:
     normal:
         a: 120

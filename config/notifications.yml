@@ -1,4 +1,13 @@
+# Whether to allow HTML in notifications.
+# This is a security risk, so only enable this if you trust your admins.
 allowXSS: true
+
+# The maximum duration of a notification in milliseconds.
 maxDuration: 60000
+
+# The default duration of a notification in milliseconds, if not specified.
 defaultDuration: 7000
+
+# The target used to send notifications to every socket on the server.
+# This is not used for the "target" parameter, instead this is for "targetChannel"/"targetUser".
 allTarget: all
