@@ -19,29 +19,13 @@ export function padNum(
 export const decoder = new TextDecoder();
 export const encoder = new TextEncoder();
 
-// Property checks
+/**
+ * Check if an object has a property
+ **/
 export function hasOwn(obj: any, property: string | number | Symbol) {
     return (Object as unknown as any).hasOwn(obj, property);
 }
 
-// Channel color2
-/*
-export function darken(hex: string) {
-    try {
-        let r = parseInt(hex.substring(1, 3), 16);
-        let g = parseInt(hex.substring(3, 5), 16);
-        let b = parseInt(hex.substring(5, 7), 16);
-
-        let newR = Math.min(r - 64, 0);
-        let newG = Math.min(g - 64, 0);
-        let newB = Math.min(b - 64, 0);
-
-        return `#${newR.toString(16).padStart(2, "0")}${newG
-            .toString(16)
-            .padStart(2, "0")}${newB.toString(16).padStart(2, "0")}`;
-    } catch (err) {}
-}
-*/
 /**
  * Darken a hex color
  * @param color Hex color string (example: "#8d3f50")
