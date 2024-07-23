@@ -25,6 +25,6 @@ adminParticipant:
 # This is a security risk, so only enable this if you trust your admins.
 enableAdminEval: false
 
-# The token validation scheme. Valid values are "none", "jwt" and "local".
+# The token validation scheme. Valid values are "none", "jwt" and "uuid".
 # This server will still validate existing tokens generated with other schemes if not set to "none".
 tokenAuth: none
