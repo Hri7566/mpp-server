@@ -20,6 +20,7 @@ import { config as usersConfig } from "../ws/usersConfig";
 import { saveChatHistory, getChatHistory } from "../data/history";
 import { mixin, darken } from "../util/helpers";
 import { User } from "@prisma/client";
+import { heapStats } from "bun:jsc";
 
 interface CachedKickban {
     userId: string;
@@ -112,6 +113,12 @@ export class Channel extends EventEmitter {
         this.settings.owner_id = owner_id;
 
         this.logger.info("Created");
+
+        if (this.getID() == "test/mem") {
+            setInterval(() => {
+                this.printMemoryInChat();
+            }, 1000);
+        }
     }
 
     private alreadyBound = false;
@@ -205,8 +212,8 @@ export class Channel extends EventEmitter {
             const ownsChannel = this.hasUser(socket.getUserID());
 
             if (cmd == "help") {
-            } else if (cmd == "") {
-
+            } else if (cmd == "mem") {
+                this.printMemoryInChat();
             }
         });
 
@@ -1138,6 +1145,11 @@ export class Channel extends EventEmitter {
                 return { endTime: ban.endTime, startTime: ban.startTime };
             }
         }
+    }
+
+    public printMemoryInChat() {
+        const mem = heapStats();
+        this.sendChatAdmin(`Size: ${(mem.heapSize / 1000 / 1000).toFixed(2)}M / Capacity: ${(mem.heapCapacity / 1000 / 1000).toFixed(2)}M`);
     }
 }
 

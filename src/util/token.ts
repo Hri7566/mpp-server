@@ -49,5 +49,17 @@ export function generateToken(id: string): Promise<string | undefined> | undefin
 
             if (token) resolve(token);
         });
-    } else return undefined;
+    } else return new Promise(() => undefined);
+}
+
+export function verifyToken(token: string) {
+    return jsonwebtoken.verify(token, privkey, { algorithms: ["RS256"] });
+}
+
+export async function decryptJWT(token: string) {
+    if (config.tokenAuth != "jwt") return undefined;
+
+    if (!privkey) throw new Error("Cannot decrypt JWT without private key loaded");
+
+    return jsonwebtoken.decode(token);
 }

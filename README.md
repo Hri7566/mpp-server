@@ -46,6 +46,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 ## TODO
 
 - Implement both UUID-based and JWT-based token auth
+    - Add `openssl genrsa -out mppkey 2048` to the instructions
 - Redo all of the validations with Zod
     - This probably means making Zod schemas for every single message type
     - Also user and channel data

@@ -9,27 +9,27 @@
   "dependencies": {
     "@prisma/client": "5.7.0",
     "@t3-oss/env-core": "^0.6.1",
-    "bun-types": "^1.0.1",
+    "bun-types": "^1.1.20",
     "commander": "^11.1.0",
-    "date-holidays": "^3.21.5",
+    "date-holidays": "^3.23.12",
     "events": "^3.3.0",
     "fancy-text-converter": "^1.0.9",
     "jsonwebtoken": "^9.0.2",
     "keccak": "^2.1.0",
     "nunjucks": "^3.2.4",
     "unique-names-generator": "^4.7.1",
-    "yaml": "^2.3.2",
-    "zod": "^3.22.2"
+    "yaml": "^2.4.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.5.9",
+    "@types/node": "^20.14.12",
     "@types/nunjucks": "^3.2.6",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
-    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0",
     "prisma": "5.7.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.5.4"
   }
 }

@@ -9,6 +9,7 @@ export interface UsersConfig {
     adminParticipant: Participant;
     enableAdminEval: boolean;
     tokenAuth: "jwt" | "uuid" | "none";
+    browserChallenge: "none" | "obf" | "basic";
 }
 
 export const usersConfigPath = "config/users.yml";
@@ -27,7 +28,8 @@ export const defaultUsersConfig: UsersConfig = {
         id: "0"
     },
     enableAdminEval: false,
-    tokenAuth: "none"
+    tokenAuth: "none",
+    browserChallenge: "none"
 };
 
 // Importing this elsewhere causes bun to segfault

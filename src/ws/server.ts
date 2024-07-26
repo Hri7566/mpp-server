@@ -91,7 +91,7 @@ export const app = Bun.serve<{ ip: string }>({
             // logger.debug("Connection at " + socket.getIP());
 
             // Let's put it in the dinner bucket.
-            socketsBySocketID.set(socket.socketID, socket);
+            socketsBySocketID.set((socket.socketID as any), socket);
         },
 
         message: (ws, message) => {

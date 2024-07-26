@@ -1,6 +1,9 @@
+import { Logger } from "../../../../util/Logger";
 import { generateToken } from "../../../../util/token";
 import { ServerEventListener } from "../../../../util/types";
 import { config } from "../../../usersConfig";
+
+const logger = new Logger("Hi handler");
 
 export const hi: ServerEventListener<"hi"> = {
     id: "hi",
@@ -9,21 +12,25 @@ export const hi: ServerEventListener<"hi"> = {
 
         let generatedToken: string | undefined;
 
+        // Is the browser challenge enabled and has the user completed it?
+        if (config.browserChallenge !== "none" && !socket.gateway.hasCompletedBrowserChallenge) return;
+
+        // Is token auth enabled?
         if (config.tokenAuth !== "none") {
-            if (socket.gateway.hasCompletedBrowserChallenge) {
-                if (msg.token) {
-                    // Check if they have passed the browser challenge
-                    // Send the token to the authenticator
-                    // TODO
-                } else {
-                    // Generate a token
-                    generatedToken = await generateToken(socket.getUserID()) as string | undefined;
-                    if (!generatedToken) return;
-                }
+            logger.debug("token auth is enabled");
+
+            // Is the browser challenge enabled and has the user completed it?
+            if (msg.token) {
+                // Check if they have passed the browser challenge
+                // Send the token to the authenticator
+                // TODO
             } else {
-                // TODO Ban the user for logging in without the browser
-                // TODO config for this
+                // Generate a token
+                generatedToken = await generateToken(socket.getUserID());
+                if (!generatedToken) return;
             }
+
+            logger.debug("token:", generatedToken);
         }
 
         if (socket.rateLimits)
@@ -51,7 +58,8 @@ export const hi: ServerEventListener<"hi"> = {
                     _id: part._id,
                     color: part.color,
                     name: part.name
-                }
+                },
+                token: generatedToken
             }
         ]);
 
