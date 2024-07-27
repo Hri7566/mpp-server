@@ -1,5 +1,4 @@
-import { createHash, randomBytes } from "crypto";
-import env from "./env";
+import { createHash, randomBytes } from "crypto"; import env from "./env";
 import { spoop_text } from "./helpers";
 
 export function createID() {

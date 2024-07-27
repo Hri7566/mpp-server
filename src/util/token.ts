@@ -3,6 +3,7 @@ import jsonwebtoken from "jsonwebtoken";
 import env from "./env";
 import { readFileSync } from "fs";
 import { Logger } from "./Logger";
+import { readUser, updateUser } from "../data/user";
 
 let privkey: string;
 
@@ -32,12 +33,24 @@ export function generateToken(id: string): Promise<string | undefined> | undefin
     } else if (config.tokenAuth == "uuid") {
         logger.info("Generating UUID token for user " + id + "...");
 
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             let token: string | undefined;
 
             try {
                 const uuid = crypto.randomUUID();
                 token = `${id}.${uuid}`;
+
+                // Save token in user data
+                const user = await readUser(id);
+                if (!user) throw new Error("User not found");
+
+                if (!user.tokens) user.tokens = "[]";
+
+                const tokens = JSON.parse(user.tokens);
+                tokens.push(token);
+
+                user.tokens = JSON.stringify(tokens);
+                await updateUser(user.id, user);
             } catch (err) {
                 logger.warn("Token generation failed for user " + id);
                 reject(err);
@@ -52,8 +65,24 @@ export function generateToken(id: string): Promise<string | undefined> | undefin
     } else return new Promise(() => undefined);
 }
 
-export function verifyToken(token: string) {
-    return jsonwebtoken.verify(token, privkey, { algorithms: ["RS256"] });
+export async function verifyToken(token: string) {
+    if (config.tokenAuth !== "none") {
+        // Get tokens from user data
+        const user = await readUser(token.split(".")[0]);
+        if (!user) return false;
+
+        if (!user.tokens) return false;
+
+        const tokens = JSON.parse(user.tokens);
+        if (!tokens) return false;
+
+        // Check if the token is in the list
+        for (const tok of tokens) {
+            if (tok === token) return true;
+        }
+    }
+
+    return false;
 }
 
 export async function decryptJWT(token: string) {

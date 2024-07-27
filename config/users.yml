@@ -34,4 +34,4 @@ tokenAuth: none
 # "none" will disable the browser challenge,
 # "obf" will sent an obfuscated function to the client,
 # and "basic" will just send a simple function that expects a boolean.
-browserChallenge: none
+browserChallenge: basic

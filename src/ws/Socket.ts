@@ -120,6 +120,15 @@ export class Socket extends EventEmitter {
             this.setNoteQuota(NoteQuota.PARAMS_RIDICULOUS);
 
             this.bindEventListeners();
+
+            if (config.browserChallenge == "basic") {
+                this.sendArray([{
+                    m: "b",
+                    code: `~return true;`
+                }]);
+            } else if (config.browserChallenge == "obf") {
+
+            }
         })();
     }
 
