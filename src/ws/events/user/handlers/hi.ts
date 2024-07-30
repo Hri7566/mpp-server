@@ -1,4 +1,5 @@
 import { Logger } from "../../../../util/Logger";
+import { getMOTD } from "../../../../util/motd";
 import { generateToken, verifyToken } from "../../../../util/token";
 import { ClientEvents, ServerEventListener } from "../../../../util/types";
 import { config } from "../../../usersConfig";
@@ -70,10 +71,11 @@ export const hi: ServerEventListener<"hi"> = {
                 color: part.color,
                 name: part.name
             },
-            token: generatedToken
-        }
+            token: generatedToken,
+            motd: getMOTD()
+        };
 
-        logger.debug("Hi message:", m);
+        //logger.debug("Hi message:", m);
 
         socket.sendArray([m as ClientEvents["hi"]]);
 
