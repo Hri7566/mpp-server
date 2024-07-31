@@ -45,10 +45,10 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 
 ## TODO
 
+- Fully implement and test tags
 - Redo all of the validations with Zod
     - This probably means making Zod schemas for every single message type
     - Also user and channel data
-- Fully implement and test tags
 - Test every frontend
 - Test fishing bot
 
