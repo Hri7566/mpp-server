@@ -1,0 +1,243 @@
+[1mdiff --git a/src/channel/Channel.ts b/src/channel/Channel.ts[m
+[1mindex e33ddc6..b6072be 100755[m
+[1m--- a/src/channel/Channel.ts[m
+[1m+++ b/src/channel/Channel.ts[m
+[36m@@ -17,7 +17,7 @@[m [mimport Crown from "./Crown";[m
+import { ChannelList } from "./ChannelList";[m
+import { config } from "./config";[m
+import { config as usersConfig } from "../ws/usersConfig";[m
+import { saveChatHistory, [31m[-getChatHistory-][m[32m{+getChatHistory, deleteChatHistory+}[m } from "../data/history";
+import { mixin, darken } from "../util/helpers";[m
+import { User } from "@prisma/client";[m
+import { heapStats } from "bun:jsc";[m
+[36m@@ -42,7 +42,18 @@[m [mexport class Channel extends EventEmitter {[m
+    public chatHistory = new Array<ClientEvents["a"]>();[m
+
+    private async loadChatHistory() {[m
+        [32m{+try {+}[m
+            this.chatHistory = await getChatHistory(this.getID());
+
+            [32m{+this.sendArray([{+}[m
+[32m{+                m: "c",+}[m
+[32m{+                c: this.chatHistory+}[m
+[32m{+            }]);+}[m
+[32m{+        } catch (err) { }+}[m
+[32m{+    }+}[m
+
+[32m{+    private async deleteChatHistory() {+}[m
+[32m{+        await deleteChatHistory(this.getID());+}[m
+    }[m
+
+    public logger: Logger;[m
+[36m@@ -97,10 +108,8 @@[m [mexport class Channel extends EventEmitter {[m
+
+            // ...and, possibly, an owner, too[m
+            if (creator) {[m
+[31m[-                // if (this.crown.canBeSetBy(creator)) {-][m
+                const part = creator.getParticipant();[m
+                if (part) [31m[-this.giveCrown(part);-][m
+[31m[-                // }-][m[32m{+this.giveCrown(part, true, false);+}[m
+            }[m
+        } else {[m
+            this.settings = config.lobbySettings;[m
+[36m@@ -129,14 +138,13 @@[m [mexport class Channel extends EventEmitter {[m
+        this.loadChatHistory();[m
+        this.logger.info("Loaded chat history");[m
+
+        this.on("update", [31m[-()-][m[32m{+(self, uuid)+}[m => {[31m[-//this.logger.debug("-------- UPDATE START --------");-][m
+            // Send updated info[m
+            for (const socket of socketsBySocketID.values()) {[m
+                for (const p of this.ppl) {[m
+                    [31m[-//if (socket.getParticipantID() == p.id) {-][m[32m{+const socketUUID = socket.getUUID();+}[m
+
+                    if [31m[-(p.uuids.includes(socket.getUUID()))-][m[32m{+(p.uuids.includes(socketUUID) && socketUUID !== uuid)+}[m {[31m[-//this.logger.debug("sending to", socket.getUUID())-][m
+                        socket.sendChannelUpdate([m
+                            this.getInfo(),[m
+                            this.getParticipantList()[m
+[36m@@ -276,6 +284,7 @@[m [mexport class Channel extends EventEmitter {[m
+                    );[m
+                }[m
+
+                [32m{+this.logger.debug("Update from user data update handler");+}[m
+                this.emit("update", this);[m
+            } catch (err) {[m
+                this.logger.error(err);[m
+[36m@@ -328,6 +337,7 @@[m [mexport class Channel extends EventEmitter {[m
+        // probably causes jank, but people can just reload their page or whatever[m
+        // not sure what to do about the URL situation[m
+        this._id = _id;[m
+        [32m{+this.logger.debug("Update from setID");+}[m
+        this.emit("update", this);[m
+    }[m
+
+[36m@@ -407,6 +417,7 @@[m [mexport class Channel extends EventEmitter {[m
+        }[m
+        */[m
+
+        [32m{+this.logger.debug("Update from changeSettings");+}[m
+        this.emit("update", this);[m
+    }[m
+
+[36m@@ -486,7 +497,7 @@[m [mexport class Channel extends EventEmitter {[m
+                p.uuids.push(socket.getUUID())[m
+            }[m
+
+            [31m[-socket.sendChannelUpdate(this.getInfo(),-][m[32m{+//socket.sendChannelUpdate(this.getInfo(),+}[m this.getParticipantList());
+        } else {[m
+            // Add them to the channel[m
+            hasChangedChannel = true;[m
+[36m@@ -534,15 +545,13 @@[m [mexport class Channel extends EventEmitter {[m
+
+                        if (p) {[m
+                            // Give the crown back[m
+                            this.giveCrown(p, [31m[-true);-][m[32m{+true, false);+}[m
+                        }[m
+                    }[m
+                }[m
+            }[m
+        }[m
+
+[31m[-        // Send our state data back-][m
+[31m[-        // TODO Does this go above?-][m
+        socket.sendArray([[m
+            // {[m
+            //     m: "ch",[m
+[36m@@ -578,7 +587,9 @@[m [mexport class Channel extends EventEmitter {[m
+            part.id[m
+        );[m
+
+        // Broadcast a channel update so everyone subscribed to the channel list can see [31m[-us-][m[32m{+the new user count+}[m
+[32m{+        //this.emit("update", this, socket.getUUID());+}[m
+[32m{+        this.logger.debug("Update from join");+}[m
+        this.emit("update", this);[m
+
+        //this.logger.debug("Settings:", this.settings);[m
+[36m@@ -625,6 +636,7 @@[m [mexport class Channel extends EventEmitter {[m
+                }[m
+            ]);[m
+
+            [32m{+this.logger.debug("Update from leave");+}[m
+            this.emit("update", this);[m
+        } else {[m
+            for (const p of this.ppl) {[m
+[36m@@ -789,6 +801,7 @@[m [mexport class Channel extends EventEmitter {[m
+        }[m
+
+        ChannelList.remove(this);[m
+        [32m{+this.deleteChatHistory();+}[m
+        this.logger.info("Destroyed");[m
+    }[m
+
+[36m@@ -819,7 +832,7 @@[m [mexport class Channel extends EventEmitter {[m
+     * @param part Participant to give crown to[m
+     * @param force Whether or not to force-create a crown (useful for lobbies)[m
+     */[m
+    public giveCrown(part: Participant, force = [31m[-false)-][m[32m{+false, update = true)+}[m {
+        if (force) {[m
+            if (!this.crown) this.crown = new Crown();[m
+        }[m
+[36m@@ -828,7 +841,11 @@[m [mexport class Channel extends EventEmitter {[m
+            this.crown.userId = part._id;[m
+            this.crown.participantId = part.id;[m
+            this.crown.time = Date.now();[m
+
+            [32m{+if (update) {+}[m
+[32m{+                this.logger.debug("Update from giveCrown");+}[m
+                this.emit("update", this);
+            [32m{+}+}[m
+        }[m
+    }[m
+
+[36m@@ -865,6 +882,7 @@[m [mexport class Channel extends EventEmitter {[m
+
+            delete this.crown.participantId;[m
+
+            [32m{+this.logger.debug("Update from dropCrown");+}[m
+            this.emit("update", this);[m
+        }[m
+    }[m
+[36m@@ -951,6 +969,7 @@[m [mexport class Channel extends EventEmitter {[m
+        }[m
+
+        if (shouldUpdate) {[m
+            [32m{+this.logger.debug("Update from kickban");+}[m
+            this.emit("update", this);[m
+
+            if (typeof banner !== "undefined") {[m
+[36m@@ -1149,7 +1168,7 @@[m [mexport class Channel extends EventEmitter {[m
+
+    public printMemoryInChat() {[m
+        const mem = heapStats();[m
+        [31m[-this.sendChatAdmin(`Size:-][m[32m{+this.sendChatAdmin(`Used:+}[m ${(mem.heapSize / 1000 / 1000).toFixed(2)}M / [31m[-Capacity:-][m[32m{+Allocated:+}[m ${(mem.heapCapacity / 1000 / 1000).toFixed(2)}M`);
+    }[m
+}[m
+
+[1mdiff --git a/src/data/history.ts b/src/data/history.ts[m
+[1mindex b769e27..0b68962 100755[m
+[1m--- a/src/data/history.ts[m
+[1m+++ b/src/data/history.ts[m
+[36m@@ -27,3 +27,7 @@[m [mexport async function getChatHistory(_id: string) {[m
+        return [];[m
+    }[m
+}[m
+
+[32m{+export async function deleteChatHistory(_id: string) {+}[m
+[32m{+    await prisma.chatHistory.delete({ where: { id: _id } });+}[m
+[32m{+}+}[m
+[1mdiff --git a/src/util/token.ts b/src/util/token.ts[m
+[1mindex 54d22af..4e7bf6f 100644[m
+[1m--- a/src/util/token.ts[m
+[1m+++ b/src/util/token.ts[m
+[36m@@ -50,7 +50,7 @@[m [mexport async function createToken(userID: string, gateway: Gateway) {[m
+        let token = "";[m
+
+        if (config.tokenAuth == "uuid") {[m
+            token = [32m{+userID + "." ++}[m crypto.randomUUID();
+        } else if (config.tokenAuth == "jwt") {[m
+            token = generateJWT(userID, gateway);[m
+        }[m
+[1mdiff --git a/src/ws/events/user/handlers/hi.ts b/src/ws/events/user/handlers/hi.ts[m
+[1mindex 91067b1..964c2cb 100755[m
+[1m--- a/src/ws/events/user/handlers/hi.ts[m
+[1m+++ b/src/ws/events/user/handlers/hi.ts[m
+[36m@@ -32,28 +32,30 @@[m [mexport const hi: ServerEventListener<"hi"> = {[m
+        let token: string | undefined;[m
+        let generatedToken = false;[m
+
+        if [32m{+(config.tokenAuth !== "none") {+}[m
+[32m{+            if+}[m (typeof msg.token !== "string") {
+                // Get a saved token
+                token = await getToken(socket.getUserID());[31m[-if (typeof token !== "string") {-][m
+[31m[-                // Generate a new one-][m
+[31m[-                token = await createToken(socket.getUserID(), socket.gateway);-][m
+                if (typeof token !== "string") {[m
+                    [32m{+// Generate a new one+}[m
+[32m{+                    token = await createToken(socket.getUserID(), socket.gateway);+}[m
+
+[32m{+                    if (typeof token !== "string") {+}[m
+                        logger.warn(`Unable to generate token for user ${socket.getUserID()}`);
+                    } else {
+                        generatedToken = true;
+                    [32m{+}+}[m
+[32m{+                }+}[m
+[32m{+            } else {+}[m
+[32m{+                // Validate the token+}[m
+[32m{+                const valid = await validateToken(socket.getUserID(), msg.token);+}[m
+[32m{+                if (!valid) {+}[m
+[32m{+                    socket.ban(60000, "Invalid token");+}[m
+[32m{+                    return;+}[m
+                }[m
+[31m[-            }-][m
+[31m[-        } else {-][m
+[31m[-            // Validate the token-][m
+[31m[-            const valid = await validateToken(socket.getUserID(), msg.token);-][m
+[31m[-            if (!valid) {-][m
+[31m[-                socket.ban(60000, "Invalid token");-][m
+[31m[-                return;-][m
+[31m[-            }-][m
+
+                token = msg.token;
+            [32m{+}+}[m
+        }[m
+
+        let part = socket.getParticipant();[m

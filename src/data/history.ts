@@ -27,3 +27,7 @@ export async function getChatHistory(_id: string) {
         return [];
     }
 }
+
+export async function deleteChatHistory(_id: string) {
+    await prisma.chatHistory.delete({ where: { id: _id } });
+}

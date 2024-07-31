@@ -50,7 +50,7 @@ export async function createToken(userID: string, gateway: Gateway) {
         let token = "";
 
         if (config.tokenAuth == "uuid") {
-            token = crypto.randomUUID();
+            token = userID + "." + crypto.randomUUID();
         } else if (config.tokenAuth == "jwt") {
             token = generateJWT(userID, gateway);
         }

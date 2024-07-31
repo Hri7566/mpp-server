@@ -32,28 +32,30 @@ export const hi: ServerEventListener<"hi"> = {
         let token: string | undefined;
         let generatedToken = false;
 
-        if (typeof msg.token !== "string") {
-            // Get a saved token
-            token = await getToken(socket.getUserID());
-            if (typeof token !== "string") {
-                // Generate a new one
-                token = await createToken(socket.getUserID(), socket.gateway);
-
+        if (config.tokenAuth !== "none") {
+            if (typeof msg.token !== "string") {
+                // Get a saved token
+                token = await getToken(socket.getUserID());
                 if (typeof token !== "string") {
-                    logger.warn(`Unable to generate token for user ${socket.getUserID()}`);
-                } else {
-                    generatedToken = true;
-                }
-            }
-        } else {
-            // Validate the token
-            const valid = await validateToken(socket.getUserID(), msg.token);
-            if (!valid) {
-                socket.ban(60000, "Invalid token");
-                return;
-            }
+                    // Generate a new one
+                    token = await createToken(socket.getUserID(), socket.gateway);
 
-            token = msg.token;
+                    if (typeof token !== "string") {
+                        logger.warn(`Unable to generate token for user ${socket.getUserID()}`);
+                    } else {
+                        generatedToken = true;
+                    }
+                }
+            } else {
+                // Validate the token
+                const valid = await validateToken(socket.getUserID(), msg.token);
+                if (!valid) {
+                    socket.ban(60000, "Invalid token");
+                    return;
+                }
+
+                token = msg.token;
+            }
         }
 
         let part = socket.getParticipant();

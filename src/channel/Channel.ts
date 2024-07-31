@@ -17,7 +17,7 @@ import Crown from "./Crown";
 import { ChannelList } from "./ChannelList";
 import { config } from "./config";
 import { config as usersConfig } from "../ws/usersConfig";
-import { saveChatHistory, getChatHistory } from "../data/history";
+import { saveChatHistory, getChatHistory, deleteChatHistory } from "../data/history";
 import { mixin, darken } from "../util/helpers";
 import { User } from "@prisma/client";
 import { heapStats } from "bun:jsc";
@@ -42,7 +42,18 @@ export class Channel extends EventEmitter {
     public chatHistory = new Array<ClientEvents["a"]>();
 
     private async loadChatHistory() {
-        this.chatHistory = await getChatHistory(this.getID());
+        try {
+            this.chatHistory = await getChatHistory(this.getID());
+
+            this.sendArray([{
+                m: "c",
+                c: this.chatHistory
+            }]);
+        } catch (err) { }
+    }
+
+    private async deleteChatHistory() {
+        await deleteChatHistory(this.getID());
     }
 
     public logger: Logger;
@@ -97,10 +108,8 @@ export class Channel extends EventEmitter {
 
             // ...and, possibly, an owner, too
             if (creator) {
-                // if (this.crown.canBeSetBy(creator)) {
                 const part = creator.getParticipant();
-                if (part) this.giveCrown(part);
-                // }
+                if (part) this.giveCrown(part, true, false);
             }
         } else {
             this.settings = config.lobbySettings;
@@ -129,14 +138,13 @@ export class Channel extends EventEmitter {
         this.loadChatHistory();
         this.logger.info("Loaded chat history");
 
-        this.on("update", () => {
-            //this.logger.debug("-------- UPDATE START --------");
+        this.on("update", (self, uuid) => {
             // Send updated info
             for (const socket of socketsBySocketID.values()) {
                 for (const p of this.ppl) {
-                    //if (socket.getParticipantID() == p.id) {
-                    if (p.uuids.includes(socket.getUUID())) {
-                        //this.logger.debug("sending to", socket.getUUID())
+                    const socketUUID = socket.getUUID();
+
+                    if (p.uuids.includes(socketUUID) && socketUUID !== uuid) {
                         socket.sendChannelUpdate(
                             this.getInfo(),
                             this.getParticipantList()
@@ -276,6 +284,7 @@ export class Channel extends EventEmitter {
                     );
                 }
 
+                //this.logger.debug("Update from user data update handler");
                 this.emit("update", this);
             } catch (err) {
                 this.logger.error(err);
@@ -328,6 +337,7 @@ export class Channel extends EventEmitter {
         // probably causes jank, but people can just reload their page or whatever
         // not sure what to do about the URL situation
         this._id = _id;
+        //this.logger.debug("Update from setID");
         this.emit("update", this);
     }
 
@@ -407,6 +417,7 @@ export class Channel extends EventEmitter {
         }
         */
 
+        //this.logger.debug("Update from changeSettings");
         this.emit("update", this);
     }
 
@@ -486,7 +497,7 @@ export class Channel extends EventEmitter {
                 p.uuids.push(socket.getUUID())
             }
 
-            socket.sendChannelUpdate(this.getInfo(), this.getParticipantList());
+            //socket.sendChannelUpdate(this.getInfo(), this.getParticipantList());
         } else {
             // Add them to the channel
             hasChangedChannel = true;
@@ -534,15 +545,13 @@ export class Channel extends EventEmitter {
 
                         if (p) {
                             // Give the crown back
-                            this.giveCrown(p, true);
+                            this.giveCrown(p, true, false);
                         }
                     }
                 }
             }
         }
 
-        // Send our state data back
-        // TODO Does this go above?
         socket.sendArray([
             // {
             //     m: "ch",
@@ -578,7 +587,9 @@ export class Channel extends EventEmitter {
             part.id
         );
 
-        // Broadcast a channel update so everyone subscribed to the channel list can see us
+        // Broadcast a channel update so everyone subscribed to the channel list can see the new user count
+        //this.emit("update", this, socket.getUUID());
+        //this.logger.debug("Update from join");
         this.emit("update", this);
 
         //this.logger.debug("Settings:", this.settings);
@@ -625,6 +636,7 @@ export class Channel extends EventEmitter {
                 }
             ]);
 
+            //this.logger.debug("Update from leave");
             this.emit("update", this);
         } else {
             for (const p of this.ppl) {
@@ -789,6 +801,7 @@ export class Channel extends EventEmitter {
         }
 
         ChannelList.remove(this);
+        this.deleteChatHistory();
         this.logger.info("Destroyed");
     }
 
@@ -819,7 +832,7 @@ export class Channel extends EventEmitter {
      * @param part Participant to give crown to
      * @param force Whether or not to force-create a crown (useful for lobbies)
      */
-    public giveCrown(part: Participant, force = false) {
+    public giveCrown(part: Participant, force = false, update = true) {
         if (force) {
             if (!this.crown) this.crown = new Crown();
         }
@@ -828,7 +841,11 @@ export class Channel extends EventEmitter {
             this.crown.userId = part._id;
             this.crown.participantId = part.id;
             this.crown.time = Date.now();
-            this.emit("update", this);
+
+            if (update) {
+                //this.logger.debug("Update from giveCrown");
+                this.emit("update", this);
+            }
         }
     }
 
@@ -865,6 +882,7 @@ export class Channel extends EventEmitter {
 
             delete this.crown.participantId;
 
+            //this.logger.debug("Update from dropCrown");
             this.emit("update", this);
         }
     }
@@ -951,6 +969,7 @@ export class Channel extends EventEmitter {
         }
 
         if (shouldUpdate) {
+            //this.logger.debug("Update from kickban");
             this.emit("update", this);
 
             if (typeof banner !== "undefined") {
@@ -1149,7 +1168,7 @@ export class Channel extends EventEmitter {
 
     public printMemoryInChat() {
         const mem = heapStats();
-        this.sendChatAdmin(`Size: ${(mem.heapSize / 1000 / 1000).toFixed(2)}M / Capacity: ${(mem.heapCapacity / 1000 / 1000).toFixed(2)}M`);
+        this.sendChatAdmin(`Used: ${(mem.heapSize / 1000 / 1000).toFixed(2)}M / Allocated: ${(mem.heapCapacity / 1000 / 1000).toFixed(2)}M`);
     }
 }
 
