@@ -739,6 +739,25 @@ export class Socket extends EventEmitter {
             logger.error(err);
         }
     }
+
+    /**
+     * Ban this socket's user for doing bad things
+     **/
+    public ban(duration: number, reason: string) {
+        // TODO cleaner ban system
+        // TODO save bans to database
+
+        const user = this.getUser();
+        if (!user) return;
+
+        this.sendNotification({
+            title: "Notice",
+            text: `You have been banned from the server for ${Math.floor(duration / 1000 / 60)} minutes. Reason: ${reason}`,
+            duration: 20000,
+            target: "#room",
+            class: "classic"
+        });
+    }
 }
 
 export const socketsBySocketID = new Map<string, Socket>();

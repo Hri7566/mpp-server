@@ -334,6 +334,7 @@ declare interface ClientEvents {
         permissions: any;
         token?: any;
         accountInfo: any;
+        motd?: string;
     };
 
     ls: {

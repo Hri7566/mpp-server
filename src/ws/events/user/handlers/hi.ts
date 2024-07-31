@@ -1,6 +1,6 @@
 import { Logger } from "../../../../util/Logger";
 import { getMOTD } from "../../../../util/motd";
-import { generateToken, verifyToken } from "../../../../util/token";
+import { createToken, getToken, validateToken } from "../../../../util/token";
 import { ClientEvents, ServerEventListener } from "../../../../util/types";
 import { config } from "../../../usersConfig";
 
@@ -15,8 +15,6 @@ export const hi: ServerEventListener<"hi"> = {
 
         if (socket.gateway.hasProcessedHi) return;
 
-        let generatedToken: string | undefined;
-
         // Browser challenge
         if (config.browserChallenge == "basic") {
             if (typeof msg.code !== "boolean") return;
@@ -29,25 +27,33 @@ export const hi: ServerEventListener<"hi"> = {
         }
 
         // Is the browser challenge enabled and has the user completed it?
-        if (config.browserChallenge !== "none" && !socket.gateway.hasCompletedBrowserChallenge) return;
+        if (config.browserChallenge !== "none" && !socket.gateway.hasCompletedBrowserChallenge) return socket.ban(60000, "Browser challenge not completed");
 
-        // Is token auth enabled?
-        if (config.tokenAuth !== "none") {
-            logger.debug("token auth is enabled");
+        let token: string | undefined;
+        let generatedToken = false;
 
-            // Is the browser challenge enabled and has the user completed it?
-            if (msg.token) {
-                // Check if they have passed the browser challenge
-                // Send the token to the authenticator
-                // TODO
-                const verified = await verifyToken(msg.token);
-            } else {
-                // Generate a token
-                generatedToken = await generateToken(socket.getUserID());
-                if (!generatedToken) return;
+        if (typeof msg.token !== "string") {
+            // Get a saved token
+            token = await getToken(socket.getUserID());
+            if (typeof token !== "string") {
+                // Generate a new one
+                token = await createToken(socket.getUserID(), socket.gateway);
+
+                if (typeof token !== "string") {
+                    logger.warn(`Unable to generate token for user ${socket.getUserID()}`);
+                } else {
+                    generatedToken = true;
+                }
+            }
+        } else {
+            // Validate the token
+            const valid = await validateToken(socket.getUserID(), msg.token);
+            if (!valid) {
+                socket.ban(60000, "Invalid token");
+                return;
             }
 
-            logger.debug("token:", generatedToken);
+            token = msg.token;
         }
 
         let part = socket.getParticipant();
@@ -61,7 +67,7 @@ export const hi: ServerEventListener<"hi"> = {
             };
         }
 
-        const m = {
+        socket.sendArray([{
             m: "hi",
             accountInfo: undefined,
             permissions: undefined,
@@ -71,13 +77,9 @@ export const hi: ServerEventListener<"hi"> = {
                 color: part.color,
                 name: part.name
             },
-            token: generatedToken,
-            motd: getMOTD()
-        };
-
-        //logger.debug("Hi message:", m);
-
-        socket.sendArray([m as ClientEvents["hi"]]);
+            motd: getMOTD(),
+            token
+        }]);
 
         socket.gateway.hasProcessedHi = true;
     }

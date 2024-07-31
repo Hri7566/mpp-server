@@ -1,94 +1,108 @@
-import { config } from "../ws/usersConfig";
-import jsonwebtoken from "jsonwebtoken";
-import env from "./env";
 import { readFileSync } from "fs";
-import { Logger } from "./Logger";
 import { readUser, updateUser } from "../data/user";
+import { Gateway } from "../ws/Gateway";
+import { config } from "../ws/usersConfig";
+import env from "./env";
+import { Logger } from "./Logger";
+import jwt from "jsonwebtoken";
 
-let privkey: string;
+const logger = new Logger("Tokens");
+
+let key: string;
 
 if (config.tokenAuth == "jwt") {
-    privkey = readFileSync("./mppkey").toString();
+    key = readFileSync("./mppkey").toString();
 }
 
-const logger = new Logger("TokenGen");
+/**
+ * Get an existing token for a user
+ * @param userID ID of user
+ * @returns Token
+ **/
+export async function getToken(userID: string) {
+    try {
+        const user = await readUser(userID);
 
-export function generateToken(id: string): Promise<string | undefined> | undefined {
-    if (config.tokenAuth == "jwt") {
-        if (!privkey) throw new Error("Private key not found");
+        if (!user) return;
+        if (typeof user.tokens !== "string") return;
 
-        logger.info("Generating JWT token for user " + id + "...");
-
-        return new Promise((resolve, reject) => {
-            jsonwebtoken.sign({ id }, privkey, { algorithm: "RS256" }, (err, token) => {
-                if (err || !token) {
-                    logger.warn("Token generation failed for user " + id);
-                    reject(err);
-                }
-
-                logger.info("Token generation finished for user " + id);
-                resolve(token);
-            });
-        });
-    } else if (config.tokenAuth == "uuid") {
-        logger.info("Generating UUID token for user " + id + "...");
-
-        return new Promise(async (resolve, reject) => {
-            let token: string | undefined;
-
-            try {
-                const uuid = crypto.randomUUID();
-                token = `${id}.${uuid}`;
-
-                // Save token in user data
-                const user = await readUser(id);
-                if (!user) throw new Error("User not found");
-
-                if (!user.tokens) user.tokens = "[]";
-
-                const tokens = JSON.parse(user.tokens);
-                tokens.push(token);
-
-                user.tokens = JSON.stringify(tokens);
-                await updateUser(user.id, user);
-            } catch (err) {
-                logger.warn("Token generation failed for user " + id);
-                reject(err);
-            }
-
-            if (!token) reject(new Error("Token generation failed for user " + id));
-
-            logger.info("Token generation finished for user " + id);
-
-            if (token) resolve(token);
-        });
-    } else return new Promise(() => undefined);
-}
-
-export async function verifyToken(token: string) {
-    if (config.tokenAuth !== "none") {
-        // Get tokens from user data
-        const user = await readUser(token.split(".")[0]);
-        if (!user) return false;
-
-        if (!user.tokens) return false;
-
-        const tokens = JSON.parse(user.tokens);
-        if (!tokens) return false;
-
-        // Check if the token is in the list
-        for (const tok of tokens) {
-            if (tok === token) return true;
-        }
+        const data = JSON.parse(user.tokens) as string[];
+        return data[0];
+    } catch (err) {
+        logger.warn(`Unable to get token for user ${userID}:`, err);
     }
-
-    return false;
 }
 
-export async function decryptJWT(token: string) {
-    if (config.tokenAuth != "jwt") return undefined;
+/**
+ * Create a new token for a user
+ * @param userID ID of user
+ * @param gateway Socket gateway context
+ * @returns Token
+ **/
+export async function createToken(userID: string, gateway: Gateway) {
+    try {
+        const user = await readUser(userID);
 
-    if (!privkey) throw new Error("Cannot decrypt JWT without private key loaded");
+        if (!user) return;
+        if (typeof user.tokens !== "string") user.tokens = "[]";
 
-    return jsonwebtoken.decode(token);
+        const data = JSON.parse(user.tokens) as string[];
+        let token = "";
+
+        if (config.tokenAuth == "uuid") {
+            token = crypto.randomUUID();
+        } else if (config.tokenAuth == "jwt") {
+            token = generateJWT(userID, gateway);
+        }
+
+        data.push(token);
+        user.tokens = JSON.stringify(data);
+
+        await updateUser(userID, user);
+        return token;
+    } catch (err) {
+        logger.warn(`Unable to create token for user ${userID}:`, err);
+    }
+}
+
+export function generateJWT(userID: string, gateway: Gateway) {
+    const payload = {
+        userID,
+        gateway
+    };
+
+    return jwt.sign(payload, key, {
+        algorithm: "RS256"
+    });
+}
+
+/**
+ * Validate a token
+ * @param userID ID of user
+ * @param token Token
+ * @returns True if token is valid, false otherwise
+ **/
+export async function validateToken(userID: string, token: string) {
+    try {
+        const user = await readUser(userID);
+
+        if (!user) {
+            logger.warn(`Unable to validate token for user ${userID}: User not found, which is really weird`);
+            return false;
+        }
+
+        if (typeof user.tokens !== "string") {
+            user.tokens = "[]";
+        }
+
+        const data = JSON.parse(user.tokens) as string[];
+
+        if (data.indexOf(token) !== -1) {
+            return true;
+        }
+
+        return false;
+    } catch (err) {
+        logger.warn(`Unable to validate token for user ${userID}:`, err);
+    }
 }
