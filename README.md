@@ -45,8 +45,6 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 
 ## TODO
 
-- Implement both UUID-based and JWT-based token auth
-    - Add `openssl genrsa -out mppkey 2048` to the instructions
 - Redo all of the validations with Zod
     - This probably means making Zod schemas for every single message type
     - Also user and channel data
@@ -104,6 +102,31 @@ such as enabling the color changing option in the userset modal menu, or sending
     Edit `.env` to your needs.
 
     - Edit the files in the `config` folder to match your needs
+
+    For token auth, there are a few options to consider. In `config/users.yml`, you can set `tokenAuth` to a few different values:
+
+    - `jwt`: Use JWT token authentication
+    - `uuid`: Use UUID token authentication
+    - `none`: Disable token authentication
+
+    If you are using UUID token authentication, the server will generate a UUID token for each user when they first connect.
+
+    If you are using JWT token authentication, you will need to generate a key for the server to use.
+    This can be done by running the following command:
+
+    ```
+    $ openssl genrsa -out mppkey 2048
+    ```
+
+    For antibot/browser detection there are also a few options to consider. In `config/users.yml`, you can set `browserChallenge` to a few different values:
+
+    - `none`: Disable browser challenge
+    - `basic`: Use a simple function to detect browsers
+    - `obf`: Use an obfuscated function to detect browsers - TODO: implement this
+
+    The `basic` option only sends a simple function to the client, and the `obf` option sends an obfuscated mess to the client.
+
+    This option requires the newer-style (MPP.net) frontend to be used.
 
 3. Install packages
 
