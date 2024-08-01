@@ -130,6 +130,8 @@ export class Socket extends EventEmitter {
 
             }
         })();
+
+        this.emit("ready");
     }
 
     /**

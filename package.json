@@ -7,7 +7,7 @@
   "author": "Hri7566",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "5.7.0",
+    "@prisma/client": "5.17.0",
     "@t3-oss/env-core": "^0.6.1",
     "bun-types": "^1.1.21",
     "commander": "^11.1.0",
@@ -29,7 +29,7 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.57.0",
-    "prisma": "5.7.0",
+    "prisma": "5.17.0",
     "typescript": "^5.5.4"
   }
 }
