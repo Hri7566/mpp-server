@@ -2,7 +2,7 @@ import { ServerEventListener } from "../../../../util/types";
 
 export const m: ServerEventListener<"m"> = {
     id: "m",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Cursor movement
         if (socket.rateLimits) {
             if (!socket.rateLimits.normal.m.attempt()) return;

@@ -2,7 +2,7 @@ import { ServerEventListener } from "../../../../util/types";
 
 export const kickban: ServerEventListener<"kickban"> = {
     id: "kickban",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Kickbanning someone from channel
         if (typeof msg._id !== "string") return;
         if (typeof msg.ms !== "number") return;

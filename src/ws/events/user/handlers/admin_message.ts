@@ -1,10 +1,11 @@
+import { Logger } from "../../../../util/Logger";
 import env from "../../../../util/env";
 import { ServerEventListener } from "../../../../util/types";
 
 export const admin_message: ServerEventListener<"admin message"> = {
     id: "admin message",
-    callback: (msg, socket) => {
-        // Administrator control message
+    callback: async (msg, socket) => {
+        // Administrator control message (Brandonism)
         if (socket.rateLimits)
             if (!socket.rateLimits.normal["admin message"].attempt()) return;
 

@@ -2,7 +2,7 @@ import { ServerEventListener } from "../../../../util/types";
 
 export const userset: ServerEventListener<"userset"> = {
     id: "userset",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Change username/color
         if (!socket.rateLimits?.chains.userset.attempt()) return;
         // You can disable color in the config because

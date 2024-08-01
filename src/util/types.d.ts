@@ -393,9 +393,11 @@ declare interface ClientEvents {
     };
 }
 
+declare type ServerEventCallback<EventID extends keyof ServerEvents> = (msg: ServerEvents[EventID], socket: Socket) => Promise<void>;
+
 declare type ServerEventListener<EventID extends keyof ServerEvents> = {
     id: EventID;
-    callback: (msg: ServerEvents[EventID], socket: Socket) => void;
+    callback: ServerEventCallback<EventID>;
 };
 
 declare type Vector2<T = number> = {

@@ -2,7 +2,7 @@ import { ServerEventListener } from "../../../../util/types";
 
 export const chset: ServerEventListener<"chset"> = {
     id: "chset",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Change channel settings
         if (socket.rateLimits)
             if (!socket.rateLimits.chains.chset.attempt()) return;

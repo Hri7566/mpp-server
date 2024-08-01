@@ -2,7 +2,7 @@ import { ServerEventListener } from "../../../../util/types";
 
 export const plus_ls: ServerEventListener<"+ls"> = {
     id: "+ls",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Give us the latest news on literally everything
         // that's happening in the server. In fact, I want
         // to know when someone clicks a button instantly,

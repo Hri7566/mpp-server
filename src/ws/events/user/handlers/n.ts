@@ -3,7 +3,7 @@ import { config } from "../../../usersConfig";
 
 export const n: ServerEventListener<"n"> = {
     id: "n",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Piano note
         if (socket.rateLimits)
             if (!socket.rateLimits.chains.n.attempt()) return;

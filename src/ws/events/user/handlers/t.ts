@@ -2,7 +2,7 @@ import { ServerEventListener } from "../../../../util/types";
 
 export const t: ServerEventListener<"t"> = {
     id: "t",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Ping
 
         if (socket.rateLimits)

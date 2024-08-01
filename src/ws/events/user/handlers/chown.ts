@@ -5,7 +5,7 @@ const logger = new Logger("chown");
 
 export const chown: ServerEventListener<"chown"> = {
     id: "chown",
-    callback: (msg, socket) => {
+    callback: async (msg, socket) => {
         // Change channel ownership
         if (socket.rateLimits)
             if (!socket.rateLimits.normal["chown"].attempt()) return;
