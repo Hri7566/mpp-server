@@ -45,6 +45,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
         - Triggers notification on every connected socket, then shuts down after 20 seconds
         - Server must be setup as a pm2/docker/systemd process for automatic restarting
     - Ability to change tags
+        - Similar to the MPP.net server, but uses a Brandon-style admin message
 
 ## TODO
 
@@ -54,6 +55,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 - Permission groups and permissions
     - Probable permission groups: owner, admin, mod, trialmod, default
     - Setup tags for each permission group
+- Redo ratelimits
 - Full server-wide event bus
     - Channel events
     - Socket events

@@ -70,7 +70,7 @@ export const hi: ServerEventListener<"hi"> = {
             };
         }
 
-        logger.debug("Tag:", part.tag);
+        //logger.debug("Tag:", part.tag);
 
         socket.sendArray([{
             m: "hi",

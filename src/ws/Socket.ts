@@ -360,9 +360,7 @@ export class Socket extends EventEmitter {
 
             try {
                 tag = JSON.parse(this.user.tag) as Tag;
-            } catch (err) {
-                logger.warn("Unable to parse tag:", err);
-            }
+            } catch (err) { }
 
             return {
                 _id: facadeID,

@@ -31,11 +31,11 @@ enableAdminEval: true
 
 # The token validation scheme. Valid values are "none", "jwt" and "uuid".
 # This server will still validate existing tokens generated with other schemes if not set to "none".
-tokenAuth: jwt
+tokenAuth: none
 
 # The browser challenge scheme. Valid values are "none", "obf" and "basic".
 # This is to change what is sent in the "b" message.
 # "none" will disable the browser challenge,
 # "obf" will sent an obfuscated function to the client,
 # and "basic" will just send a simple function that expects a boolean.
-browserChallenge: basic
+browserChallenge: none
