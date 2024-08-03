@@ -6,6 +6,7 @@ export interface UsersConfig {
     defaultFlags: UserFlags;
     enableColorChanging: boolean;
     enableCustomNoteData: boolean;
+    enableTags: boolean;
     adminParticipant: Participant;
     enableAdminEval: boolean;
     tokenAuth: "jwt" | "uuid" | "none";
@@ -21,6 +22,7 @@ export const defaultUsersConfig: UsersConfig = {
     },
     enableColorChanging: false,
     enableCustomNoteData: true,
+    enableTags: false,
     adminParticipant: {
         _id: "0",
         name: "mpp",

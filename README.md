@@ -20,10 +20,12 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 
 - Chat
     - Original chat filter by chacha and Brandon Lockaby
+    - Commands for debugging or administrative purposes
 - Piano Notes
     - Uses the same `NoteQuota` implementation from the client
 - Usernames/colors
-    - Allowing color changing can be toggled in the config
+    - Allowing color changing can be toggled in the config, similar to MPP.com
+    - Default user parameters can be set
 - Channels
     - Channel list
     - Channel settings
@@ -37,20 +39,32 @@ Brandon's server originally used MongoDB for storing user data, but there are to
         - Chat muting
         - Rate limit bypasses
     - Channel/User-targeted notifications
+    - Server-wide/channel-specific/user-specific notifications
 - New admin messages
     - Restart message
         - Triggers notification on every connected socket, then shuts down after 20 seconds
-        - Server must be setup as a pm2/docker/systemd process
+        - Server must be setup as a pm2/docker/systemd process for automatic restarting
     - Ability to change tags
 
 ## TODO
 
 - Fully implement and test tags
+    - Tags are sent to clients now
+    - Check if tags are sent to everyone
+- Permission groups and permissions
+    - Probable permission groups: owner, admin, mod, trialmod, default
+    - Setup tags for each permission group
+- Full server-wide event bus
+    - Channel events
+    - Socket events
+    - User data events
+    - Permission-related events
 - Redo all of the validations with Zod
     - This probably means making Zod schemas for every single message type
     - Also user and channel data
 - Test every frontend
 - Test fishing bot
+- Remote console
 
 ## Backlog/Notes
 

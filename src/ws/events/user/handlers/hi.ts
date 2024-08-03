@@ -65,9 +65,12 @@ export const hi: ServerEventListener<"hi"> = {
                 _id: socket.getUserID(),
                 name: "Anonymous",
                 color: "#777",
-                id: ""
+                id: "",
+                tag: undefined
             };
         }
+
+        logger.debug("Tag:", part.tag);
 
         socket.sendArray([{
             m: "hi",
@@ -77,7 +80,8 @@ export const hi: ServerEventListener<"hi"> = {
             u: {
                 _id: part._id,
                 color: part.color,
-                name: part.name
+                name: part.name,
+                tag: part.tag
             },
             motd: getMOTD(),
             token

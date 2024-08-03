@@ -11,6 +11,7 @@ import { name } from "./handlers/name";
 import { notification } from "./handlers/notification";
 import { rename_channel } from "./handlers/rename_channel";
 import { restart } from "./handlers/restart";
+import { tag } from "./handlers/tag";
 import { user_flag } from "./handlers/user_flag";
 
 // EVENT_GROUP_ADMIN.add(color);
@@ -27,7 +28,8 @@ EVENT_GROUP_ADMIN.addMany(
 	move,
 	rename_channel,
 	admin_chat,
-	eval_msg
+	eval_msg,
+	tag
 );
 
 eventGroups.push(EVENT_GROUP_ADMIN);

@@ -88,7 +88,7 @@ export class Channel extends EventEmitter {
                     (typeof set.color2 == "undefined" ||
                         set.color2 === this.settings.color2)
                 ) {
-                    this.logger.debug("color 2 darken triggered");
+                    //this.logger.debug("color 2 darken triggered");
                     set.color2 = darken(set.color);
                 }
 
@@ -97,7 +97,7 @@ export class Channel extends EventEmitter {
 
                 // Set the verified settings
                 for (const key of Object.keys(validatedSet)) {
-                    this.logger.debug(`${key}: ${(validatedSet as any)[key]}`);
+                    //this.logger.debug(`${key}: ${(validatedSet as any)[key]}`);
                     if ((validatedSet as any)[key] === false) continue;
                     (this.settings as any)[key] = (set as any)[key];
                 }
@@ -480,7 +480,7 @@ export class Channel extends EventEmitter {
                 if (this.isTrueLobby()) {
                     // Get the next lobby number
                     const nextID = this.getNextLobbyID();
-                    this.logger.debug("New ID:", nextID);
+                    //this.logger.debug("New ID:", nextID);
                     // Move them to the next lobby
                     return socket.setChannel(nextID);
                 }
@@ -691,7 +691,7 @@ export class Channel extends EventEmitter {
                 name: p.name,
                 color: p.color,
                 id: p.id,
-                tag: config.sendTags ? p.tag : undefined
+                tag: usersConfig.enableTags ? p.tag : undefined
             });
         }
 

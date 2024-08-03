@@ -7,12 +7,16 @@ defaultFlags:
 
 # Whether or not to allow users to change their color.
 # Brandon's server has this set to false, but multiple users have reported it to be on before 2016.
-enableColorChanging: false
+enableColorChanging: true
 
 # Allows custom data inside note messages.
 # This was in the original server, but not in MPP.net's server.
 # This only exists for backwards compatibility with scripts like nagalun's drarwing script.
 enableCustomNoteData: true
+
+# Whether or not to enable tags that are sent publicly.
+# This won't prevent admins from changing tags internally, but it will not be sent to clients.
+enableTags: true
 
 # This is the user data that the server will use to send admin chat messages with.
 adminParticipant:
@@ -27,11 +31,11 @@ enableAdminEval: true
 
 # The token validation scheme. Valid values are "none", "jwt" and "uuid".
 # This server will still validate existing tokens generated with other schemes if not set to "none".
-tokenAuth: none
+tokenAuth: jwt
 
 # The browser challenge scheme. Valid values are "none", "obf" and "basic".
 # This is to change what is sent in the "b" message.
 # "none" will disable the browser challenge,
 # "obf" will sent an obfuscated function to the client,
 # and "basic" will just send a simple function that expects a boolean.
-browserChallenge: none
+browserChallenge: basic

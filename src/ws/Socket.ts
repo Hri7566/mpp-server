@@ -14,7 +14,8 @@ import {
     ServerEvents,
     UserFlags,
     Vector2,
-    Notification
+    Notification,
+    Tag
 } from "../util/types";
 import type { User } from "@prisma/client";
 import { createUser, readUser, updateUser } from "../data/user";
@@ -355,11 +356,20 @@ export class Socket extends EventEmitter {
                 }
             }
 
+            let tag: Tag | undefined;
+
+            try {
+                tag = JSON.parse(this.user.tag) as Tag;
+            } catch (err) {
+                logger.warn("Unable to parse tag:", err);
+            }
+
             return {
                 _id: facadeID,
                 name: this.user.name,
                 color: this.user.color,
-                id: this.getParticipantID()
+                id: this.getParticipantID(),
+                tag: config.enableTags ? tag : undefined
             };
         } else {
             return null;
@@ -744,6 +754,7 @@ export class Socket extends EventEmitter {
      * @param color Color of the tag
      **/
     public setTag(text: string, color: string) {
+        //logger.debug("Setting tag:", text, color);
         const user = this.getUser();
         if (!user) return;
         user.tag = JSON.stringify({ text, color });
