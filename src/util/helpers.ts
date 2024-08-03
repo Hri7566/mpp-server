@@ -1,9 +1,20 @@
-// Gray console text
+/**
+ * Gray console text maker
+ * @param str String to gray
+ * @returns Gray string to put in console
+ **/
 export function unimportant(str: string) {
     return `\x1b[90m${str}\x1b[0m`;
 }
 
-// Pad time strings
+/**
+ * Pad time strings
+ * @param num Number to pad
+ * @param padAmount Amount of padding
+ * @param padChar Character to pad with
+ * @param left Whether to pad left or right
+ * @returns Padded string
+ **/
 export function padNum(
     num: number,
     padAmount: number,
@@ -21,6 +32,9 @@ export const encoder = new TextEncoder();
 
 /**
  * Check if an object has a property
+ * @param obj Object to check
+ * @param property Property to check
+ * @returns Whether the object has the property
  **/
 export function hasOwn(obj: any, property: string | number | Symbol) {
     return (Object as unknown as any).hasOwn(obj, property);
@@ -47,7 +61,15 @@ export function darken(color: string, amount = 0x40) {
 
     return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
-// Brandon made this literally eons ago and it's fucking hilarious
+
+// spooky.jsaurus
+// NOT the same as poop_text
+
+/**
+ * Make text spoopy
+ * @param message Message to spoop
+ * @returns Spooped message
+ **/
 export function spoop_text(message: string) {
     var old = message;
     message = "";
@@ -64,6 +86,11 @@ export function spoop_text(message: string) {
     return message;
 }
 
+/**
+ * Mix two objects
+ * @param obj1 Object to mix into
+ * @param obj2 Object to mix
+ **/
 export function mixin(obj1: any, obj2: any) {
     for (const key of Object.keys(obj2)) {
         obj1[key] = obj2[key];

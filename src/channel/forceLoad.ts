@@ -7,6 +7,11 @@ import { ChannelList } from "./ChannelList";
 
 const logger = new Logger("Channel Forceloader");
 
+/**
+ * Forceloads a channel
+ * @param id The channel ID
+ * @returns Whether the channel was loaded
+ */
 export function forceloadChannel(id: string) {
     try {
         logger.info("Forceloading", id);
@@ -17,6 +22,11 @@ export function forceloadChannel(id: string) {
     }
 }
 
+/**
+ * Unforceloads a channel
+ * @param id The channel ID
+ * @returns Whether the channel was unloaded
+ */
 export function unforceloadChannel(id: string) {
     const ch = ChannelList.getList().find(ch => ch.getID() == id);
     if (!ch) return false;
@@ -27,6 +37,10 @@ export function unforceloadChannel(id: string) {
     return true;
 }
 
+/**
+ * Forceloads all forceload-configured channels
+ * This is meant to be called on startup
+ **/
 export function loadForcedStartupChannels() {
     let hasFullChannel = false;
 

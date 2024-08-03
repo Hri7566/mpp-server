@@ -36,6 +36,11 @@ const logger = new Logger("Sockets");
 
 type CursorValue = string | number;
 
+/**
+ * Extended websocket thing
+ * Most poeple call this "Client" but it's not on the client...
+ * This is likely the source of my memory leaks
+ **/
 export class Socket extends EventEmitter {
     private id: string;
     private _id: string;
@@ -65,6 +70,7 @@ export class Socket extends EventEmitter {
     ) {
         super();
 
+        // real user?
         if (ws) {
             // Real user
             this.ip = ws.data.ip;
@@ -82,13 +88,18 @@ export class Socket extends EventEmitter {
         let foundSocket;
         let count = 0;
 
+        // big boi loop
         for (const socket of socketsBySocketID.values()) {
+            // Skip us
             if (socket.socketID == this.socketID) continue;
 
+            // Are they real?
             if (socket.ws) {
+                // Are they connected?
                 if (socket.ws.readyState !== 1) continue;
             }
 
+            // Same user ID?
             if (socket.getUserID() == this.getUserID()) {
                 foundSocket = socket;
                 count++;
@@ -96,11 +107,14 @@ export class Socket extends EventEmitter {
         }
 
         if (count >= 4) {
+            // Too many go away
             this.destroy();
         }
 
         // logger.debug("Found socket?", foundSocket);
 
+        // If there is another socket, use their ID for some reason I forgot
+        // otherwise, make a new one
         if (!foundSocket) {
             // Use new session ID
             this.id = createID();
@@ -109,18 +123,24 @@ export class Socket extends EventEmitter {
             this.id = foundSocket.id;
 
             // Break us off
+            // didn't work nvm
             //this.id = "broken";
             //this.destroy();
         }
 
+        // Load stuff
         (async () => {
+            // Load our user data
             await this.loadUser();
 
+            // Set our rate limits
             this.resetRateLimits();
             this.setNoteQuota(NoteQuota.PARAMS_RIDICULOUS);
 
+            // Bind a bunch of our event listeners so we do stuff when told to
             this.bindEventListeners();
 
+            // Send a challenge to the browser for MPP.net frontends
             if (config.browserChallenge == "basic") {
                 this.sendArray([{
                     m: "b",
@@ -131,6 +151,7 @@ export class Socket extends EventEmitter {
             }
         })();
 
+        // all done
         this.emit("ready");
     }
 
@@ -143,7 +164,7 @@ export class Socket extends EventEmitter {
     }
 
     /**
-     * Get the user ID of this socket
+     * Get the user ID (_id) of this socket
      * @returns User ID
      **/
     public getUserID() {
@@ -151,7 +172,7 @@ export class Socket extends EventEmitter {
     }
 
     /**
-     * Get the participant ID of this socket
+     * Get the participant ID (id) of this socket
      * @returns Participant ID
      **/
     public getParticipantID() {
@@ -744,6 +765,9 @@ export class Socket extends EventEmitter {
 
     /**
      * Ban this socket's user for doing bad things
+     * this doesn't actually ban the user, it just sends a notification right now FIXME
+     * @param duration Duration of the ban in milliseconds
+     * @param reason Reason for the ban
      **/
     public ban(duration: number, reason: string) {
         // TODO cleaner ban system
@@ -763,13 +787,26 @@ export class Socket extends EventEmitter {
 }
 
 export const socketsBySocketID = new Map<string, Socket>();
+(globalThis as any).socketsBySocketID = socketsBySocketID;
 
+/**
+ * Find a socket by their participant ID
+ * bad don't use for unique sockets
+ * @param id Participant ID to find
+ * @returns Socket object
+ **/
 export function findSocketByPartID(id: string) {
     for (const socket of socketsBySocketID.values()) {
         if (socket.getParticipantID() == id) return socket;
     }
 }
 
+/**
+ * Find all sockets by their user ID
+ * also not unique
+ * @param _id User ID to find
+ * @returns Socket objects
+ **/
 export function findSocketsByUserID(_id: string) {
     const sockets = [];
 
@@ -781,6 +818,12 @@ export function findSocketsByUserID(_id: string) {
     return sockets;
 }
 
+/**
+ * Find a socket by their IP
+ * probably not unique if they're on different tabs
+ * @param ip IP to find
+ * @returns Socket object
+ **/
 export function findSocketByIP(ip: string) {
     for (const socket of socketsBySocketID.values()) {
         if (socket.getIP() == ip) {

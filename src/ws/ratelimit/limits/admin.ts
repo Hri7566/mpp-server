@@ -22,18 +22,18 @@ export const adminLimits: RateLimitConstructorList = {
     chains: {
         userset: () =>
             new RateLimitChain(
-                config.admin.chains.userset.interval,
-                config.admin.chains.userset.num
+                config.admin.chains.userset.num,
+                config.admin.chains.userset.interval
             ),
         chset: () =>
             new RateLimitChain(
-                config.admin.chains.chset.interval,
-                config.admin.chains.userset.num
+                config.admin.chains.chset.num,
+                config.admin.chains.userset.interval
             ),
         n: () =>
             new RateLimitChain(
-                config.admin.chains.n.interval,
-                config.admin.chains.userset.num
+                config.admin.chains.n.num,
+                config.admin.chains.userset.interval
             )
     }
 };

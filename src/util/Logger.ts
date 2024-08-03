@@ -1,11 +1,15 @@
 import { padNum, unimportant } from "./helpers";
 
+/**
+ * A logger that doesn't fuck with the readline prompt
+ * timestamps are likely wrong because of js timezones
+ **/
 export class Logger {
     private static log(method: string, ...args: any[]) {
-        // Clear current line
+        // Un-fuck the readline prompt
         process.stdout.write("\x1b[2K\r");
 
-        // Log our stuff
+        // Log
         (console as unknown as Record<string, (..._args: any[]) => any>)[
             method
         ](
@@ -14,7 +18,7 @@ export class Logger {
             ...args
         );
 
-        // Fix the readline prompt (spooky cringe code)
+        // Re-print the readline prompt (spooky cringe global variable)
         if ((globalThis as unknown as any).rl)
             (globalThis as unknown as any).rl.prompt();
     }
@@ -38,7 +42,7 @@ export class Logger {
         return new Date().toISOString().split("T")[0];
     }
 
-    constructor(public id: string) {}
+    constructor(public id: string) { }
 
     public info(...args: any[]) {
         Logger.log("log", `[${this.id}]`, `\x1b[34m[info]\x1b[0m`, ...args);

@@ -19,6 +19,8 @@ async function getIndex() {
     // nobody realistically uses templates in 2024 and documents
     // it well enough to say what library they used
 
+    // I totally forget if this even works
+
     const index = Bun.file("./public/index.html");
 
     const rendered = nunjucks.renderString(await index.text(), {
@@ -91,11 +93,15 @@ export const app = Bun.serve<{ ip: string }>({
             // logger.debug("Connection at " + socket.getIP());
 
             // Let's put it in the dinner bucket.
-            socketsBySocketID.set((socket.socketID as any), socket);
+            if (socket.socketID == undefined) {
+                socket.socketID = createSocketID();
+            }
+
+            socketsBySocketID.set(socket.socketID, socket);
         },
 
         message: (ws, message) => {
-            // "Let's make it binary" said all websocket developers for some reason
+            // Fucking string
             const msg = message.toString();
 
             // Let's find out wtf they even sent
@@ -103,8 +109,6 @@ export const app = Bun.serve<{ ip: string }>({
         },
 
         close: (ws, code, message) => {
-            // logger.debug("Close called");
-
             // This usually gets called when someone leaves,
             // but it's also used internally just in case
             // some dickhead can't close their tab like a

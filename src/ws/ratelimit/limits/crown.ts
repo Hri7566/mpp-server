@@ -22,18 +22,18 @@ export const crownLimits: RateLimitConstructorList = {
     chains: {
         userset: () =>
             new RateLimitChain(
-                config.crown.chains.userset.interval,
-                config.crown.chains.userset.num
+                config.crown.chains.userset.num,
+                config.crown.chains.userset.interval
             ),
         chset: () =>
             new RateLimitChain(
-                config.crown.chains.chset.interval,
-                config.crown.chains.userset.num
+                config.crown.chains.chset.num,
+                config.crown.chains.userset.interval
             ),
         n: () =>
             new RateLimitChain(
-                config.crown.chains.n.interval,
-                config.crown.chains.userset.num
+                config.crown.chains.n.num,
+                config.crown.chains.userset.interval
             )
     }
 };
