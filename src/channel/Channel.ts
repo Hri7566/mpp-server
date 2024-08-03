@@ -9,6 +9,7 @@ import {
     IChannelInfo,
     Notification,
     UserFlags,
+    Tag,
 } from "../util/types";
 import type { Socket } from "../ws/Socket";
 import { validateChannelSettings } from "./settings";
@@ -280,7 +281,8 @@ export class Channel extends EventEmitter {
                                 color: p.color,
                                 id: p.id,
                                 x: x,
-                                y: y
+                                y: y,
+                                tag: usersConfig.enableTags ? p.tag : undefined
                             }
                         ]
                     );
