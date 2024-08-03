@@ -30,6 +30,9 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 - Channels
     - Channel list
     - Channel settings
+    - Options to keep channels forceloaded
+        - Configurable
+        - Ability to forceload at runtime
 - Rate limits
     - Borrowed from Brandon's GitHub Gist account
 - Brandon-style admin messages
@@ -49,6 +52,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
         - Similar to the MPP.net server, but uses a Brandon-style admin message
     - Ability to rename channels
     - Chat clearing similar to MPP.net
+    - Channel forceloading message
 
 ## TODO
 
