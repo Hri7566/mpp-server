@@ -1110,6 +1110,12 @@ export class Channel extends EventEmitter {
 
         this.sendArray([outgoing]);
         this.chatHistory.push(outgoing);
+
+        // Limit chat history to 512 messages
+        if (this.chatHistory.length > 512) {
+            this.chatHistory.splice(0, this.chatHistory.length - 512);
+        }
+
         await saveChatHistory(this.getID(), this.chatHistory);
     }
 
