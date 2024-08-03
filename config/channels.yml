@@ -40,10 +40,6 @@ fullChannel: test/awkward
 # Whether or not to publish channel user limits in the channel list.
 sendLimit: false
 
-# Whether or not to send tags to users.
-# TODO This likely doesn't belong here
-sendTags: false
-
 # Whether to give a user the crown when they join a channel they were already the owner of when they left.
 # Reportedly, this is a feature on the original server, but it's not working there.
 # This is corrected in MPP.net's server.
