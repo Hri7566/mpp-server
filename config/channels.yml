@@ -26,4 +26,3 @@ lobbyBackdoor: lolwutsecretlobbybackdoor
 fullChannel: test/awkward
 sendLimit: false
 chownOnRejoin: true
-sendTags: false
