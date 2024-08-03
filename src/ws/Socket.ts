@@ -143,12 +143,14 @@ export class Socket extends EventEmitter {
 
             // Send a challenge to the browser for MPP.net frontends
             if (config.browserChallenge == "basic") {
+                // Basic function
                 this.sendArray([{
                     m: "b",
                     code: `~return true;`
                 }]);
             } else if (config.browserChallenge == "obf") {
-
+                // Obfuscated challenge building
+                // TODO
             }
         })();
 
@@ -524,7 +526,8 @@ export class Socket extends EventEmitter {
                     id: part.id,
                     name: part.name,
                     x: cursorPos.x,
-                    y: cursorPos.y
+                    y: cursorPos.y,
+                    tag: config.enableTags ? part.tag : undefined
                 }
             ]);
         }

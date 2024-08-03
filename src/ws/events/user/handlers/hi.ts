@@ -50,11 +50,11 @@ export const hi: ServerEventListener<"hi"> = {
                 // Validate the token
                 const valid = await validateToken(socket.getUserID(), msg.token);
                 if (!valid) {
-                    socket.ban(60000, "Invalid token");
-                    return;
+                    //socket.ban(60000, "Invalid token");
+                    //return;
+                } else {
+                    token = msg.token;
                 }
-
-                token = msg.token;
             }
         }
 

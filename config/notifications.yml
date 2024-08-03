@@ -1,3 +1,5 @@
+# Notification config file
+
 # Whether to allow HTML in notifications.
 # This is a security risk, so only enable this if you trust your admins.
 allowXSS: true

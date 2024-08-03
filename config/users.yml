@@ -1,24 +1,29 @@
+# User data config file
+
 # The default username for new users.
 defaultName: Anonymous
 
 # The default user flags for new users.
+# These flags control arbitrary data that could be checked by any part of the code.
+# This is an internal feature available on MPP.com, but not MPP.net.
 defaultFlags:
     volume: 100
 
 # Whether or not to allow users to change their color.
-# Brandon's server has this set to false, but multiple users have reported it to be on before 2016.
+# Based on some reports, the MPP.com server stopped allowing this around 2016.
 enableColorChanging: true
 
-# Allows custom data inside note messages.
-# This was in the original server, but not in MPP.net's server.
-# This only exists for backwards compatibility with scripts like nagalun's drarwing script.
+# Whether to allow custom data inside note messages.
+# This was in the original server, but not in MPP.net's server do to stricter sanitization.
+# This only exists for backwards compatibility with scripts like nagalun's drawing script.
 enableCustomNoteData: true
 
 # Whether or not to enable tags that are sent publicly.
-# This won't prevent admins from changing tags internally, but it will not be sent to clients.
+# This won't prevent admins from changing tags internally, but they will not be sent to clients if set to false.
 enableTags: true
 
 # This is the user data that the server will use to send admin chat messages with.
+# This is a feature available on MPP.com, but was unknown to the MPP.net developers, therefore not implemented on MPP.net.
 adminParticipant:
     _id: "0"
     name: mpp
@@ -30,12 +35,28 @@ adminParticipant:
 enableAdminEval: true
 
 # The token validation scheme. Valid values are "none", "jwt" and "uuid".
-# This server will still validate existing tokens generated with other schemes if not set to "none".
-tokenAuth: none
+# This server will still validate existing tokens generated with other schemes if not set to "none", mimicking MPP.net's server.
+# This is set to "none" by default because MPP.com does not have a token system.
+tokenAuth: jwt
 
-# The browser challenge scheme. Valid values are "none", "obf" and "basic".
+# The browser challenge scheme. Valid options are "none", "obf" and "basic".
 # This is to change what is sent in the "b" message.
 # "none" will disable the browser challenge,
 # "obf" will sent an obfuscated function to the client,
 # and "basic" will just send a simple function that expects a boolean.
-browserChallenge: none
+browserChallenge: basic
+
+# Scheme for generating user IDs.
+# Valid options are "random", "sha256", "mpp" and "uuid".
+# "random" will generate a random ID. As of writing, this is in use by MPP.com's server, but likely a mistake or poor workaround.
+# "sha256" will generate a hash of the user's IP address and the server's SALT with the SHA256 algorithm.
+# "mpp" will generate a hash of the user's IP address in the same way that MPP.com and MPP.net do. This is the default.
+# "uuid" will generate a UUID for the user ID.
+idGeneration: mpp
+
+# Scheme for generating user colors.
+# Valid options are "random", "sha256", "mpp" and "white".
+# "random" will generate a random color for the user. This is not a known feature of any other server.
+# "sha256" will generate a color based on a hash of the user's ID.
+# "mpp" will generate a color based on the user's ID with a separate salt variable. This salt must be provided in the "COLOR_SALT" environment variable in the .env file.
+colorGeneration: mpp

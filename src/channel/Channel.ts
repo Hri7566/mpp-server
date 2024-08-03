@@ -53,7 +53,9 @@ export class Channel extends EventEmitter {
     }
 
     private async deleteChatHistory() {
-        await deleteChatHistory(this.getID());
+        try {
+            await deleteChatHistory(this.getID());
+        } catch (err) { }
     }
 
     public logger: Logger;

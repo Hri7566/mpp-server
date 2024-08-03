@@ -26,6 +26,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 - Usernames/colors
     - Allowing color changing can be toggled in the config, similar to MPP.com
     - Default user parameters can be set
+    - Configurable ID and color generation methods
 - Channels
     - Channel list
     - Channel settings
@@ -46,6 +47,8 @@ Brandon's server originally used MongoDB for storing user data, but there are to
         - Server must be setup as a pm2/docker/systemd process for automatic restarting
     - Ability to change tags
         - Similar to the MPP.net server, but uses a Brandon-style admin message
+    - Ability to rename channels
+    - Chat clearing similar to MPP.net
 
 ## TODO
 
@@ -67,6 +70,7 @@ Brandon's server originally used MongoDB for storing user data, but there are to
 - Test every frontend
 - Test fishing bot
 - Remote console
+- Modify frontend to use templating
 
 ## Backlog/Notes
 
@@ -75,7 +79,6 @@ Brandon's server originally used MongoDB for storing user data, but there are to
     - Split script.js into multiple files
     - Implement tags as a server option, toggles code on frontend
         - Same with color changing
-- Bun memory usage can skyrocket
 - Reload config files on save
 - Expose API?
 
@@ -115,7 +118,7 @@ such as enabling the color changing option in the userset modal menu, or sending
     $ cp .env.template .env
     ```
 
-    Edit `.env` to your needs.
+    Edit `.env` to your needs. Some variables are required for certain features to work.
 
     - Edit the files in the `config` folder to match your needs
 

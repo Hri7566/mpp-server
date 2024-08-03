@@ -1,3 +1,5 @@
+# Rate limit config file
+
 # Difference between rate limits and rate limit chains:
 # Rate limits will not allow anything to be sent until the rate limit interval has passed.
 # Rate limit chains, on the other hand, will allow messages to be sent until the rate limit chain's limit has been reached.

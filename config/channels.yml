@@ -1,9 +1,8 @@
-# Which channels to load on startup.
+# Channel config file
+
 forceLoad:
     - lobby
     - test/awkward
-
-# Default channel settings for lobby channels.
 lobbySettings:
     lobby: true
     chat: true
@@ -11,36 +10,20 @@ lobbySettings:
     visible: true
     color: "#73b3cc"
     color2: "#273546"
-
-# Default channel settings for normal user-created channels.
-# Note that this allows for channel settings users can't set, like visible and lobby.
 defaultSettings:
     chat: true
     crownsolo: false
     color: "#3b5054"
     color2: "#001014"
     visible: true
-
-# Regex patterns for lobby channel names.
-# Any channel name that matches any of these patterns will be considered a lobby channel on instantiation.
 lobbyRegexes:
     - ^lobby[0-9][0-9]$
     - ^lobby[0-9]$
     - ^lobby$
     - ^lobbyNaN$
     - ^test/.+$
-
-# The channel to use for the lobby backdoor.
 lobbyBackdoor: lolwutsecretlobbybackdoor
-
-# The channel that users get sent to when they are banned from a channel/join a channel they are already banned in/join a channel that is full and not a regular lobby.
-# This will not be used for real lobby channels. (channels that start with "lobby" and may have numbers on the end)
 fullChannel: test/awkward
-
-# Whether or not to publish channel user limits in the channel list.
 sendLimit: false
-
-# Whether to give a user the crown when they join a channel they were already the owner of when they left.
-# Reportedly, this is a feature on the original server, but it's not working there.
-# This is corrected in MPP.net's server.
 chownOnRejoin: true
+sendTags: false

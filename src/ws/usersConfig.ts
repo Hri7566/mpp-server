@@ -11,6 +11,8 @@ export interface UsersConfig {
     enableAdminEval: boolean;
     tokenAuth: "jwt" | "uuid" | "none";
     browserChallenge: "none" | "obf" | "basic";
+    idGeneration: "random" | "sha256" | "mpp" | "uuid";
+    colorGeneration: "random" | "sha256" | "mpp" | "white";
 }
 
 export const usersConfigPath = "config/users.yml";
@@ -31,7 +33,9 @@ export const defaultUsersConfig: UsersConfig = {
     },
     enableAdminEval: false,
     tokenAuth: "none",
-    browserChallenge: "none"
+    browserChallenge: "none",
+    idGeneration: "mpp",
+    colorGeneration: "mpp"
 };
 
 // Importing this elsewhere causes bun to segfault

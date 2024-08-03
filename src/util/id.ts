@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "crypto"; import env from "./env";
 import { spoop_text } from "./helpers";
+import { config } from "../ws/usersConfig";
 
 export function createID() {
     // Maybe I could make this funnier than it needs to be...
@@ -21,24 +22,46 @@ export function createID() {
 }
 
 export function createUserID(ip: string) {
-    return createHash("sha256")
-        .update(ip)
-        .update(env.SALT)
-        .digest("hex")
-        .substring(0, 24);
+    if (config.idGeneration == "random") {
+        return createID();
+    } else if (config.idGeneration == "sha256") {
+        return createHash("sha256")
+            .update(ip)
+            .update(env.SALT)
+            .digest("hex")
+            .substring(0, 24);
+    } else if (config.idGeneration == "mpp") {
+        return createHash("md5")
+            .update("::ffff:" + ip + env.SALT)
+            .digest("hex")
+            .substring(0, 24);
+    }
 }
 
 export function createSocketID() {
     return crypto.randomUUID();
 }
 
-export function createColor(ip: string) {
-    return (
-        "#" +
-        createHash("sha256")
-            .update(ip)
+export function createColor(_id: string) {
+    if (config.colorGeneration == "random") {
+        return "#" + Math.floor(Math.random() * 16777215).toString(16);
+    } else if (config.colorGeneration == "sha256") {
+        return "#" + createHash("sha256")
+            .update(_id)
             .update(env.SALT)
             .digest("hex")
-            .substring(24, 24 + 6)
-    );
+            .substring(24, 24 + 6);
+    } else if (config.colorGeneration == "mpp") {
+        const hash = createHash("md5");
+        hash.update(_id + env.COLOR_SALT);
+        const output = hash.digest();
+
+        const r = output.readUInt8(0) - 0x40;
+        const g = output.readUInt8(1) + 0x20;
+        const b = output.readUInt8(2);
+
+        return "#" + r.toString(16) + g.toString(16) + b.toString(16);
+    } else if (config.colorGeneration == "white") {
+        return "#ffffff";
+    }
 }
